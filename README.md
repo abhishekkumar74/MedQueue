@@ -17,23 +17,6 @@ A production-ready Progressive Web App (PWA) for managing hospital patient queue
 - **Database**: Supabase (PostgreSQL + Realtime + RLS)
 - **Deploy**: Vercel
 
-## Getting Started
-
-```bash
-git clone https://github.com/abhishekkumar74/MedQueue.git
-cd MedQueue
-cp client/.env.example client/.env
-# Add your Supabase credentials in client/.env
-npm install --prefix client
-npm run dev:client
-```
-
-## Environment Variables
-
-```
-VITE_SUPABASE_URL=your_supabase_url
-VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
-```
 
 ## Security
 
@@ -45,4 +28,4 @@ VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 
 ## License
 
-Private — All rights reserved.
+MedQueue © 2026 — Built by Abhishek Kumar
