@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { AuthUser, loginStaff, requestOtp, verifyOtp } from '../lib/auth';
-import { Activity, Eye, EyeOff, Loader2, AlertCircle, Phone, Shield, ArrowLeft } from 'lucide-react';
+import { supabase } from '../lib/supabase';
+import { Activity, Eye, EyeOff, Loader2, AlertCircle, Phone, Shield, ArrowLeft, User, MapPin, Hash } from 'lucide-react';
 
-type LoginMode = 'choose' | 'staff' | 'patient-phone' | 'patient-otp';
+type LoginMode = 'choose' | 'staff' | 'patient-phone' | 'patient-otp' | 'patient-register';
 
 interface LoginPageProps {
   onLogin: (user: AuthUser) => void;
@@ -22,6 +23,10 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
   const [phone, setPhone] = useState('');
   const [otp, setOtp] = useState('');
   const [devOtp, setDevOtp] = useState('');
+  const [newPatientId, setNewPatientId] = useState('');
+
+  // New patient registration form
+  const [regForm, setRegForm] = useState({ name: '', age: '', address: '' });
 
   function reset() {
     setError('');
@@ -65,9 +70,48 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
     setLoading(true); setError('');
     try {
       const user = await verifyOtp(phone.trim(), otp.trim());
+      // New patient — name is empty, show registration form
+      if (!user.name || user.name === phone.trim()) {
+        setNewPatientId(user.id);
+        setMode('patient-register');
+        setLoading(false);
+        return;
+      }
+      // Returning patient — go straight in
       onLogin(user);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Invalid OTP');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handlePatientRegister(e: React.FormEvent) {
+    e.preventDefault();
+    if (!regForm.name.trim()) return setError('Name is required');
+    setLoading(true); setError('');
+    try {
+      const { error } = await supabase
+        .from('patients')
+        .update({
+          name: regForm.name.trim(),
+          age: regForm.age ? parseInt(regForm.age) : 0,
+          address: regForm.address.trim(),
+        })
+        .eq('id', newPatientId);
+      if (error) throw new Error(error.message);
+
+      const user: AuthUser = {
+        id: newPatientId,
+        name: regForm.name.trim(),
+        type: 'patient',
+        phone: phone.trim(),
+        age: regForm.age ? parseInt(regForm.age) : 0,
+        address: regForm.address.trim(),
+      };
+      onLogin(user);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to save details');
     } finally {
       setLoading(false);
     }
@@ -184,15 +228,6 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
                 {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Shield className="w-5 h-5" />}
                 {loading ? 'Signing in...' : 'Sign In'}
               </button>
-
-              {/* Dev hint */}
-              <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 text-xs text-blue-700">
-                <p className="font-bold mb-1">Default accounts (password: Admin@1234)</p>
-                <p>Admin: admin@hospital.com</p>
-                <p>Doctor: doctor@hospital.com</p>
-                <p>Ward Boy: wardboy@hospital.com</p>
-                <p>Pharmacy: pharmacy@hospital.com</p>
-              </div>
             </form>
           )}
 
@@ -269,6 +304,87 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
               >
                 Resend OTP
               </button>
+            </form>
+          )}
+
+          {/* ── New patient registration ── */}
+          {mode === 'patient-register' && (
+            <form onSubmit={handlePatientRegister} className="space-y-5">
+              {/* Welcome header */}
+              <div className="text-center pb-2">
+                <div className="w-14 h-14 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <User className="w-7 h-7 text-emerald-600" />
+                </div>
+                <h2 className="text-xl font-bold text-gray-800">Welcome!</h2>
+                <p className="text-sm text-gray-500 mt-1">
+                  First time here. Please fill your basic details.
+                </p>
+                <div className="mt-2 bg-emerald-50 border border-emerald-200 rounded-xl px-3 py-2 text-xs text-emerald-700 font-semibold">
+                  📱 {phone}
+                </div>
+              </div>
+
+              {/* Name */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                  Full Name <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <input
+                    type="text"
+                    value={regForm.name}
+                    onChange={e => setRegForm(f => ({ ...f, name: e.target.value }))}
+                    placeholder="Enter your full name"
+                    autoFocus
+                    className="w-full min-h-[44px] border-2 border-gray-200 rounded-xl pl-10 pr-4 py-3 text-base focus:border-emerald-500 focus:outline-none transition-colors"
+                  />
+                </div>
+              </div>
+
+              {/* Age */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Age</label>
+                <div className="relative">
+                  <Hash className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <input
+                    type="number"
+                    value={regForm.age}
+                    onChange={e => setRegForm(f => ({ ...f, age: e.target.value }))}
+                    placeholder="e.g. 35"
+                    min="0" max="120"
+                    className="w-full min-h-[44px] border-2 border-gray-200 rounded-xl pl-10 pr-4 py-3 text-base focus:border-emerald-500 focus:outline-none transition-colors"
+                  />
+                </div>
+              </div>
+
+              {/* Address */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Address</label>
+                <div className="relative">
+                  <MapPin className="absolute left-3 top-3.5 w-4 h-4 text-gray-400" />
+                  <textarea
+                    value={regForm.address}
+                    onChange={e => setRegForm(f => ({ ...f, address: e.target.value }))}
+                    placeholder="City / Village / Area"
+                    rows={2}
+                    className="w-full border-2 border-gray-200 rounded-xl pl-10 pr-4 py-3 text-base focus:border-emerald-500 focus:outline-none transition-colors resize-none"
+                  />
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading || !regForm.name.trim()}
+                className="w-full min-h-[48px] bg-emerald-500 hover:bg-emerald-600 disabled:opacity-60 text-white font-bold rounded-xl transition-colors flex items-center justify-center gap-2"
+              >
+                {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : null}
+                {loading ? 'Saving...' : 'Save & Continue →'}
+              </button>
+
+              <p className="text-center text-xs text-gray-400">
+                Ye details next visit pe automatically fill ho jayengi
+              </p>
             </form>
           )}
         </div>
