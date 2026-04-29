@@ -7,6 +7,7 @@
  * then run: npm run dev (starts both client + server)
  */
 import { supabase } from './supabase';
+import { todayStartUTC } from './dateUtils';
 
 // ─── TOKEN REGISTRATION ──────────────────────────────────────────────────────
 
@@ -41,11 +42,11 @@ export async function registerToken(params: {
     }
   }
 
-  // Get today's max token number
-  const today = new Date().toISOString().split('T')[0];
+  // Get today's max token number (IST date, UTC-aware query)
+  const todayStart = todayStartUTC();
   const { data: lastToken } = await supabase
     .from('tokens').select('token_number')
-    .gte('created_at', `${today}T00:00:00`)
+    .gte('created_at', todayStart)
     .order('token_number', { ascending: false })
     .limit(1).maybeSingle();
 
@@ -103,12 +104,12 @@ export async function getQueue(department?: string) {
 // ─── TOKEN STATUS ─────────────────────────────────────────────────────────────
 
 export async function getTokenStatus(phone: string) {
-  const today = new Date().toISOString().split('T')[0];
+  const todayStart = todayStartUTC();
 
   const { data: token } = await supabase
     .from('tokens').select('*, patients(*)')
     .eq('phone', phone)
-    .gte('created_at', `${today}T00:00:00`)
+    .gte('created_at', todayStart)
     .order('created_at', { ascending: false })
     .limit(1).maybeSingle();
 

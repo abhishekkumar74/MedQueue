@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { registerToken } from '../lib/api';
 import { Token, Priority, Department, DEPARTMENT_LABEL } from '../types';
 import { AuthUser } from '../lib/auth';
-import { User, Phone, Building2, Ticket, ChevronDown, ChevronUp, Bell, CheckCircle, Loader2, AlertCircle, MapPin, Hash } from 'lucide-react';
+import PhoneInput, { isValidPhone } from '../components/PhoneInput';
+import { User, Building2, Ticket, ChevronDown, ChevronUp, Bell, CheckCircle, Loader2, AlertCircle, MapPin, Hash } from 'lucide-react';
 
 const DEPARTMENTS: Department[] = [
   'general', 'cardiology', 'orthopedics', 'pediatrics',
@@ -21,57 +22,87 @@ const HOW_IT_WORKS = [
   { icon: <Bell className="w-5 h-5" />, title: '3. Real-time Alerts', desc: "Wait comfortably — we'll notify you when it's your turn." },
 ];
 
-const EMPTY_FORM = {
-  fullName: '',
-  age: '',
-  address: '',
-  phone: '',
-  department: '' as Department | '',
-  priority: 2 as Priority,
-};
-
 export default function RegisterPage({ onNavigate, currentUser }: {
   onNavigate: (p: string, state?: Record<string, unknown>) => void;
   currentUser?: AuthUser | null;
 }) {
+  // Check if this is a returning patient (has name + phone already)
+  const isReturning = !!(
+    currentUser?.type === 'patient' &&
+    currentUser.phone &&
+    currentUser.name &&
+    currentUser.name !== currentUser.phone
+  );
+
+  // ── Returning patient form (only dept + priority) ──────────
+  const [quickDept, setQuickDept] = useState<Department | ''>('');
+  const [quickPriority, setQuickPriority] = useState<Priority>(2);
+
+  // ── New patient / guest form ───────────────────────────────
   const [form, setForm] = useState({
-    fullName: currentUser?.name ?? '',
-    age: currentUser?.age ? String(currentUser.age) : '',
-    address: currentUser?.address ?? '',
-    phone: currentUser?.phone ?? '',
+    fullName: '',
+    age: '',
+    address: '',
+    phone: '+91',
     department: '' as Department | '',
     priority: 2 as Priority,
   });
 
-  // Pre-fill when user changes (e.g. after login)
+  // Pre-fill new patient form from logged-in user
   useEffect(() => {
-    if (currentUser?.type === 'patient') {
+    if (currentUser?.type === 'patient' && !isReturning) {
       setForm(f => ({
         ...f,
-        fullName: currentUser.name ?? f.fullName,
+        fullName: (currentUser.name && currentUser.name !== currentUser.phone) ? currentUser.name : '',
         phone: currentUser.phone ?? f.phone,
         age: currentUser.age ? String(currentUser.age) : f.age,
         address: currentUser.address ?? f.address,
       }));
     }
-  }, [currentUser]);
+  }, [currentUser, isReturning]);
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [token, setToken] = useState<Token | null>(null);
   const [howOpen, setHowOpen] = useState(false);
 
-  async function handleSubmit(e: React.FormEvent) {
+  // ── Returning patient quick submit ─────────────────────────
+  async function handleQuickSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!form.phone.trim()) return setError('Phone number is required');
-    if (!form.department) return setError('Please select a department');
-    setLoading(true);
-    setError('');
+    if (!quickDept) return setError('Please select a department');
+    setLoading(true); setError('');
     try {
       const data = await registerToken({
-        phone: form.phone.trim(),
-        name: form.fullName.trim() || undefined,
-        age: form.age ? parseInt(form.age) : undefined,
-        address: form.address.trim() || undefined,
+        phone: currentUser!.phone!,
+        name: currentUser!.name,
+        age: currentUser!.age,
+        address: currentUser!.address,
+        priority: quickPriority,
+        department: quickDept,
+      });
+      setToken(data.token);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to register. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // ── New patient full submit ────────────────────────────────
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!form.fullName.trim()) return setError('Full name is required');
+    if (!form.age.trim()) return setError('Age is required');
+    if (!form.address.trim()) return setError('Address is required');
+    if (!isValidPhone(form.phone)) return setError('Please enter a valid 10-digit mobile number');
+    if (!form.department) return setError('Please select a department');
+    setLoading(true); setError('');
+    try {
+      const data = await registerToken({
+        phone: form.phone,
+        name: form.fullName.trim(),
+        age: parseInt(form.age),
+        address: form.address.trim(),
         priority: form.priority,
         department: form.department,
       });
@@ -83,14 +114,12 @@ export default function RegisterPage({ onNavigate, currentUser }: {
     }
   }
 
-  // Success screen
+  // ── Success screen ─────────────────────────────────────────
   if (token) {
     return (
       <div className="min-h-screen bg-[#E8F3FF] flex items-center justify-center px-4 py-8">
         <div className="bg-white rounded-3xl shadow-lg p-8 max-w-sm w-full text-center">
-          <div className="flex justify-center mb-4">
-            <CheckCircle className="w-16 h-16 text-emerald-500" />
-          </div>
+          <CheckCircle className="w-16 h-16 text-emerald-500 mx-auto mb-4" />
           <h2 className="text-2xl font-bold text-[#005EB8] mb-1">Token Booked!</h2>
           <p className="text-gray-500 mb-6 text-sm">Your queue token has been generated successfully.</p>
 
@@ -104,12 +133,12 @@ export default function RegisterPage({ onNavigate, currentUser }: {
             {token.patients?.name && <p><span className="font-semibold">Name:</span> {token.patients.name}</p>}
             {token.patients?.age ? <p><span className="font-semibold">Age:</span> {token.patients.age} yrs</p> : null}
             {token.department && <p><span className="font-semibold">Department:</span> {DEPARTMENT_LABEL[token.department]}</p>}
-            <p><span className="font-semibold">Booked at:</span> {new Date(token.created_at).toLocaleTimeString()}</p>
+            <p><span className="font-semibold">Booked at:</span> {new Date(token.created_at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kolkata' })}</p>
           </div>
 
           <div className="flex gap-3">
             <button
-              onClick={() => { setToken(null); setForm(EMPTY_FORM); }}
+              onClick={() => { setToken(null); setQuickDept(''); setQuickPriority(2); }}
               className="flex-1 min-h-[44px] py-3 border-2 border-[#005EB8] text-[#005EB8] rounded-xl font-semibold hover:bg-[#E8F3FF] transition-colors"
             >
               Book Another
@@ -129,170 +158,269 @@ export default function RegisterPage({ onNavigate, currentUser }: {
   return (
     <div className="min-h-screen bg-[#E8F3FF]">
       <div className="max-w-lg mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-[#005EB8]">Patient Registration</h1>
-          <p className="text-gray-600 mt-1 text-sm">
-            Register now to secure your place in the medical queue. You will receive a digital token to track your status in real-time.
-          </p>
-        </div>
 
-        {error && (
-          <div className="mb-4 flex items-center gap-2 bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3">
-            <AlertCircle className="w-5 h-5 flex-shrink-0" />
-            <span className="text-sm">{error}</span>
-          </div>
-        )}
-
-        {/* Form Card */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-4">
-          <form onSubmit={handleSubmit} className="space-y-5">
-
-            {/* Full Name */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Full Name</label>
-              <div className="relative">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <input
-                  type="text"
-                  value={form.fullName}
-                  onChange={(e) => setForm(f => ({ ...f, fullName: e.target.value }))}
-                  placeholder="Enter patient's full name"
-                  className="w-full min-h-[44px] border-2 border-gray-200 rounded-xl pl-10 pr-4 py-3 text-base focus:border-[#005EB8] focus:outline-none transition-colors"
-                />
-              </div>
+        {/* ── RETURNING PATIENT — Quick booking ── */}
+        {isReturning ? (
+          <>
+            <div className="mb-6">
+              <h1 className="text-2xl font-bold text-[#005EB8]">Welcome back!</h1>
+              <p className="text-gray-600 mt-1 text-sm">Select department and get your token instantly.</p>
             </div>
 
-            {/* Age + Phone side by side */}
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Age</label>
-                <div className="relative">
-                  <Hash className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <input
-                    type="number"
-                    value={form.age}
-                    onChange={(e) => setForm(f => ({ ...f, age: e.target.value }))}
-                    placeholder="e.g. 35"
-                    min="0"
-                    max="120"
-                    className="w-full min-h-[44px] border-2 border-gray-200 rounded-xl pl-10 pr-4 py-3 text-base focus:border-[#005EB8] focus:outline-none transition-colors"
-                  />
+            {/* Patient info card */}
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 mb-4 flex items-center gap-4">
+              <div className="w-12 h-12 bg-[#E8F3FF] rounded-xl flex items-center justify-center flex-shrink-0">
+                <User className="w-6 h-6 text-[#005EB8]" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="font-bold text-gray-800 truncate">{currentUser!.name}</div>
+                <div className="text-sm text-gray-500">
+                  {currentUser!.phone}
+                  {currentUser!.age ? ` • ${currentUser!.age} yrs` : ''}
+                  {currentUser!.address ? ` • ${currentUser!.address}` : ''}
                 </div>
               </div>
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Phone Number *</label>
-                <div className="relative">
-                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <input
-                    type="tel"
-                    value={form.phone}
-                    onChange={(e) => setForm(f => ({ ...f, phone: e.target.value }))}
-                    placeholder="+91 9876543210"
-                    className="w-full min-h-[44px] border-2 border-gray-200 rounded-xl pl-10 pr-4 py-3 text-base focus:border-[#005EB8] focus:outline-none transition-colors"
-                  />
+              <span className="text-xs bg-emerald-100 text-emerald-700 font-bold px-2 py-1 rounded-full flex-shrink-0">
+                Returning
+              </span>
+            </div>
+
+            {error && (
+              <div className="mb-4 flex items-center gap-2 bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3">
+                <AlertCircle className="w-5 h-5 flex-shrink-0" />
+                <span className="text-sm">{error}</span>
+              </div>
+            )}
+
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-4">
+              <form onSubmit={handleQuickSubmit} className="space-y-5">
+                {/* Department */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                    Medical Department <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                    <select
+                      value={quickDept}
+                      onChange={e => setQuickDept(e.target.value as Department)}
+                      className="w-full min-h-[44px] border-2 border-gray-200 rounded-xl pl-10 pr-4 py-3 text-base focus:border-[#005EB8] focus:outline-none transition-colors appearance-none bg-white"
+                    >
+                      <option value="">Select Department</option>
+                      {DEPARTMENTS.map(d => (
+                        <option key={d} value={d}>{DEPARTMENT_LABEL[d]}</option>
+                      ))}
+                    </select>
+                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                  </div>
                 </div>
-              </div>
-            </div>
 
-            {/* Address */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Address</label>
-              <div className="relative">
-                <MapPin className="absolute left-3 top-3.5 w-4 h-4 text-gray-400" />
-                <textarea
-                  value={form.address}
-                  onChange={(e) => setForm(f => ({ ...f, address: e.target.value }))}
-                  placeholder="City / Village / Area"
-                  rows={2}
-                  className="w-full border-2 border-gray-200 rounded-xl pl-10 pr-4 py-3 text-base focus:border-[#005EB8] focus:outline-none transition-colors resize-none"
-                />
-              </div>
-            </div>
+                {/* Priority */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Priority</label>
+                  <div className="grid grid-cols-1 gap-2">
+                    {PRIORITY_OPTIONS.map(p => (
+                      <button
+                        key={p.value}
+                        type="button"
+                        onClick={() => setQuickPriority(p.value)}
+                        className={`flex items-center gap-3 min-h-[44px] px-4 py-3 rounded-xl border-2 text-left transition-all ${
+                          quickPriority === p.value ? p.color : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
+                        }`}
+                      >
+                        <div className={`w-3 h-3 rounded-full flex-shrink-0 ${quickPriority === p.value ? p.dot : 'bg-gray-300'}`} />
+                        <div>
+                          <div className="font-semibold text-sm">{p.label}</div>
+                          <div className="text-xs opacity-75">{p.desc}</div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
 
-            {/* Department */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Medical Department *</label>
-              <div className="relative">
-                <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-                <select
-                  value={form.department}
-                  onChange={(e) => setForm(f => ({ ...f, department: e.target.value as Department }))}
-                  className="w-full min-h-[44px] border-2 border-gray-200 rounded-xl pl-10 pr-4 py-3 text-base focus:border-[#005EB8] focus:outline-none transition-colors appearance-none bg-white"
+                <button
+                  type="submit"
+                  disabled={loading || !quickDept}
+                  className="w-full min-h-[52px] bg-[#005EB8] hover:bg-[#004a96] disabled:opacity-60 text-white font-bold text-base rounded-xl transition-colors flex items-center justify-center gap-2"
                 >
-                  <option value="">Select Department</option>
-                  {DEPARTMENTS.map(d => (
-                    <option key={d} value={d}>{DEPARTMENT_LABEL[d]}</option>
-                  ))}
-                </select>
-                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-              </div>
+                  {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Ticket className="w-5 h-5" />}
+                  {loading ? 'Booking...' : 'Get Token Instantly →'}
+                </button>
+              </form>
+            </div>
+          </>
+        ) : (
+          /* ── NEW PATIENT — Full form ── */
+          <>
+            <div className="mb-6">
+              <h1 className="text-2xl font-bold text-[#005EB8]">Patient Registration</h1>
+              <p className="text-gray-600 mt-1 text-sm">
+                Register to get your place in the queue. You'll receive a digital token to track your status.
+              </p>
             </div>
 
-            {/* Priority */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Priority</label>
-              <div className="grid grid-cols-1 gap-2">
-                {PRIORITY_OPTIONS.map(p => (
-                  <button
-                    key={p.value}
-                    type="button"
-                    onClick={() => setForm(f => ({ ...f, priority: p.value }))}
-                    className={`flex items-center gap-3 min-h-[44px] px-4 py-3 rounded-xl border-2 text-left transition-all ${
-                      form.priority === p.value ? p.color : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
-                    }`}
-                  >
-                    <div className={`w-3 h-3 rounded-full flex-shrink-0 ${form.priority === p.value ? p.dot : 'bg-gray-300'}`} />
-                    <div>
-                      <div className="font-semibold text-sm">{p.label}</div>
-                      <div className="text-xs opacity-75">{p.desc}</div>
+            {error && (
+              <div className="mb-4 flex items-center gap-2 bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3">
+                <AlertCircle className="w-5 h-5 flex-shrink-0" />
+                <span className="text-sm">{error}</span>
+              </div>
+            )}
+
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-4">
+              <form onSubmit={handleSubmit} className="space-y-5">
+
+                {/* Full Name */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                    Full Name <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <input
+                      type="text"
+                      value={form.fullName}
+                      onChange={e => setForm(f => ({ ...f, fullName: e.target.value }))}
+                      placeholder="Enter patient's full name"
+                      required
+                      className="w-full min-h-[44px] border-2 border-gray-200 rounded-xl pl-10 pr-4 py-3 text-base focus:border-[#005EB8] focus:outline-none transition-colors"
+                    />
+                  </div>
+                </div>
+
+                {/* Age + Phone */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                      Age <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <Hash className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                      <input
+                        type="number"
+                        value={form.age}
+                        onChange={e => setForm(f => ({ ...f, age: e.target.value }))}
+                        placeholder="e.g. 35"
+                        min="1" max="120"
+                        required
+                        className="w-full min-h-[44px] border-2 border-gray-200 rounded-xl pl-10 pr-4 py-3 text-base focus:border-[#005EB8] focus:outline-none transition-colors"
+                      />
                     </div>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Submit */}
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full min-h-[52px] bg-[#005EB8] hover:bg-[#004a96] disabled:opacity-60 text-white font-bold text-base rounded-xl transition-colors flex items-center justify-center gap-2"
-            >
-              {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Ticket className="w-5 h-5" />}
-              {loading ? 'Registering...' : 'Get Digital Token'}
-            </button>
-
-            <p className="text-center text-xs text-gray-400">
-              By clicking, you agree to our patient data privacy policy.
-            </p>
-          </form>
-        </div>
-
-        {/* How it works */}
-        <div className="bg-[#dbeafe] rounded-2xl border border-blue-200 overflow-hidden">
-          <button
-            onClick={() => setHowOpen(o => !o)}
-            className="w-full flex items-center justify-between px-5 py-4 text-left"
-          >
-            <span className="font-bold text-[#005EB8]">How it works</span>
-            {howOpen ? <ChevronUp className="w-5 h-5 text-[#005EB8]" /> : <ChevronDown className="w-5 h-5 text-[#005EB8]" />}
-          </button>
-          {howOpen && (
-            <div className="px-5 pb-5 space-y-4">
-              {HOW_IT_WORKS.map((step, i) => (
-                <div key={i} className="flex items-start gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-[#005EB8] text-white flex items-center justify-center flex-shrink-0">
-                    {step.icon}
                   </div>
                   <div>
-                    <div className="font-semibold text-[#005EB8] text-sm">{step.title}</div>
-                    <div className="text-xs text-gray-600 mt-0.5">{step.desc}</div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                      Mobile <span className="text-red-500">*</span>
+                    </label>
+                    <PhoneInput
+                      value={form.phone}
+                      onChange={v => setForm(f => ({ ...f, phone: v }))}
+                    />
                   </div>
                 </div>
-              ))}
+
+                {/* Address */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                    Address <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <MapPin className="absolute left-3 top-3.5 w-4 h-4 text-gray-400" />
+                    <textarea
+                      value={form.address}
+                      onChange={e => setForm(f => ({ ...f, address: e.target.value }))}
+                      placeholder="City / Village / Area"
+                      rows={2}
+                      required
+                      className="w-full border-2 border-gray-200 rounded-xl pl-10 pr-4 py-3 text-base focus:border-[#005EB8] focus:outline-none transition-colors resize-none"
+                    />
+                  </div>
+                </div>
+
+                {/* Department */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                    Medical Department <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                    <select
+                      value={form.department}
+                      onChange={e => setForm(f => ({ ...f, department: e.target.value as Department }))}
+                      className="w-full min-h-[44px] border-2 border-gray-200 rounded-xl pl-10 pr-4 py-3 text-base focus:border-[#005EB8] focus:outline-none transition-colors appearance-none bg-white"
+                    >
+                      <option value="">Select Department</option>
+                      {DEPARTMENTS.map(d => (
+                        <option key={d} value={d}>{DEPARTMENT_LABEL[d]}</option>
+                      ))}
+                    </select>
+                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                  </div>
+                </div>
+
+                {/* Priority */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Priority</label>
+                  <div className="grid grid-cols-1 gap-2">
+                    {PRIORITY_OPTIONS.map(p => (
+                      <button
+                        key={p.value}
+                        type="button"
+                        onClick={() => setForm(f => ({ ...f, priority: p.value }))}
+                        className={`flex items-center gap-3 min-h-[44px] px-4 py-3 rounded-xl border-2 text-left transition-all ${
+                          form.priority === p.value ? p.color : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
+                        }`}
+                      >
+                        <div className={`w-3 h-3 rounded-full flex-shrink-0 ${form.priority === p.value ? p.dot : 'bg-gray-300'}`} />
+                        <div>
+                          <div className="font-semibold text-sm">{p.label}</div>
+                          <div className="text-xs opacity-75">{p.desc}</div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full min-h-[52px] bg-[#005EB8] hover:bg-[#004a96] disabled:opacity-60 text-white font-bold text-base rounded-xl transition-colors flex items-center justify-center gap-2"
+                >
+                  {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Ticket className="w-5 h-5" />}
+                  {loading ? 'Registering...' : 'Get Digital Token'}
+                </button>
+
+                <p className="text-center text-xs text-gray-400">
+                  By clicking, you agree to our patient data privacy policy.
+                </p>
+              </form>
             </div>
-          )}
-        </div>
+
+            {/* How it works */}
+            <div className="bg-[#dbeafe] rounded-2xl border border-blue-200 overflow-hidden">
+              <button
+                onClick={() => setHowOpen(o => !o)}
+                className="w-full flex items-center justify-between px-5 py-4 text-left"
+              >
+                <span className="font-bold text-[#005EB8]">How it works</span>
+                {howOpen ? <ChevronUp className="w-5 h-5 text-[#005EB8]" /> : <ChevronDown className="w-5 h-5 text-[#005EB8]" />}
+              </button>
+              {howOpen && (
+                <div className="px-5 pb-5 space-y-4">
+                  {HOW_IT_WORKS.map((step, i) => (
+                    <div key={i} className="flex items-start gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-[#005EB8] text-white flex items-center justify-center flex-shrink-0">
+                        {step.icon}
+                      </div>
+                      <div>
+                        <div className="font-semibold text-[#005EB8] text-sm">{step.title}</div>
+                        <div className="text-xs text-gray-600 mt-0.5">{step.desc}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

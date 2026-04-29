@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { bookAppointment, getAppointmentSlots, registerToken } from '../lib/api';
 import { Department, DEPARTMENT_LABEL, TimeSlot } from '../types';
-import { ChevronLeft, ChevronRight, Clock, MapPin, User, Phone, CheckCircle, Loader2, AlertCircle } from 'lucide-react';
+import { AuthUser } from '../lib/auth';
+import PhoneInput, { isValidPhone } from '../components/PhoneInput';
+import { ChevronLeft, ChevronRight, Clock, MapPin, User, Hash, CheckCircle, Loader2, AlertCircle } from 'lucide-react';
 
 const DEPARTMENTS: Department[] = [
   'general', 'cardiology', 'orthopedics', 'pediatrics',
@@ -24,14 +26,29 @@ const DAYS = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June',
   'July', 'August', 'September', 'October', 'November', 'December'];
 
-export default function AppointmentBooking({ onNavigate }: { onNavigate: (p: string, state?: Record<string, unknown>) => void }) {
+export default function AppointmentBooking({ onNavigate, currentUser }: { 
+  onNavigate: (p: string, state?: Record<string, unknown>) => void;
+  currentUser?: AuthUser | null;
+}) {
   const today = new Date();
   const [viewDate, setViewDate] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedSlot, setSelectedSlot] = useState<TimeSlot | null>(null);
   const [department, setDepartment] = useState<Department>('general');
   const [patientName, setPatientName] = useState('');
-  const [phone, setPhone] = useState('');
+  const [phone, setPhone] = useState('+91');
+  const [age, setAge] = useState('');
+  const [address, setAddress] = useState('');
+
+  // Pre-fill from logged-in patient
+  useEffect(() => {
+    if (currentUser?.type === 'patient') {
+      if (currentUser.name && currentUser.name !== currentUser.phone) setPatientName(currentUser.name);
+      if (currentUser.phone) setPhone(currentUser.phone);
+      if (currentUser.age) setAge(String(currentUser.age));
+      if (currentUser.address) setAddress(currentUser.address);
+    }
+  }, [currentUser]);
   const [slots, setSlots] = useState<TimeSlot[]>([]);
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [booking, setBooking] = useState(false);
@@ -84,14 +101,15 @@ export default function AppointmentBooking({ onNavigate }: { onNavigate: (p: str
   }
 
   async function handleBook() {
-    if (!selectedDate || !selectedSlot || !patientName.trim() || !phone.trim()) {
-      return setError('Please fill all fields and select a date and time slot.');
-    }
-    setBooking(true);
-    setError('');
+    if (!patientName.trim()) return setError('Full name is required');
+    if (!age.trim()) return setError('Age is required');
+    if (!address.trim()) return setError('Address is required');
+    if (!isValidPhone(phone)) return setError('Please enter a valid 10-digit mobile number');
+    if (!selectedDate || !selectedSlot) return setError('Please select a date and time slot');
+    setBooking(true); setError('');
     try {
       await bookAppointment({
-        phone: phone.trim(),
+        phone,
         patient_name: patientName.trim(),
         department,
         doctor_id: department,
@@ -107,9 +125,7 @@ export default function AppointmentBooking({ onNavigate }: { onNavigate: (p: str
       } else {
         setError(msg);
       }
-    } finally {
-      setBooking(false);
-    }
+    } finally { setBooking(false); }
   }
 
   if (success) {
@@ -265,24 +281,49 @@ export default function AppointmentBooking({ onNavigate }: { onNavigate: (p: str
             {/* Patient info */}
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 space-y-4">
               <h3 className="font-bold text-gray-800">Patient Details</h3>
+              {/* Name */}
               <div className="relative">
                 <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <input
                   type="text"
                   value={patientName}
                   onChange={e => setPatientName(e.target.value)}
-                  placeholder="Full Name"
+                  placeholder="Full Name *"
+                  required
                   className="w-full min-h-[44px] border-2 border-gray-200 rounded-xl pl-10 pr-4 py-3 text-base focus:border-[#005EB8] focus:outline-none"
                 />
               </div>
+              {/* Age */}
               <div className="relative">
-                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Hash className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <input
-                  type="tel"
-                  value={phone}
-                  onChange={e => setPhone(e.target.value)}
-                  placeholder="Phone Number"
+                  type="number"
+                  value={age}
+                  onChange={e => setAge(e.target.value)}
+                  placeholder="Age *"
+                  min="1" max="120"
+                  required
                   className="w-full min-h-[44px] border-2 border-gray-200 rounded-xl pl-10 pr-4 py-3 text-base focus:border-[#005EB8] focus:outline-none"
+                />
+              </div>
+              {/* Phone */}
+              <div>
+                <PhoneInput
+                  value={phone}
+                  onChange={setPhone}
+                  disabled={currentUser?.type === 'patient' && !!currentUser.phone}
+                />
+              </div>
+              {/* Address */}
+              <div className="relative">
+                <MapPin className="absolute left-3 top-3.5 w-4 h-4 text-gray-400" />
+                <textarea
+                  value={address}
+                  onChange={e => setAddress(e.target.value)}
+                  placeholder="Address *"
+                  rows={2}
+                  required
+                  className="w-full border-2 border-gray-200 rounded-xl pl-10 pr-4 py-3 text-base focus:border-[#005EB8] focus:outline-none resize-none"
                 />
               </div>
             </div>
@@ -339,7 +380,7 @@ export default function AppointmentBooking({ onNavigate }: { onNavigate: (p: str
 
               <button
                 onClick={handleBook}
-                disabled={booking || !selectedDate || !selectedSlot || !patientName.trim() || !phone.trim()}
+                disabled={booking || !selectedDate || !selectedSlot || !patientName.trim() || !isValidPhone(phone) || !age.trim() || !address.trim()}
                 className="w-full mt-4 min-h-[48px] bg-[#005EB8] hover:bg-[#004a96] disabled:opacity-50 text-white font-bold rounded-xl transition-colors flex items-center justify-center gap-2"
               >
                 {booking ? <Loader2 className="w-5 h-5 animate-spin" /> : null}

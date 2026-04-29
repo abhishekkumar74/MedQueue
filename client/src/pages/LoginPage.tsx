@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { AuthUser, loginStaff, requestOtp, verifyOtp } from '../lib/auth';
 import { supabase } from '../lib/supabase';
-import { Activity, Eye, EyeOff, Loader2, AlertCircle, Phone, Shield, ArrowLeft, User, MapPin, Hash } from 'lucide-react';
+import PhoneInput, { isValidPhone } from '../components/PhoneInput';
+import { Activity, Eye, EyeOff, Loader2, AlertCircle, Shield, ArrowLeft, User, MapPin, Hash } from 'lucide-react';
 
 type LoginMode = 'choose' | 'staff' | 'patient-phone' | 'patient-otp' | 'patient-register';
 
@@ -20,20 +21,17 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
   const [password, setPassword] = useState('');
 
   // Patient OTP
-  const [phone, setPhone] = useState('');
+  const [phone, setPhone] = useState('+91');
   const [otp, setOtp] = useState('');
   const [devOtp, setDevOtp] = useState('');
   const [newPatientId, setNewPatientId] = useState('');
 
-  // New patient registration form
+  // New patient registration (all required)
   const [regForm, setRegForm] = useState({ name: '', age: '', address: '' });
 
-  function reset() {
-    setError('');
-    setLoading(false);
-  }
+  function reset() { setError(''); setLoading(false); }
 
-  // ── Staff login ─────────────────────────────────────────
+  // ── Staff login ──────────────────────────────────────────
   async function handleStaffLogin(e: React.FormEvent) {
     e.preventDefault();
     if (!email || !password) return setError('Email and password required');
@@ -43,59 +41,59 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
       onLogin(user);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed');
-    } finally {
-      setLoading(false);
-    }
+    } finally { setLoading(false); }
   }
 
-  // ── Patient OTP ─────────────────────────────────────────
+  // ── Patient OTP request ──────────────────────────────────
   async function handleRequestOtp(e: React.FormEvent) {
     e.preventDefault();
-    if (!phone.trim()) return setError('Phone number required');
+    if (!isValidPhone(phone)) return setError('Please enter a valid 10-digit mobile number');
     setLoading(true); setError('');
     try {
-      const res = await requestOtp(phone.trim());
+      const res = await requestOtp(phone);
       if (res.otp) setDevOtp(res.otp);
       setMode('patient-otp');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to send OTP');
-    } finally {
-      setLoading(false);
-    }
+    } finally { setLoading(false); }
   }
 
+  // ── OTP verify ───────────────────────────────────────────
   async function handleVerifyOtp(e: React.FormEvent) {
     e.preventDefault();
     if (!otp.trim()) return setError('Enter the OTP');
     setLoading(true); setError('');
     try {
-      const user = await verifyOtp(phone.trim(), otp.trim());
-      // New patient — name is empty, show registration form
-      if (!user.name || user.name === phone.trim()) {
+      const user = await verifyOtp(phone, otp.trim());
+      // New patient — name empty → show registration form
+      if (!user.name || user.name === phone) {
         setNewPatientId(user.id);
         setMode('patient-register');
         setLoading(false);
         return;
       }
-      // Returning patient — go straight in
       onLogin(user);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Invalid OTP');
-    } finally {
-      setLoading(false);
-    }
+    } finally { setLoading(false); }
   }
 
+  // ── New patient details save ─────────────────────────────
   async function handlePatientRegister(e: React.FormEvent) {
     e.preventDefault();
-    if (!regForm.name.trim()) return setError('Name is required');
+    if (!regForm.name.trim())    return setError('Full name is required');
+    if (!regForm.age.trim())     return setError('Age is required');
+    if (!regForm.address.trim()) return setError('Address is required');
+    const age = parseInt(regForm.age);
+    if (isNaN(age) || age < 1 || age > 120) return setError('Enter a valid age (1–120)');
+
     setLoading(true); setError('');
     try {
       const { error } = await supabase
         .from('patients')
         .update({
           name: regForm.name.trim(),
-          age: regForm.age ? parseInt(regForm.age) : 0,
+          age,
           address: regForm.address.trim(),
         })
         .eq('id', newPatientId);
@@ -105,16 +103,14 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
         id: newPatientId,
         name: regForm.name.trim(),
         type: 'patient',
-        phone: phone.trim(),
-        age: regForm.age ? parseInt(regForm.age) : 0,
+        phone,
+        age,
         address: regForm.address.trim(),
       };
       onLogin(user);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save details');
-    } finally {
-      setLoading(false);
-    }
+    } finally { setLoading(false); }
   }
 
   return (
@@ -171,11 +167,11 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
                 className="w-full flex items-center gap-4 p-5 rounded-2xl border-2 border-gray-200 hover:border-emerald-500 hover:bg-emerald-50 transition-all text-left group"
               >
                 <div className="w-12 h-12 bg-emerald-500 rounded-xl flex items-center justify-center flex-shrink-0">
-                  <Phone className="w-6 h-6 text-white" />
+                  <User className="w-6 h-6 text-white" />
                 </div>
                 <div>
                   <div className="font-bold text-gray-800 group-hover:text-emerald-700">Patient Login</div>
-                  <div className="text-sm text-gray-500">Login with phone number + OTP</div>
+                  <div className="text-sm text-gray-500">Login with mobile number + OTP</div>
                 </div>
               </button>
             </div>
@@ -184,8 +180,8 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
           {/* ── Staff login ── */}
           {mode === 'staff' && (
             <form onSubmit={handleStaffLogin} className="space-y-5">
-              <h2 className="text-xl font-bold text-gray-800 mb-2">Staff Login</h2>
-              <p className="text-sm text-gray-500 mb-4">Enter your hospital credentials</p>
+              <h2 className="text-xl font-bold text-gray-800">Staff Login</h2>
+              <p className="text-sm text-gray-500">Enter your hospital credentials</p>
 
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1.5">Email</label>
@@ -234,45 +230,42 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
           {/* ── Patient phone ── */}
           {mode === 'patient-phone' && (
             <form onSubmit={handleRequestOtp} className="space-y-5">
-              <h2 className="text-xl font-bold text-gray-800 mb-2">Patient Login</h2>
-              <p className="text-sm text-gray-500 mb-4">We'll send a 6-digit OTP to your phone</p>
+              <h2 className="text-xl font-bold text-gray-800">Patient Login</h2>
+              <p className="text-sm text-gray-500">Enter your 10-digit mobile number</p>
 
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Phone Number</label>
-                <div className="relative">
-                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <input
-                    type="tel"
-                    value={phone}
-                    onChange={e => setPhone(e.target.value)}
-                    placeholder="+91 9876543210"
-                    className="w-full min-h-[44px] border-2 border-gray-200 rounded-xl pl-10 pr-4 py-3 text-base focus:border-emerald-500 focus:outline-none transition-colors"
-                  />
-                </div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                  Mobile Number <span className="text-red-500">*</span>
+                </label>
+                <PhoneInput
+                  value={phone}
+                  onChange={setPhone}
+                  focusColor="focus:border-emerald-500"
+                />
               </div>
 
               <button
                 type="submit"
-                disabled={loading}
+                disabled={loading || !isValidPhone(phone)}
                 className="w-full min-h-[48px] bg-emerald-500 hover:bg-emerald-600 disabled:opacity-60 text-white font-bold rounded-xl transition-colors flex items-center justify-center gap-2"
               >
-                {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Phone className="w-5 h-5" />}
-                {loading ? 'Sending OTP...' : 'Send OTP'}
+                {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : null}
+                {loading ? 'Sending OTP...' : 'Send OTP →'}
               </button>
             </form>
           )}
 
-          {/* ── Patient OTP verify ── */}
+          {/* ── OTP verify ── */}
           {mode === 'patient-otp' && (
             <form onSubmit={handleVerifyOtp} className="space-y-5">
-              <h2 className="text-xl font-bold text-gray-800 mb-2">Enter OTP</h2>
-              <p className="text-sm text-gray-500 mb-4">
+              <h2 className="text-xl font-bold text-gray-800">Enter OTP</h2>
+              <p className="text-sm text-gray-500">
                 OTP sent to <span className="font-semibold text-gray-700">{phone}</span>
               </p>
 
               {devOtp && (
                 <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-sm text-amber-700">
-                  <span className="font-bold">Dev mode OTP:</span> {devOtp}
+                  <span className="font-bold">Dev OTP:</span> {devOtp}
                 </div>
               )}
 
@@ -280,10 +273,12 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
                 <label className="block text-sm font-semibold text-gray-700 mb-1.5">6-digit OTP</label>
                 <input
                   type="text"
+                  inputMode="numeric"
                   value={otp}
                   onChange={e => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
                   placeholder="123456"
                   maxLength={6}
+                  autoFocus
                   className="w-full min-h-[44px] border-2 border-gray-200 rounded-xl px-4 py-3 text-2xl font-bold tracking-[0.5em] text-center focus:border-emerald-500 focus:outline-none transition-colors"
                 />
               </div>
@@ -309,16 +304,13 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
 
           {/* ── New patient registration ── */}
           {mode === 'patient-register' && (
-            <form onSubmit={handlePatientRegister} className="space-y-5">
-              {/* Welcome header */}
-              <div className="text-center pb-2">
+            <form onSubmit={handlePatientRegister} className="space-y-4">
+              <div className="text-center pb-1">
                 <div className="w-14 h-14 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-3">
                   <User className="w-7 h-7 text-emerald-600" />
                 </div>
                 <h2 className="text-xl font-bold text-gray-800">Welcome!</h2>
-                <p className="text-sm text-gray-500 mt-1">
-                  First time here. Please fill your basic details.
-                </p>
+                <p className="text-sm text-gray-500 mt-1">First visit — please fill your details</p>
                 <div className="mt-2 bg-emerald-50 border border-emerald-200 rounded-xl px-3 py-2 text-xs text-emerald-700 font-semibold">
                   📱 {phone}
                 </div>
@@ -337,6 +329,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
                     onChange={e => setRegForm(f => ({ ...f, name: e.target.value }))}
                     placeholder="Enter your full name"
                     autoFocus
+                    required
                     className="w-full min-h-[44px] border-2 border-gray-200 rounded-xl pl-10 pr-4 py-3 text-base focus:border-emerald-500 focus:outline-none transition-colors"
                   />
                 </div>
@@ -344,7 +337,9 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
 
               {/* Age */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Age</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                  Age <span className="text-red-500">*</span>
+                </label>
                 <div className="relative">
                   <Hash className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                   <input
@@ -352,7 +347,8 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
                     value={regForm.age}
                     onChange={e => setRegForm(f => ({ ...f, age: e.target.value }))}
                     placeholder="e.g. 35"
-                    min="0" max="120"
+                    min="1" max="120"
+                    required
                     className="w-full min-h-[44px] border-2 border-gray-200 rounded-xl pl-10 pr-4 py-3 text-base focus:border-emerald-500 focus:outline-none transition-colors"
                   />
                 </div>
@@ -360,7 +356,9 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
 
               {/* Address */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Address</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                  Address <span className="text-red-500">*</span>
+                </label>
                 <div className="relative">
                   <MapPin className="absolute left-3 top-3.5 w-4 h-4 text-gray-400" />
                   <textarea
@@ -368,6 +366,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
                     onChange={e => setRegForm(f => ({ ...f, address: e.target.value }))}
                     placeholder="City / Village / Area"
                     rows={2}
+                    required
                     className="w-full border-2 border-gray-200 rounded-xl pl-10 pr-4 py-3 text-base focus:border-emerald-500 focus:outline-none transition-colors resize-none"
                   />
                 </div>
@@ -375,7 +374,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
 
               <button
                 type="submit"
-                disabled={loading || !regForm.name.trim()}
+                disabled={loading || !regForm.name.trim() || !regForm.age.trim() || !regForm.address.trim()}
                 className="w-full min-h-[48px] bg-emerald-500 hover:bg-emerald-600 disabled:opacity-60 text-white font-bold rounded-xl transition-colors flex items-center justify-center gap-2"
               >
                 {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : null}
@@ -383,15 +382,13 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
               </button>
 
               <p className="text-center text-xs text-gray-400">
-                Ye details next visit pe automatically fill ho jayengi
+                Ye details next visit pe automatically fill ho jayengi ✓
               </p>
             </form>
           )}
         </div>
 
-        <p className="text-center text-blue-200 text-xs mt-6">
-          MedQueue Hospital Management System
-        </p>
+        <p className="text-center text-blue-200 text-xs mt-6">MedQueue Hospital Management System</p>
       </div>
     </div>
   );

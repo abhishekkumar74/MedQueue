@@ -111,6 +111,7 @@ export async function loginStaff(email: string, password: string): Promise<AuthU
     type: 'staff',
     role: staff.role,
     email: staff.email,
+    phone: staff.phone ?? undefined,   // ← store staff phone too
     department: staff.department,
     room_number: staff.room_number,
   };
@@ -125,37 +126,18 @@ async function verifyPassword(password: string, hash: string): Promise<boolean> 
   try {
     const { data, error } = await supabase.rpc('verify_password', { password, hash });
     if (!error && data === true) return true;
-    // If RPC returned false or errored, fall through to client-side check
-    if (error) {
-      console.warn('verify_password RPC error:', error.message);
-    }
+    if (error) console.warn('verify_password RPC error:', error.message);
   } catch (e) {
     console.warn('verify_password RPC exception:', e);
   }
 
-  // 2. Client-side bcrypt check using bcryptjs
-  // This handles the case where RPC is unavailable or hash was generated differently
+  // 2. Client-side bcrypt fallback (handles hashes generated outside Supabase)
   try {
     const bcrypt = await import('bcryptjs');
     return await bcrypt.compare(password, hash);
   } catch {
-    // bcryptjs not installed — use hardcoded fallback
+    return false;
   }
-
-  // 3. Last resort: known hash fallback for seeded accounts
-  // These are the bcrypt hashes for "Admin@1234" at rounds=10 and rounds=12
-  const KNOWN_HASHES_FOR_ADMIN1234 = [
-    '$2b$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
-    '$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
-    '$2a$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
-    '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
-  ];
-  if (KNOWN_HASHES_FOR_ADMIN1234.includes(hash) && password === 'Admin@1234') return true;
-
-  // 4. Plaintext fallback (dev only — if password was stored unhashed)
-  if (!hash.startsWith('$2')) return hash === password;
-
-  return false;
 }
 
 // ── Patient OTP Login ─────────────────────────────────────

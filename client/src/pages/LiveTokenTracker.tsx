@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase';
 import { getTokenStatus } from '../lib/api';
 import { Token, DEPARTMENT_LABEL, Department } from '../types';
 import { calculateEstimatedWait } from '../lib/analytics';
+import { todayStartUTC } from '../lib/dateUtils';
 import {
   RefreshCw, Users, Clock, Wifi, WifiOff, Bell,
   MapPin, Stethoscope, CheckCircle2, ArrowRight,
@@ -160,12 +161,12 @@ export default function LiveTokenTracker({ phone }: LiveTokenTrackerProps) {
   }, [phone]);
 
   const fetchCompletedToday = useCallback(async () => {
-    const today = new Date().toISOString().split('T')[0];
+    const todayStart = todayStartUTC();
     const { data } = await supabase
       .from('tokens')
       .select('created_at')
       .eq('status', 'DONE')
-      .gte('created_at', `${today}T00:00:00`)
+      .gte('created_at', todayStart)
       .order('created_at', { ascending: true });
     if (data) setCompletedToday(data as Token[]);
   }, []);
@@ -445,7 +446,7 @@ export default function LiveTokenTracker({ phone }: LiveTokenTrackerProps) {
                 }`}>
                   <span className="flex-1">{u.message}</span>
                   <span className="text-xs opacity-60 flex-shrink-0">
-                    {u.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    {u.timestamp.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kolkata' })}
                   </span>
                 </div>
               ))}

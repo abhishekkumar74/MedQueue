@@ -192,7 +192,7 @@ export default function App() {
             phone={pageState.phone ?? (user.type === 'patient' ? user.phone : undefined)}
           />
         )}
-        {page === 'appointment' && <AppointmentBooking onNavigate={navigate} />}
+        {page === 'appointment' && <AppointmentBooking onNavigate={navigate} currentUser={user} />}
       </main>
       <OfflineIndicator />
     </div>
