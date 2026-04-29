@@ -36,5 +36,11 @@ Thumbs.db
 *.suo
 *.sw?
 
+# Supabase SQL files — database config stays private
+supabase/
+
+# Kiro internal files
+.kiro/
+
 # Misc
 *.local
