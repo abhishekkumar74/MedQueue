@@ -42,27 +42,68 @@ export function getAccessToken(): string | null {
   return localStorage.getItem('mq_user') ? 'supabase-direct' : null;
 }
 
+// ── Brute force protection ────────────────────────────────
+const loginAttempts = new Map<string, { count: number; blockedUntil: number }>();
+
+function checkRateLimit(email: string): void {
+  const now = Date.now();
+  const record = loginAttempts.get(email);
+  if (record && record.blockedUntil > now) {
+    const mins = Math.ceil((record.blockedUntil - now) / 60000);
+    throw new Error(`Too many failed attempts. Try again in ${mins} minute(s).`);
+  }
+}
+
+function recordFailedAttempt(email: string): void {
+  const now = Date.now();
+  const record = loginAttempts.get(email) ?? { count: 0, blockedUntil: 0 };
+  record.count += 1;
+  // Block for 15 minutes after 5 failed attempts
+  if (record.count >= 5) {
+    record.blockedUntil = now + 15 * 60 * 1000;
+    record.count = 0;
+  }
+  loginAttempts.set(email, record);
+}
+
+function clearFailedAttempts(email: string): void {
+  loginAttempts.delete(email);
+}
+
 // ── Staff Login (email + password via Supabase) ───────────
 
 export async function loginStaff(email: string, password: string): Promise<AuthUser> {
+  const normalizedEmail = email.toLowerCase().trim();
+
+  // Check brute force block
+  checkRateLimit(normalizedEmail);
+
   const { data: staff, error } = await supabase
     .from('staff_users')
     .select('*')
-    .eq('email', email.toLowerCase().trim())
+    .eq('email', normalizedEmail)
     .eq('is_active', true)
     .single();
 
   if (error) {
-    console.error('Staff lookup error:', error.message);
-    // PGRST116 = no rows found
+    recordFailedAttempt(normalizedEmail);
     if (error.code === 'PGRST116') throw new Error('No account found with this email');
     throw new Error('Login failed: ' + error.message);
   }
 
-  if (!staff) throw new Error('No account found with this email');
+  if (!staff) {
+    recordFailedAttempt(normalizedEmail);
+    throw new Error('No account found with this email');
+  }
 
   const isValid = await verifyPassword(password, staff.password_hash);
-  if (!isValid) throw new Error('Incorrect password');
+  if (!isValid) {
+    recordFailedAttempt(normalizedEmail);
+    throw new Error('Incorrect password');
+  }
+
+  // Success — clear failed attempts
+  clearFailedAttempts(normalizedEmail);
 
   const user: AuthUser = {
     id: staff.id,
