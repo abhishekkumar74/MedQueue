@@ -35,15 +35,20 @@ export default function App() {
       if (cached && token) {
         setUser(cached);
         fetchMe().then(fresh => { if (fresh) setUser(fresh); });
-        // If patient — check if they have an active token today
+
         if (cached.type === 'patient' && cached.phone) {
           try {
             const { token: activeToken } = await getTokenStatus(cached.phone);
+            // Active token → tracker
             if (activeToken && (activeToken.status === 'WAITING' || activeToken.status === 'SERVING')) {
               setPage('tracker');
               setPageState({ tokenNumber: activeToken.token_number, phone: activeToken.phone });
+            } else if (cached.name && cached.name !== cached.phone) {
+              // Returning patient, no active token → appointment booking
+              setPage('appointment');
             }
-          } catch { /* silent — just go to register */ }
+            // else new patient → stays on register (default)
+          } catch { /* silent */ }
         }
       }
       setAuthLoading(false);
@@ -85,22 +90,31 @@ export default function App() {
       setUser(u);
       if (u.type === 'staff') {
         setPage('staff');
-      } else if (u.phone) {
-        // Patient login — check if active token exists today
+        return;
+      }
+
+      // Patient routing logic:
+      if (u.phone) {
         try {
           const { token: activeToken } = await getTokenStatus(u.phone);
+
+          // 1. Active token (WAITING/SERVING) → Token Tracker
           if (activeToken && (activeToken.status === 'WAITING' || activeToken.status === 'SERVING')) {
             setPage('tracker');
             setPageState({ tokenNumber: activeToken.token_number, phone: activeToken.phone });
-          } else {
-            setPage('register');
+            return;
           }
-        } catch {
-          setPage('register');
+        } catch { /* silent */ }
+
+        // 2. Returning patient (has name) → Appointment booking
+        if (u.name && u.name !== u.phone) {
+          setPage('appointment');
+          return;
         }
-      } else {
-        setPage('register');
       }
+
+      // 3. New patient (no name) → Register first
+      setPage('register');
     }} />;
   }
 
