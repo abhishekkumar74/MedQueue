@@ -34,13 +34,26 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
   // ── Staff login ──────────────────────────────────────────
   async function handleStaffLogin(e: React.FormEvent) {
     e.preventDefault();
-    if (!email || !password) return setError('Email and password required');
+    if (!email.trim()) return setError('Please enter your email address');
+    if (!password.trim()) return setError('Please enter your password');
     setLoading(true); setError('');
     try {
       const user = await loginStaff(email, password);
       onLogin(user);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Login failed');
+      const msg = err instanceof Error ? err.message : 'Login failed';
+      // Show specific error based on message
+      if (msg.includes('No account') || msg.includes('not found')) {
+        setError('❌ No account found with this email. Please check and try again.');
+      } else if (msg.includes('Incorrect password') || msg.includes('password')) {
+        setError('🔑 Incorrect password. Please try again.');
+      } else if (msg.includes('Too many')) {
+        setError('⏳ ' + msg);
+      } else if (msg.includes('fetch') || msg.includes('network') || msg.includes('connect')) {
+        setError('📶 Connection error. Please check your internet and try again.');
+      } else {
+        setError('Login failed. Please try again.');
+      }
     } finally { setLoading(false); }
   }
 
@@ -138,9 +151,24 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
 
           {/* Error */}
           {error && (
-            <div className="mb-4 flex items-center gap-2 bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3">
-              <AlertCircle className="w-4 h-4 flex-shrink-0" />
-              <span className="text-sm">{error}</span>
+            <div className={`mb-4 flex items-start gap-2 rounded-xl px-4 py-3 border ${
+              error.startsWith('🔑') ? 'bg-orange-50 border-orange-200 text-orange-700' :
+              error.startsWith('⏳') ? 'bg-amber-50 border-amber-200 text-amber-700' :
+              error.startsWith('📶') ? 'bg-blue-50 border-blue-200 text-blue-700' :
+              'bg-red-50 border-red-200 text-red-700'
+            }`}>
+              <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <span className="text-sm">{error}</span>
+                {error.startsWith('📶') && (
+                  <button
+                    onClick={() => { setError(''); }}
+                    className="block text-xs underline mt-1 opacity-70 hover:opacity-100"
+                  >
+                    Try again
+                  </button>
+                )}
+              </div>
             </div>
           )}
 

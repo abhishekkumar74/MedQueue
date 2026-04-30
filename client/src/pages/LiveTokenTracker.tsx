@@ -129,12 +129,14 @@ function getStepIndex(token: Token): number {
 export default function LiveTokenTracker({ phone }: LiveTokenTrackerProps) {
   const [token, setToken] = useState<Token | null>(null);
   const [ahead, setAhead] = useState(0);
+  const [prevAhead, setPrevAhead] = useState<number | null>(null);
   const [completedToday, setCompletedToday] = useState<Token[]>([]);
   const [updates, setUpdates] = useState<QueueUpdate[]>([]);
   const [connectionStatus, setConnectionStatus] = useState<'connected' | 'connecting' | 'offline'>('connecting');
   const [loading, setLoading] = useState(true);
   const [showAlert, setShowAlert] = useState(false);
   const [alertMessage, setAlertMessage] = useState('');
+  const [positionPulse, setPositionPulse] = useState(false);
 
   const addUpdate = useCallback((msg: string, type: QueueUpdate['type'] = 'info') => {
     setUpdates(prev => [{
@@ -151,7 +153,16 @@ export default function LiveTokenTracker({ phone }: LiveTokenTrackerProps) {
       const data = await getTokenStatus(phone);
       if (data.token) {
         setToken(data.token as Token);
-        setAhead(data.ahead ?? 0);
+        setAhead(prev => {
+          const newAhead = data.ahead ?? 0;
+          // Pulse animation when position improves
+          if (prev !== null && newAhead < prev) {
+            setPrevAhead(prev);
+            setPositionPulse(true);
+            setTimeout(() => setPositionPulse(false), 2000);
+          }
+          return newAhead;
+        });
       }
     } catch {
       // silent
@@ -174,6 +185,12 @@ export default function LiveTokenTracker({ phone }: LiveTokenTrackerProps) {
   useEffect(() => {
     fetchStatus();
     fetchCompletedToday();
+    // Auto-refresh every 30 seconds as fallback
+    const autoRefresh = setInterval(() => {
+      fetchStatus();
+      fetchCompletedToday();
+    }, 30000);
+    return () => clearInterval(autoRefresh);
   }, [fetchStatus, fetchCompletedToday]);
 
   // Realtime subscription — listen to token changes
@@ -411,10 +428,18 @@ export default function LiveTokenTracker({ phone }: LiveTokenTrackerProps) {
         {/* Stats */}
         {token.status === 'WAITING' && (
           <div className="grid grid-cols-2 gap-3 mb-4">
-            <div className="bg-white rounded-xl p-4 text-center shadow-sm">
+            <div className={`bg-white rounded-xl p-4 text-center shadow-sm transition-all ${positionPulse ? 'ring-2 ring-emerald-400 scale-105' : ''}`}>
               <Users className="w-5 h-5 text-[#005EB8] mx-auto mb-1" />
-              <div className="text-xl font-extrabold text-gray-800">{ahead}</div>
+              <div className={`text-xl font-extrabold ${positionPulse ? 'text-emerald-600' : 'text-gray-800'}`}>
+                {ahead}
+                {positionPulse && prevAhead !== null && (
+                  <span className="text-sm text-emerald-500 ml-1">↓{prevAhead - ahead}</span>
+                )}
+              </div>
               <div className="text-xs text-gray-500">Patients Ahead</div>
+              {positionPulse && (
+                <div className="text-xs text-emerald-600 font-semibold mt-0.5 animate-pulse">Queue moved! ✓</div>
+              )}
             </div>
             <div className="bg-white rounded-xl p-4 text-center shadow-sm">
               <Clock className="w-5 h-5 text-amber-500 mx-auto mb-1" />

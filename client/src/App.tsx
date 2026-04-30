@@ -10,6 +10,7 @@ import OfflineIndicator from './components/OfflineIndicator';
 import SetupBanner from './components/SetupBanner';
 import { isMissingConfig } from './lib/supabase';
 import { AuthUser, getCachedUser, fetchMe, logout, getAccessToken } from './lib/auth';
+import { getTokenStatus } from './lib/api';
 import { LogOut, User } from 'lucide-react';
 
 type Page = 'register' | 'staff' | 'display' | 'tracker' | 'appointment' | 'pharmacy';
@@ -34,6 +35,16 @@ export default function App() {
       if (cached && token) {
         setUser(cached);
         fetchMe().then(fresh => { if (fresh) setUser(fresh); });
+        // If patient — check if they have an active token today
+        if (cached.type === 'patient' && cached.phone) {
+          try {
+            const { token: activeToken } = await getTokenStatus(cached.phone);
+            if (activeToken && (activeToken.status === 'WAITING' || activeToken.status === 'SERVING')) {
+              setPage('tracker');
+              setPageState({ tokenNumber: activeToken.token_number, phone: activeToken.phone });
+            }
+          } catch { /* silent — just go to register */ }
+        }
       }
       setAuthLoading(false);
     }
@@ -70,7 +81,27 @@ export default function App() {
 
   // ── Not logged in → show login ────────────────────────
   if (!user) {
-    return <LoginPage onLogin={(u) => { setUser(u); setPage(u.type === 'staff' ? 'staff' : 'register'); }} />;
+    return <LoginPage onLogin={async (u) => {
+      setUser(u);
+      if (u.type === 'staff') {
+        setPage('staff');
+      } else if (u.phone) {
+        // Patient login — check if active token exists today
+        try {
+          const { token: activeToken } = await getTokenStatus(u.phone);
+          if (activeToken && (activeToken.status === 'WAITING' || activeToken.status === 'SERVING')) {
+            setPage('tracker');
+            setPageState({ tokenNumber: activeToken.token_number, phone: activeToken.phone });
+          } else {
+            setPage('register');
+          }
+        } catch {
+          setPage('register');
+        }
+      } else {
+        setPage('register');
+      }
+    }} />;
   }
 
   // ── Display board (no nav needed) ────────────────────
