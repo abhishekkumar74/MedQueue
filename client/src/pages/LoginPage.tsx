@@ -44,7 +44,7 @@ export default function LoginPage({ onLogin }: LoginPageProps) {
       const msg = err instanceof Error ? err.message : 'Login failed';
       // Show specific error based on message
       if (msg.includes('No account') || msg.includes('not found')) {
-        setError('❌ No account found with this email. Please check and try again.');
+        setError('❌ No account found with this nuumber. Please check and try again.');
       } else if (msg.includes('Incorrect password') || msg.includes('password')) {
         setError('🔑 Incorrect password. Please try again.');
       } else if (msg.includes('Too many')) {

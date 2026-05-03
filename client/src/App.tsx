@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import LandingPage from './pages/LandingPage';
 import RegisterPage from './pages/RegisterPage';
 import StaffDashboard from './pages/StaffDashboard';
 import DisplayBoard from './pages/DisplayBoard';
@@ -13,7 +14,7 @@ import { AuthUser, getCachedUser, fetchMe, logout, getAccessToken } from './lib/
 import { getTokenStatus } from './lib/api';
 import { LogOut, User } from 'lucide-react';
 
-type Page = 'register' | 'staff' | 'display' | 'tracker' | 'appointment' | 'pharmacy';
+type Page = 'landing' | 'login' | 'register' | 'staff' | 'display' | 'tracker' | 'appointment' | 'pharmacy';
 
 interface PageState {
   tokenNumber?: number;
@@ -39,17 +40,23 @@ export default function App() {
         if (cached.type === 'patient' && cached.phone) {
           try {
             const { token: activeToken } = await getTokenStatus(cached.phone);
-            // Active token → tracker
             if (activeToken && (activeToken.status === 'WAITING' || activeToken.status === 'SERVING')) {
               setPage('tracker');
               setPageState({ tokenNumber: activeToken.token_number, phone: activeToken.phone });
             } else if (cached.name && cached.name !== cached.phone) {
-              // Returning patient, no active token → appointment booking
               setPage('appointment');
+            } else {
+              setPage('register');
             }
-            // else new patient → stays on register (default)
-          } catch { /* silent */ }
+          } catch {
+            setPage('register');
+          }
+        } else if (cached.type === 'staff') {
+          setPage('staff');
         }
+      } else {
+        // No session — show landing page
+        setPage('landing');
       }
       setAuthLoading(false);
     }
@@ -65,7 +72,7 @@ export default function App() {
   async function handleLogout() {
     await logout();
     setUser(null);
-    setPage('register');
+    setPage('landing');
     setShowUserMenu(false);
   }
 
@@ -84,38 +91,46 @@ export default function App() {
   // ── Setup check ───────────────────────────────────────
   if (isMissingConfig) return <SetupBanner />;
 
-  // ── Not logged in → show login ────────────────────────
-  if (!user) {
+  // ── Landing page ──────────────────────────────────────
+  if (page === 'landing' && !user) {
+    return <LandingPage
+      onGetStarted={() => setPage('login')}
+      onStaffLogin={() => setPage('login')}
+    />;
+  }
+
+  // ── Login page ────────────────────────────────────────
+  if (page === 'login' && !user) {
     return <LoginPage onLogin={async (u) => {
       setUser(u);
       if (u.type === 'staff') {
         setPage('staff');
         return;
       }
-
-      // Patient routing logic:
       if (u.phone) {
         try {
           const { token: activeToken } = await getTokenStatus(u.phone);
-
-          // 1. Active token (WAITING/SERVING) → Token Tracker
           if (activeToken && (activeToken.status === 'WAITING' || activeToken.status === 'SERVING')) {
             setPage('tracker');
             setPageState({ tokenNumber: activeToken.token_number, phone: activeToken.phone });
             return;
           }
         } catch { /* silent */ }
-
-        // 2. Returning patient (has name) → Appointment booking
         if (u.name && u.name !== u.phone) {
           setPage('appointment');
           return;
         }
       }
-
-      // 3. New patient (no name) → Register first
       setPage('register');
     }} />;
+  }
+
+  // ── Not logged in → landing ───────────────────────────
+  if (!user) {
+    return <LandingPage
+      onGetStarted={() => setPage('login')}
+      onStaffLogin={() => setPage('login')}
+    />;
   }
 
   // ── Display board (no nav needed) ────────────────────
