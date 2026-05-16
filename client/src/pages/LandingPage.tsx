@@ -6,8 +6,8 @@ import {
 } from 'lucide-react';
 
 interface Props {
-  onGetStarted: () => void;
-  onStaffLogin: () => void;
+  onGetStarted: () => void;   // patient login
+  onStaffLogin: () => void;   // staff login
 }
 
 const SERVICES = [
@@ -81,11 +81,11 @@ export default function LandingPage({ onGetStarted, onStaffLogin }: Props) {
           <div className="hidden md:flex items-center gap-3">
             <button onClick={onStaffLogin}
               className="text-sm font-semibold text-gray-700 hover:text-violet-600 px-4 py-2 transition-colors">
-              Sign In
+              Staff Login
             </button>
             <button onClick={onGetStarted}
               className="flex items-center gap-2 text-sm font-bold px-5 py-2.5 bg-violet-600 hover:bg-violet-700 text-white rounded-full transition-all shadow-lg shadow-violet-200">
-              Contact Us
+              Patient Login
               <div className="w-5 h-5 bg-white/20 rounded-full flex items-center justify-center">
                 <ArrowRight className="w-3 h-3" />
               </div>
@@ -108,8 +108,8 @@ export default function LandingPage({ onGetStarted, onStaffLogin }: Props) {
               </a>
             ))}
             <div className="flex gap-3 pt-2">
-              <button onClick={onStaffLogin} className="flex-1 py-2.5 border-2 border-gray-200 text-gray-700 rounded-full text-sm font-semibold">Sign In</button>
-              <button onClick={onGetStarted} className="flex-1 py-2.5 bg-violet-600 text-white rounded-full text-sm font-bold">Get Started</button>
+              <button onClick={onStaffLogin} className="flex-1 py-2.5 border-2 border-gray-200 text-gray-700 rounded-full text-sm font-semibold">Staff Login</button>
+              <button onClick={onGetStarted} className="flex-1 py-2.5 bg-violet-600 text-white rounded-full text-sm font-bold">Patient Login</button>
             </div>
           </div>
         )}
@@ -149,7 +149,7 @@ export default function LandingPage({ onGetStarted, onStaffLogin }: Props) {
             <div className="flex items-center gap-5 mb-10">
               <button onClick={onGetStarted}
                 className="flex items-center gap-3 px-7 py-4 bg-violet-600 hover:bg-violet-700 text-white font-bold rounded-full transition-all shadow-xl shadow-violet-200 text-base">
-                Make Schedule
+                Get Your Token
                 <div className="w-7 h-7 bg-white/20 rounded-full flex items-center justify-center">
                   <ArrowRight className="w-4 h-4" />
                 </div>
@@ -415,7 +415,7 @@ export default function LandingPage({ onGetStarted, onStaffLogin }: Props) {
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <button onClick={onGetStarted}
               className="flex items-center justify-center gap-2 px-8 py-4 bg-violet-600 hover:bg-violet-700 text-white font-bold rounded-full transition-all shadow-xl shadow-violet-200 text-base">
-              Schedule a Demo
+              Get Your Token Now
               <ArrowRight className="w-5 h-5" />
             </button>
             <button onClick={onStaffLogin}

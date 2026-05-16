@@ -1,20 +1,23 @@
 import { useState, useEffect } from 'react';
 import LandingPage from './pages/LandingPage';
+import PatientLoginPage from './pages/PatientLoginPage';
+import StaffLoginPage from './pages/StaffLoginPage';
 import RegisterPage from './pages/RegisterPage';
 import StaffDashboard from './pages/StaffDashboard';
 import DisplayBoard from './pages/DisplayBoard';
 import LiveTokenTracker from './pages/LiveTokenTracker';
 import AppointmentBooking from './pages/AppointmentBooking';
 import PharmacyDashboard from './pages/PharmacyDashboard';
-import LoginPage from './pages/LoginPage';
+import PatientHistory from './pages/PatientHistory';
 import OfflineIndicator from './components/OfflineIndicator';
 import SetupBanner from './components/SetupBanner';
 import { isMissingConfig } from './lib/supabase';
 import { AuthUser, getCachedUser, fetchMe, logout, getAccessToken } from './lib/auth';
 import { getTokenStatus } from './lib/api';
-import { LogOut, User } from 'lucide-react';
+import { LogOut, User, Clock, Calendar, FileText, Home } from 'lucide-react';
 
-type Page = 'landing' | 'login' | 'register' | 'staff' | 'display' | 'tracker' | 'appointment' | 'pharmacy';
+type Page = 'landing' | 'patient-login' | 'staff-login' | 'register' | 'staff'
+  | 'display' | 'tracker' | 'appointment' | 'pharmacy' | 'history';
 
 interface PageState {
   tokenNumber?: number;
@@ -22,13 +25,13 @@ interface PageState {
 }
 
 export default function App() {
-  const [page, setPage] = useState<Page>('register');
+  const [page, setPage] = useState<Page>('landing');
   const [pageState, setPageState] = useState<PageState>({});
   const [user, setUser] = useState<AuthUser | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [showUserMenu, setShowUserMenu] = useState(false);
 
-  // Restore session on load
+  // ── Session restore ───────────────────────────────────
   useEffect(() => {
     async function restoreSession() {
       const cached = getCachedUser();
@@ -43,9 +46,8 @@ export default function App() {
             if (activeToken && (activeToken.status === 'WAITING' || activeToken.status === 'SERVING')) {
               setPage('tracker');
               setPageState({ tokenNumber: activeToken.token_number, phone: activeToken.phone });
-            } else if (cached.name && cached.name !== cached.phone) {
-              setPage('appointment');
             } else {
+              // Returning patient → register page (quick token booking)
               setPage('register');
             }
           } catch {
@@ -55,7 +57,6 @@ export default function App() {
           setPage('staff');
         }
       } else {
-        // No session — show landing page
         setPage('landing');
       }
       setAuthLoading(false);
@@ -76,6 +77,23 @@ export default function App() {
     setShowUserMenu(false);
   }
 
+  // ── Patient login handler ─────────────────────────────
+  async function handlePatientLogin(u: AuthUser) {
+    setUser(u);
+    if (u.phone) {
+      try {
+        const { token: activeToken } = await getTokenStatus(u.phone);
+        if (activeToken && (activeToken.status === 'WAITING' || activeToken.status === 'SERVING')) {
+          setPage('tracker');
+          setPageState({ tokenNumber: activeToken.token_number, phone: activeToken.phone });
+          return;
+        }
+      } catch { /* silent */ }
+    }
+    // New or returning patient → register page
+    setPage('register');
+  }
+
   // ── Loading ───────────────────────────────────────────
   if (authLoading) {
     return (
@@ -88,52 +106,41 @@ export default function App() {
     );
   }
 
-  // ── Setup check ───────────────────────────────────────
   if (isMissingConfig) return <SetupBanner />;
 
-  // ── Landing page ──────────────────────────────────────
-  if (page === 'landing' && !user) {
+  // ── Landing ───────────────────────────────────────────
+  if (page === 'landing') {
     return <LandingPage
-      onGetStarted={() => setPage('login')}
-      onStaffLogin={() => setPage('login')}
+      onGetStarted={() => setPage('patient-login')}
+      onStaffLogin={() => setPage('staff-login')}
     />;
   }
 
-  // ── Login page ────────────────────────────────────────
-  if (page === 'login' && !user) {
-    return <LoginPage onLogin={async (u) => {
-      setUser(u);
-      if (u.type === 'staff') {
-        setPage('staff');
-        return;
-      }
-      if (u.phone) {
-        try {
-          const { token: activeToken } = await getTokenStatus(u.phone);
-          if (activeToken && (activeToken.status === 'WAITING' || activeToken.status === 'SERVING')) {
-            setPage('tracker');
-            setPageState({ tokenNumber: activeToken.token_number, phone: activeToken.phone });
-            return;
-          }
-        } catch { /* silent */ }
-        if (u.name && u.name !== u.phone) {
-          setPage('appointment');
-          return;
-        }
-      }
-      setPage('register');
-    }} />;
+  // ── Patient login ─────────────────────────────────────
+  if (page === 'patient-login' && !user) {
+    return <PatientLoginPage
+      onLogin={handlePatientLogin}
+      onBack={() => setPage('landing')}
+    />;
+  }
+
+  // ── Staff login ───────────────────────────────────────
+  if (page === 'staff-login' && !user) {
+    return <StaffLoginPage
+      onLogin={(u) => { setUser(u); setPage('staff'); }}
+      onBack={() => setPage('landing')}
+    />;
   }
 
   // ── Not logged in → landing ───────────────────────────
   if (!user) {
     return <LandingPage
-      onGetStarted={() => setPage('login')}
-      onStaffLogin={() => setPage('login')}
+      onGetStarted={() => setPage('patient-login')}
+      onStaffLogin={() => setPage('staff-login')}
     />;
   }
 
-  // ── Display board (no nav needed) ────────────────────
+  // ── Display board ─────────────────────────────────────
   if (page === 'display') {
     return (
       <div>
@@ -148,7 +155,7 @@ export default function App() {
     );
   }
 
-  // ── Pharmacy (separate layout) ────────────────────────
+  // ── Pharmacy ──────────────────────────────────────────
   if (page === 'pharmacy') {
     return (
       <div className="min-h-screen bg-gray-50">
@@ -179,14 +186,16 @@ export default function App() {
             {user.type === 'patient' && (
               <>
                 {[
-                  { id: 'register', label: 'Register' },
-                  { id: 'appointment', label: 'Schedule' },
-                  { id: 'tracker', label: 'My Token' },
+                  { id: 'register', label: 'Register', icon: <Home className="w-4 h-4" /> },
+                  { id: 'tracker', label: 'My Token', icon: <Clock className="w-4 h-4" /> },
+                  { id: 'appointment', label: 'Schedule', icon: <Calendar className="w-4 h-4" /> },
+                  { id: 'history', label: 'History', icon: <FileText className="w-4 h-4" /> },
                 ].map(link => (
                   <button key={link.id} onClick={() => navigate(link.id)}
-                    className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                       page === link.id ? 'bg-[#00A3AD] text-white' : 'text-blue-100 hover:bg-blue-700'
                     }`}>
+                    {link.icon}
                     {link.label}
                   </button>
                 ))}
@@ -215,9 +224,7 @@ export default function App() {
               className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-3 py-2 rounded-xl transition-colors">
               <User className="w-4 h-4" />
               <span className="text-sm font-medium max-w-[120px] truncate">{user.name || user.phone || 'User'}</span>
-              {user.role && (
-                <span className="text-xs bg-[#00A3AD] px-2 py-0.5 rounded-full">{user.role}</span>
-              )}
+              {user.role && <span className="text-xs bg-[#00A3AD] px-2 py-0.5 rounded-full">{user.role}</span>}
             </button>
 
             {showUserMenu && (
@@ -227,6 +234,13 @@ export default function App() {
                   <p className="text-xs text-gray-500">{user.email || user.phone}</p>
                   {user.role && <p className="text-xs text-[#005EB8] font-bold mt-0.5">{user.role}</p>}
                 </div>
+                {user.type === 'patient' && (
+                  <button onClick={() => { navigate('history'); setShowUserMenu(false); }}
+                    className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                    <FileText className="w-4 h-4" />
+                    My Health Records
+                  </button>
+                )}
                 <button onClick={handleLogout}
                   className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors">
                   <LogOut className="w-4 h-4" />
@@ -238,12 +252,31 @@ export default function App() {
         </div>
       </div>
 
-      {/* Click outside to close menu */}
-      {showUserMenu && (
-        <div className="fixed inset-0 z-40" onClick={() => setShowUserMenu(false)} />
+      {/* Mobile bottom nav for patients */}
+      {user.type === 'patient' && (
+        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-40 md:hidden">
+          <div className="grid grid-cols-4 h-16">
+            {[
+              { id: 'register', label: 'Register', icon: <Home className="w-5 h-5" /> },
+              { id: 'tracker', label: 'Token', icon: <Clock className="w-5 h-5" /> },
+              { id: 'appointment', label: 'Schedule', icon: <Calendar className="w-5 h-5" /> },
+              { id: 'history', label: 'History', icon: <FileText className="w-5 h-5" /> },
+            ].map(link => (
+              <button key={link.id} onClick={() => navigate(link.id)}
+                className={`flex flex-col items-center justify-center gap-0.5 transition-colors ${
+                  page === link.id ? 'text-[#005EB8]' : 'text-gray-400'
+                }`}>
+                {link.icon}
+                <span className="text-xs font-medium">{link.label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
       )}
 
-      <main>
+      {showUserMenu && <div className="fixed inset-0 z-40" onClick={() => setShowUserMenu(false)} />}
+
+      <main className={user.type === 'patient' ? 'pb-16 md:pb-0' : ''}>
         {page === 'register' && <RegisterPage onNavigate={navigate} currentUser={user} />}
         {page === 'staff' && <StaffDashboard onNavigate={navigate} currentUser={user} />}
         {page === 'tracker' && (
@@ -253,13 +286,13 @@ export default function App() {
           />
         )}
         {page === 'appointment' && <AppointmentBooking onNavigate={navigate} currentUser={user} />}
+        {page === 'history' && user.type === 'patient' && <PatientHistory currentUser={user} />}
       </main>
       <OfflineIndicator />
     </div>
   );
 }
 
-// Small user badge for pharmacy/display layouts
 function UserBadge({ user, onLogout }: { user: AuthUser; onLogout: () => void }) {
   return (
     <div className="flex items-center gap-3">
