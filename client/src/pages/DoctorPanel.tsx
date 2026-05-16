@@ -149,13 +149,23 @@ export default function DoctorPanel({ doctorDepartment, doctorName, roomNumber }
             </p>
           </div>
         </div>
-        <button
-          onClick={fetchQueue}
-          className="flex items-center gap-2 px-4 py-2 border-2 border-[#005EB8] text-[#005EB8] rounded-xl font-semibold hover:bg-[#E8F3FF] transition-colors"
-        >
-          <RefreshCw className="w-4 h-4" />
-          Refresh
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={callNext}
+            disabled={!!actionLoading || readyCount === 0}
+            className="flex items-center gap-2 px-4 py-2 bg-[#005EB8] hover:bg-[#004a96] disabled:opacity-50 text-white font-bold rounded-xl transition-colors"
+          >
+            {actionLoading === 'calling' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Phone className="w-4 h-4" />}
+            Call Next
+            {readyCount > 0 && <span className="bg-white/20 text-xs px-1.5 py-0.5 rounded-full">{readyCount}</span>}
+          </button>
+          <button
+            onClick={fetchQueue}
+            className="flex items-center gap-2 px-3 py-2 border-2 border-[#005EB8] text-[#005EB8] rounded-xl font-semibold hover:bg-[#E8F3FF] transition-colors"
+          >
+            <RefreshCw className="w-4 h-4" />
+          </button>
+        </div>
       </div>
 
       {error && (

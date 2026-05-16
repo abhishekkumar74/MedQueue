@@ -7,31 +7,42 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'icon-192.png', 'icon-512.png'],
+      includeAssets: ['icon-192.png', 'icon-512.png', 'apple-touch-icon.png'],
       manifest: {
         name: 'MedQueue — Hospital Queue',
         short_name: 'MedQueue',
-        description: 'Digital hospital queue management — register, track your token, and walk in on time.',
+        description: 'Digital hospital queue — register, track your token, walk in on time.',
         theme_color: '#005EB8',
-        background_color: '#ffffff',
+        background_color: '#005EB8',
         display: 'standalone',
         orientation: 'portrait',
         start_url: '/',
         scope: '/',
-        lang: 'en',
-        categories: ['health', 'medical'],
+        id: '/',
         icons: [
           {
             src: '/icon-192.png',
             sizes: '192x192',
             type: 'image/png',
-            purpose: 'any maskable',
+            purpose: 'any',
           },
           {
             src: '/icon-512.png',
             sizes: '512x512',
             type: 'image/png',
-            purpose: 'any maskable',
+            purpose: 'any',
+          },
+          {
+            src: '/icon-192.png',
+            sizes: '192x192',
+            type: 'image/png',
+            purpose: 'maskable',
+          },
+          {
+            src: '/icon-512.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'maskable',
           },
         ],
         shortcuts: [
@@ -51,39 +62,18 @@ export default defineConfig({
         clientsClaim: true,
         runtimeCaching: [
           {
-            // Cache Supabase REST API reads
             urlPattern: /^https:\/\/.*\.supabase\.co\/rest\/v1\/.*/i,
             handler: 'NetworkFirst',
             options: {
               cacheName: 'supabase-api-v1',
-              expiration: {
-                maxEntries: 50,
-                maxAgeSeconds: 60 * 5, // 5 minutes
-              },
+              expiration: { maxEntries: 50, maxAgeSeconds: 300 },
               networkTimeoutSeconds: 10,
-            },
-          },
-          {
-            // Cache Google Fonts
-            urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'google-fonts-cache',
-              expiration: {
-                maxEntries: 10,
-                maxAgeSeconds: 60 * 60 * 24 * 365, // 1 year
-              },
             },
           },
         ],
       },
-      devOptions: {
-        enabled: true,
-        type: 'module',
-      },
+      devOptions: { enabled: true, type: 'module' },
     }),
   ],
-  optimizeDeps: {
-    exclude: ['lucide-react'],
-  },
+  optimizeDeps: { exclude: ['lucide-react'] },
 });

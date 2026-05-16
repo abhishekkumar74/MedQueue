@@ -12,7 +12,7 @@ type Mode = 'phone' | 'otp' | 'register';
 
 interface Props {
   onLogin: (user: AuthUser) => void;
-  onBack: () => void;
+  onBack: () => void;  // goes to landing page
 }
 
 export default function PatientLoginPage({ onLogin, onBack }: Props) {
@@ -80,13 +80,13 @@ export default function PatientLoginPage({ onLogin, onBack }: Props) {
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#005EB8] to-[#003d7a] flex items-center justify-center px-4 py-8">
       <div className="w-full max-w-md">
-        <div className="text-center mb-8">
+        <button onClick={onBack} className="text-center mb-8 w-full hover:opacity-80 transition-opacity">
           <div className="flex items-center justify-center gap-3 mb-2">
             <Activity className="w-10 h-10 text-[#00A3AD]" />
             <span className="text-3xl font-extrabold text-white">MedQueue</span>
           </div>
           <p className="text-blue-200 text-sm">Patient Portal</p>
-        </div>
+        </button>
 
         <div className="bg-white rounded-3xl shadow-2xl p-8">
           <button onClick={mode === 'phone' ? onBack : () => { setMode('phone'); setOtp(''); reset(); }}
