@@ -218,19 +218,19 @@ export default function LandingPage({ onGetStarted, onStaffLogin }: Props) {
 
         <div className="relative max-w-7xl mx-auto px-6 grid lg:grid-cols-12 gap-12 items-center w-full z-10">
           
-          {/* Left Hero Pitch: Elegant glassmorphic EHR card overlay */}
-          <div className="lg:col-span-7 space-y-7 text-left bg-white/90 md:bg-white/80 backdrop-blur-xl border border-white/60 p-8 sm:p-12 rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.05)] hover:scale-[1.01] transition-transform duration-300">
+          {/* Left Hero Pitch: Borderless direct text overlay on background image */}
+          <div className="lg:col-span-7 space-y-7 text-left">
             <div className="inline-flex items-center gap-1.5 bg-[#005EB8]/10 text-[#005EB8] text-[10px] font-black px-3.5 py-1.5 rounded-full uppercase tracking-widest border border-[#005EB8]/20">
               <Sparkles className="w-3.5 h-3.5 text-[#00A3AD] animate-spin" style={{ animationDuration: '6s' }} />
               Enterprise Healthcare Platform
             </div>
 
-            <h1 className="text-3.5xl sm:text-5xl lg:text-6xl font-black text-slate-800 tracking-tight leading-[1.08]">
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-slate-800 tracking-tight leading-[1.08] drop-shadow-[0_1px_2px_rgba(255,255,255,0.8)]">
               Healthcare for<br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#005EB8] to-[#00A3AD]">Personalized Wellness.</span>
+              <span className="text-[#005EB8]">Personalized Wellness.</span>
             </h1>
 
-            <p className="text-slate-500 text-sm sm:text-base leading-relaxed max-w-lg font-semibold">
+            <p className="text-slate-650 text-sm sm:text-base leading-relaxed max-w-lg font-bold drop-shadow-[0_1px_1px_rgba(255,255,255,0.9)]">
               MedQueue unifies patient flow, staff coordination, real-time queues, and clinical operations in one intelligent platform. Built for hospitals. Designed for better care.
             </p>
 
@@ -244,52 +244,25 @@ export default function LandingPage({ onGetStarted, onStaffLogin }: Props) {
               </a>
               <a 
                 href="#features"
-                className="px-6 py-3.5 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 font-black rounded-xl text-xs transition-all duration-300 shadow-sm hover:shadow-md uppercase tracking-widest"
+                className="px-6 py-3.5 bg-white border border-slate-250 text-slate-700 hover:bg-slate-50 font-black rounded-xl text-xs transition-all duration-300 shadow-sm hover:shadow-md uppercase tracking-widest"
               >
                 Explore Features
               </a>
             </div>
 
             {/* Micro badges */}
-            <div className="flex items-center gap-5 text-xs text-slate-400 font-semibold pt-1">
-              <span className="flex items-center gap-1.5">
+            <div className="flex items-center gap-5 text-xs text-slate-500 font-bold pt-1">
+              <span className="flex items-center gap-1.5 drop-shadow-[0_1px_1px_rgba(255,255,255,0.9)]">
                 <CheckCircle2 className="w-4 h-4 text-[#005EB8]" /> No Credit Card Required
               </span>
-              <span className="flex items-center gap-1.5">
+              <span className="flex items-center gap-1.5 drop-shadow-[0_1px_1px_rgba(255,255,255,0.9)]">
                 <CheckCircle2 className="w-4 h-4 text-[#005EB8]" /> 14-Day Free Trial
               </span>
             </div>
           </div>
 
-          {/* Right Hero Preview: Spans clean area allowing doctors background image to show, loaded with floating glass panels */}
-          <div className="lg:col-span-5 relative hidden lg:flex flex-col justify-between min-h-[380px] w-full">
-            
-            {/* FLOATING CARD A: Surgical Department (Top Right) */}
-            <div className="absolute top-4 right-2 bg-white/90 backdrop-blur-md border border-white/60 rounded-xl px-4 py-2 shadow-[0_10px_30px_rgba(0,0,0,0.04)] flex items-center gap-2 animate-float-slow hover:scale-105 transition-transform duration-300">
-              <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="text-[10px] font-black text-slate-700 uppercase tracking-widest">Surgical Department</span>
-            </div>
-
-            {/* FLOATING CARD B: Healthy Patients (Bottom Left) */}
-            <div className="absolute bottom-10 left-4 bg-white/90 backdrop-blur-md border border-white/60 rounded-xl px-4 py-2 shadow-[0_10px_30px_rgba(0,0,0,0.04)] flex items-center gap-2 animate-float-medium hover:scale-105 transition-transform duration-300">
-              <div className="w-2 h-2 rounded-full bg-[#00A3AD] animate-pulse" />
-              <span className="text-[10px] font-black text-slate-700 uppercase tracking-widest">Healthy Patients</span>
-            </div>
-
-            {/* FLOATING CARD C: Book Appointment (Center Focus) */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white/95 backdrop-blur-xl border border-white/70 rounded-2xl p-4.5 shadow-[0_20px_50px_rgba(0,0,0,0.08)] w-52 animate-float-fast hover:scale-105 transition-transform duration-300">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#005EB8] to-[#00A3AD] text-white flex items-center justify-center font-bold text-xs shadow-md shadow-[#005EB8]/20">
-                  <Heart className="w-4 h-4 fill-white" />
-                </div>
-                <div>
-                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider block">Book Appointment</span>
-                  <span className="text-[10px] text-slate-700 font-extrabold block mt-0.5">Route to Least Busy Doctor</span>
-                </div>
-              </div>
-            </div>
-
-          </div>
+          {/* Right Hero Preview: Kept completely empty and clean, allowing the beautiful doctor & family background image to shine through cleanly without clutter */}
+          <div className="lg:col-span-5 h-[350px] hidden lg:block" />
         </div>
 
         {/* ── TRUSTED BY CLINICAL BRANDS (Flat, Borderless, Side-by-Side Logo Layout matching 3rd Image) ── */}
