@@ -10,8 +10,8 @@
     "build": "npm run build:client && npm run build:server",
     "build:client": "npm run build --prefix client",
     "build:server": "npm run build --prefix server",
-    "install:all": "npm install --prefix client && npm install --prefix server",
-    "postinstall": "npm install --prefix client && npm install --prefix server",
+    "install:all": "npm install --production=false --prefix client && npm install --production=false --prefix server",
+    "postinstall": "npm install --production=false --prefix client && npm install --production=false --prefix server",
     "preview": "npm run preview --prefix client"
   },
   "devDependencies": {
