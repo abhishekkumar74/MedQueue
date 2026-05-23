@@ -6,9 +6,58 @@
   .animate-fade-in {
     animation: fadeIn 0.4s ease-in-out;
   }
+  
+  .animate-float-slow {
+    animation: floatSlow 6s ease-in-out infinite;
+  }
+
+  .animate-float-medium {
+    animation: floatMedium 5s ease-in-out infinite;
+  }
+
+  .animate-float-fast {
+    animation: floatFast 4s ease-in-out infinite;
+  }
+  
+  .animate-pulse-glow {
+    animation: pulseGlow 3s ease-in-out infinite;
+  }
+
+  .animate-heartbeat-slow {
+    animation: heartbeat 2.5s ease-in-out infinite;
+  }
 }
 
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(8px); }
   to   { opacity: 1; transform: translateY(0); }
 }
+
+@keyframes floatSlow {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-12px) rotate(1deg); }
+}
+
+@keyframes floatMedium {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-8px) rotate(-1.5deg); }
+}
+
+@keyframes floatFast {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-6px) rotate(1deg); }
+}
+
+@keyframes pulseGlow {
+  0%, 100% { opacity: 0.4; transform: scale(1); }
+  50% { opacity: 0.8; transform: scale(1.05); }
+}
+
+@keyframes heartbeat {
+  0%, 100% { transform: scale(1); }
+  25% { transform: scale(1.08); }
+  35% { transform: scale(0.96); }
+  45% { transform: scale(1.08); }
+  55% { transform: scale(1); }
+}
+

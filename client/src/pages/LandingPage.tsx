@@ -3,7 +3,8 @@ import {
   Activity, Clock, Shield, ArrowRight, 
   CheckCircle2, Stethoscope, Heart, Star, Menu, X,
   Package, Database, Users, LineChart, 
-  Building2, Monitor, AlertTriangle, Layers, Send, Sparkles
+  Building2, Monitor, AlertTriangle, Layers, Send, Sparkles,
+  Linkedin, Github, Twitter, MessageCircle
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
@@ -174,117 +175,152 @@ export default function LandingPage({ onGetStarted, onStaffLogin }: Props) {
       </nav>
 
       {/* ── 1. HERO SECTION ── */}
-      <section className="relative min-h-screen flex items-center justify-center pt-24 pb-16 overflow-hidden">
-        {/* Background Gradients */}
-        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-[#005EB8]/5 rounded-full blur-[120px] pointer-events-none" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-[#00A3AD]/5 rounded-full blur-[120px] pointer-events-none" />
+      <section className="relative min-h-screen flex flex-col justify-center pt-28 pb-16 overflow-hidden bg-gradient-to-b from-[#F8FAFC] to-[#F1F5F9]">
+        {/* Background Gradients with animated pulse and rotation blur */}
+        <div className="absolute top-[-10%] left-[-10%] w-[60%] h-[60%] bg-gradient-to-tr from-[#005EB8]/10 to-[#00A3AD]/10 rounded-full blur-[130px] pointer-events-none animate-pulse-glow" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-gradient-to-br from-[#00A3AD]/10 to-[#005EB8]/10 rounded-full blur-[130px] pointer-events-none animate-pulse-glow" />
 
-        <div className="relative max-w-7xl mx-auto px-6 grid lg:grid-cols-12 gap-12 items-center w-full">
+        <div className="relative max-w-7xl mx-auto px-6 grid lg:grid-cols-12 gap-16 items-center w-full z-10">
           {/* Left Hero Pitch */}
-          <div className="lg:col-span-6 space-y-6 text-left">
-            <div className="inline-flex items-center gap-1.5 bg-[#005EB8]/10 text-[#005EB8] text-[10px] font-black px-3.5 py-1.5 rounded-full uppercase tracking-wider">
-              <Sparkles className="w-3.5 h-3.5 text-[#00A3AD]" />
-              Enterprise Healthcare Operations Cloud
+          <div className="lg:col-span-6 space-y-7 text-left">
+            <div className="inline-flex items-center gap-1.5 bg-[#005EB8]/10 text-[#005EB8] text-[10px] font-black px-3.5 py-1.5 rounded-full uppercase tracking-widest border border-[#005EB8]/20">
+              <Sparkles className="w-3.5 h-3.5 text-[#00A3AD] animate-spin" style={{ animationDuration: '6s' }} />
+              Enterprise Healthcare Platform
             </div>
 
-            <h1 className="text-4xl sm:text-5xl font-black text-slate-800 tracking-tight leading-none">
-              Modern Healthcare <br />
-              <span className="text-[#005EB8]">Operations Platform</span>
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-slate-800 tracking-tight leading-[1.05]">
+              Smarter Healthcare.<br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#005EB8] to-[#00A3AD]">Better Outcomes.</span>
             </h1>
 
-            <p className="text-slate-400 text-sm sm:text-base leading-relaxed max-w-lg font-medium">
-              Manage patient flows, real-time queues, available doctors, dynamic e-prescriptions, automated pharmacy stocks, and public display boards in one unified multi-tenant cloud platform.
+            <p className="text-slate-500 text-sm sm:text-base leading-relaxed max-w-lg font-medium">
+              MedQueue unifies patient flow, staff coordination, real-time queues, and clinical operations in one intelligent platform. Built for hospitals. Designed for better care.
             </p>
 
-            <div className="flex flex-wrap items-center gap-3 pt-2">
+            <div className="flex flex-wrap items-center gap-4 pt-2">
               <a 
                 href="#demo"
-                className="flex items-center gap-2 px-5 py-3 bg-[#005EB8] hover:bg-[#004a96] text-white font-black rounded-xl text-xs shadow-md shadow-[#005EB8]/10 transition-all uppercase tracking-wider"
+                className="flex items-center gap-2 px-6 py-3.5 bg-[#005EB8] hover:bg-[#004a96] text-white font-black rounded-xl text-xs shadow-lg shadow-[#005EB8]/25 hover:shadow-[#005EB8]/45 transition-all duration-300 uppercase tracking-widest"
               >
-                Book Operational Demo
+                Book a Live Demo
                 <ArrowRight className="w-4 h-4" />
               </a>
               <a 
-                href="#pricing"
-                className="px-5 py-3 bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 font-black rounded-xl text-xs transition-colors uppercase tracking-wider"
+                href="#features"
+                className="px-6 py-3.5 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 font-black rounded-xl text-xs transition-all duration-300 shadow-sm hover:shadow-md uppercase tracking-widest"
               >
-                Start Free Trial
+                Explore Features
               </a>
             </div>
 
-            {/* Ratings and Stats */}
-            <div className="pt-6 border-t border-slate-100 flex items-center gap-6">
-              <div>
-                <div className="flex gap-0.5 text-amber-400">
-                  {[...Array(5)].map((_, i) => <Star key={i} className="w-3.5 h-3.5 fill-current" />)}
-                </div>
-                <p className="text-[10px] text-slate-400 font-extrabold uppercase mt-1">Reduction in patient ETAs: ~45%</p>
-              </div>
-              <div className="w-px h-8 bg-slate-200" />
-              <div>
-                <div className="text-lg font-black text-slate-800">99.9%</div>
-                <p className="text-[10px] text-slate-400 font-extrabold uppercase mt-0.5">Engine Sync Uptime</p>
-              </div>
+            {/* Micro badges from mockup */}
+            <div className="flex items-center gap-5 text-xs text-slate-400 font-semibold pt-1">
+              <span className="flex items-center gap-1.5">
+                <CheckCircle2 className="w-4 h-4 text-[#005EB8]" /> No Credit Card Required
+              </span>
+              <span className="flex items-center gap-1.5">
+                <CheckCircle2 className="w-4 h-4 text-[#005EB8]" /> 14-Day Free Trial
+              </span>
             </div>
           </div>
 
           {/* Right Hero Interface Preview Card */}
-          <div className="lg:col-span-6 flex justify-center">
-            <div className="bg-white rounded-3xl border border-slate-100 shadow-xl p-6 w-full max-w-lg space-y-6 relative">
-              <div className="flex items-center justify-between border-b border-slate-50 pb-3">
-                <div className="flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping" />
-                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 absolute" />
-                  <span className="text-[10px] font-black uppercase text-slate-700 tracking-wider">Clinical Live Monitor</span>
-                </div>
-                <span className="text-[9px] bg-slate-100 font-bold px-2 py-0.5 rounded-full">Campus: Delhi Apollo</span>
-              </div>
+          <div className="lg:col-span-6 flex justify-center relative">
+            <div className="relative w-full max-w-lg aspect-square sm:aspect-[4/3] lg:aspect-square flex items-center justify-center">
+              
+              {/* Premium Background Glow behind 3D render */}
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-gradient-to-tr from-[#005EB8]/20 to-[#00A3AD]/20 rounded-full blur-[90px] pointer-events-none animate-pulse-glow" />
 
-              {/* Grid indicators inside mockup */}
-              <div className="grid grid-cols-3 gap-3">
-                <div className="bg-[#F4F8FB] p-3 rounded-2xl border border-slate-100 text-center">
-                  <span className="text-[8px] font-extrabold uppercase text-slate-400">Online Staff</span>
-                  <div className="text-base font-black text-slate-800 mt-0.5">8 Doctors</div>
+              {/* FLOATING CARD A: Today's Appointments (Top Left) */}
+              <div className="absolute -top-6 -left-8 bg-white/90 backdrop-blur-md border border-white/60 rounded-2xl p-4 shadow-[0_20px_50px_rgba(0,0,0,0.08)] w-44 animate-float-slow z-20 hover:scale-105 transition-transform duration-300">
+                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">Today's Appointments</span>
+                <div className="flex items-baseline gap-2 mt-1">
+                  <span className="text-2xl font-black text-slate-800">156</span>
+                  <span className="text-[10px] font-black text-emerald-600 bg-emerald-50 border border-emerald-100/50 px-1.5 py-0.5 rounded-full">+18%</span>
                 </div>
-                <div className="bg-[#F4F8FB] p-3 rounded-2xl border border-slate-100 text-center">
-                  <span className="text-[8px] font-extrabold uppercase text-slate-400">Patients Today</span>
-                  <div className="text-base font-black text-[#005EB8] mt-0.5">140 Nodes</div>
-                </div>
-                <div className="bg-[#F4F8FB] p-3 rounded-2xl border border-slate-100 text-center">
-                  <span className="text-[8px] font-extrabold uppercase text-slate-400">Queue Load</span>
-                  <div className="text-base font-black text-emerald-600 mt-0.5">Stable</div>
+                {/* Micro Bar Chart */}
+                <div className="flex gap-1.5 items-end h-8 mt-3">
+                  <div className="bg-[#005EB8]/10 w-full h-[40%] rounded-sm" />
+                  <div className="bg-[#005EB8]/20 w-full h-[60%] rounded-sm" />
+                  <div className="bg-[#005EB8]/10 w-full h-[30%] rounded-sm" />
+                  <div className="bg-[#005EB8]/40 w-full h-[80%] rounded-sm" />
+                  <div className="bg-[#005EB8] w-full h-[100%] rounded-sm" />
                 </div>
               </div>
 
-              {/* Queuing Telemetry mockup list */}
-              <div className="space-y-2.5">
-                <span className="text-[9px] font-extrabold text-slate-400 uppercase tracking-widest block">Active Token Priority Queue</span>
-                {[
-                  { token: '#08', dept: 'Cardiology', doctor: 'Dr. Diana Rodriguez', status: 'SERVING', statusColor: 'bg-emerald-50 border-emerald-100 text-emerald-700' },
-                  { token: '#09', dept: 'General OPD', doctor: 'Dr. Abhishek Kumar', status: 'WAITING', statusColor: 'bg-amber-50 border-amber-100 text-amber-700' }
-                ].map((item, idx) => (
-                  <div key={idx} className="border border-slate-100 bg-slate-50/50 p-3 rounded-xl flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-[#005EB8] text-white flex items-center justify-center font-black text-xs">
-                        {item.token}
-                      </div>
-                      <div>
-                        <div className="text-[11px] font-extrabold text-slate-800">{item.dept}</div>
-                        <div className="text-[9px] text-slate-400 font-semibold">{item.doctor}</div>
-                      </div>
-                    </div>
-                    <span className={`text-[8px] font-black px-2 py-0.5 rounded-full border ${item.statusColor}`}>
-                      {item.status}
-                    </span>
-                  </div>
-                ))}
+              {/* FLOATING CARD B: Live Queue Status (Top Right) */}
+              <div className="absolute -top-2 right-[-2.5rem] bg-white/90 backdrop-blur-md border border-white/60 rounded-2xl p-4 shadow-[0_20px_50px_rgba(0,0,0,0.08)] w-48 animate-float-medium z-20 hover:scale-105 transition-transform duration-300">
+                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">Live Queue Status</span>
+                <span className="text-[10px] text-slate-500 font-extrabold block mt-0.5">OPD Cardiology</span>
+                <div className="flex items-baseline gap-2 mt-1.5">
+                  <span className="text-3xl font-black text-[#005EB8]">08</span>
+                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider">Patients Ahead</span>
+                </div>
+                {/* Active Sparkline Wave */}
+                <div className="mt-2.5 h-6 w-full overflow-hidden">
+                  <svg viewBox="0 0 100 25" className="w-full h-full text-[#005EB8] stroke-current stroke-2 fill-none">
+                    <path d="M0,15 Q15,5 30,18 T60,10 T80,20 T100,8" className="animate-pulse" />
+                  </svg>
+                </div>
               </div>
 
-              {/* Dynamic Alert Banner mockup */}
-              <div className="bg-red-50 border border-red-100 text-red-600 rounded-2xl p-3 flex items-center gap-2">
-                <AlertTriangle className="w-4 h-4 flex-shrink-0 animate-bounce" />
-                <span className="text-[10px] font-black uppercase tracking-wider">⚠️ System telemetry warning: Out of Stock alerts detected in pharmacy module</span>
+              {/* FLOATING CARD C: Average Wait Time (Bottom Left) */}
+              <div className="absolute bottom-6 -left-12 bg-white/90 backdrop-blur-md border border-white/60 rounded-2xl p-4 shadow-[0_20px_50px_rgba(0,0,0,0.08)] w-44 animate-float-fast z-20 hover:scale-105 transition-transform duration-300">
+                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">Average Wait Time</span>
+                <div className="flex items-baseline gap-1 mt-1">
+                  <span className="text-3xl font-black text-slate-800">24</span>
+                  <span className="text-xs font-black text-slate-600 uppercase tracking-widest font-mono">min</span>
+                </div>
+                {/* Trend Badge */}
+                <div className="flex items-center gap-1.5 mt-2 text-[9px] font-black text-emerald-600 bg-emerald-50 border border-emerald-100/50 px-2 py-0.5 rounded-full w-max">
+                  <svg viewBox="0 0 10 10" className="w-2 h-2 fill-current">
+                    <path d="M1,7 L5,3 L9,7 Z" transform="rotate(180 5 5)" />
+                  </svg>
+                  <span>-12% vs yesterday</span>
+                </div>
               </div>
+
+              {/* Main Premium Glass Container for our 3D Image */}
+              <div className="w-full h-full bg-white/40 backdrop-blur-xl border border-white/80 rounded-[2.5rem] p-4 shadow-[0_30px_60px_rgba(0,0,0,0.05)] overflow-hidden flex items-center justify-center relative group">
+                <div className="absolute inset-0 bg-gradient-to-tr from-[#005EB8]/5 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500" />
+                <img 
+                  src="/healthcare_hero.png" 
+                  alt="Futuristic Healthcare Operations Cloud Dashboard Mockup" 
+                  className="w-full h-full object-cover rounded-3xl shadow-sm border border-slate-100/80 transition-all duration-700 group-hover:scale-102"
+                />
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        {/* ── TRUSTED BY CLINICAL BRANDS ── */}
+        <div className="relative max-w-7xl mx-auto px-6 w-full pt-16 z-10">
+          <div className="border-t border-slate-200/60 pt-8 text-center space-y-4">
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
+              Trusted by Modern Healthcare Teams
+            </p>
+            <p className="text-xs text-slate-400 font-semibold max-w-md mx-auto">
+              Hospitals, clinics, and healthcare networks love MedQueue.
+            </p>
+            <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6 pt-3">
+              {[
+                { name: 'Apollo Clinic', color: 'text-[#005EB8]' },
+                { name: 'MAX Health', color: 'text-[#00A3AD]' },
+                { name: 'Fortis', color: 'text-emerald-600' },
+                { name: 'Manipal', color: 'text-indigo-600' },
+                { name: 'Narayana', color: 'text-rose-500' }
+              ].map((item, idx) => (
+                <div 
+                  key={idx}
+                  className="bg-white hover:bg-slate-50 border border-slate-200/80 px-5 py-3 rounded-2xl flex items-center gap-2 shadow-sm transition-all duration-300 hover:-translate-y-0.5 cursor-pointer"
+                >
+                  <div className={`w-2.5 h-2.5 rounded-full ${idx === 0 ? 'bg-[#005EB8]' : idx === 1 ? 'bg-[#00A3AD]' : idx === 2 ? 'bg-emerald-500' : idx === 3 ? 'bg-indigo-500' : 'bg-rose-500'} animate-pulse`} />
+                  <span className={`text-xs font-black text-slate-700 uppercase tracking-widest ${item.color}`}>
+                    {item.name}
+                  </span>
+                </div>
+              ))}
             </div>
           </div>
         </div>
@@ -908,37 +944,104 @@ export default function LandingPage({ onGetStarted, onStaffLogin }: Props) {
       </section>
 
       {/* ── FOOTER ── */}
-      <footer className="bg-slate-900 text-slate-400 py-12 px-6 border-t border-slate-850">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-[#005EB8] flex items-center justify-center shadow-md shadow-[#005EB8]/20">
-              <Activity className="w-4 h-4 text-white animate-pulse" />
+      <footer className="bg-gradient-to-br from-[#060B1C] via-[#09112B] to-[#040816] py-16 px-6 relative overflow-hidden border-t border-white/[0.08] backdrop-blur-md">
+        
+        {/* Subtle decorative glow overlays for modern SaaS aesthetic */}
+        <div className="absolute top-0 left-1/4 -translate-y-1/2 w-[500px] h-[500px] bg-[#005EB8]/10 rounded-full blur-[120px] pointer-events-none animate-pulse-glow" />
+        <div className="absolute top-0 right-1/4 -translate-y-1/2 w-[500px] h-[500px] bg-[#00A3AD]/10 rounded-full blur-[120px] pointer-events-none animate-pulse-glow" />
+
+        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-12 relative z-10">
+          
+          {/* Brand and Tagline Column */}
+          <div className="md:col-span-4 space-y-6">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-[#005EB8] to-[#00A3AD] flex items-center justify-center shadow-lg shadow-[#005EB8]/20 relative group overflow-hidden">
+                <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />
+                <Activity className="w-5 h-5 text-white animate-heartbeat-slow" />
+              </div>
+              <div>
+                <span className="font-black text-white text-base tracking-tight flex items-center">
+                  MedQueue
+                  <span className="text-[#00A3AD] font-extrabold ml-0.5 animate-pulse">.</span>
+                </span>
+                <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-widest block mt-0.5">
+                  Smart Hospital Operations Cloud
+                </span>
+              </div>
             </div>
-            <span className="font-black text-white text-base tracking-tight">
-              MedQueue
-              <span className="text-[#00A3AD] font-extrabold">.</span>
-            </span>
+
+            <p className="text-slate-400 text-xs leading-relaxed font-semibold max-w-sm">
+              SaaS hospital queue engine and operations isolating workspace databases. Real-time patient workflows, pharmacy reductions, and digital display integrations.
+            </p>
+
+            {/* Social Icons */}
+            <div className="flex gap-3 pt-2">
+              <a href="https://linkedin.com" target="_blank" rel="noreferrer" className="w-9 h-9 rounded-xl border border-white/10 hover:border-white/20 bg-white/[0.02] hover:bg-white/[0.08] text-slate-400 hover:text-white flex items-center justify-center transition-all duration-300 shadow-sm hover:-translate-y-0.5">
+                <Linkedin className="w-4 h-4" />
+              </a>
+              <a href="https://github.com" target="_blank" rel="noreferrer" className="w-9 h-9 rounded-xl border border-white/10 hover:border-white/20 bg-white/[0.02] hover:bg-white/[0.08] text-slate-400 hover:text-white flex items-center justify-center transition-all duration-300 shadow-sm hover:-translate-y-0.5">
+                <Github className="w-4 h-4" />
+              </a>
+              <a href="https://twitter.com" target="_blank" rel="noreferrer" className="w-9 h-9 rounded-xl border border-white/10 hover:border-white/20 bg-white/[0.02] hover:bg-white/[0.08] text-slate-400 hover:text-white flex items-center justify-center transition-all duration-300 shadow-sm hover:-translate-y-0.5">
+                <Twitter className="w-4 h-4" />
+              </a>
+              <a href="https://wa.me" target="_blank" rel="noreferrer" className="w-9 h-9 rounded-xl border border-white/10 hover:border-white/20 bg-white/[0.02] hover:bg-white/[0.08] text-slate-400 hover:text-[#25D366] flex items-center justify-center transition-all duration-300 shadow-sm hover:-translate-y-0.5">
+                <MessageCircle className="w-4 h-4" />
+              </a>
+            </div>
           </div>
 
-          <div className="flex flex-wrap gap-6 text-xs font-bold text-slate-400 justify-center">
-            <a href="#how-it-works" className="hover:text-white transition-colors">Platform Workflow</a>
-            <a href="#features" className="hover:text-white transition-colors">Core Modules</a>
-            <a href="#isolation" className="hover:text-white transition-colors">Data Security</a>
-            <a href="#pricing" className="hover:text-white transition-colors">SaaS Plans</a>
+          {/* Links Column 1: Platform */}
+          <div className="md:col-span-2 space-y-4">
+            <h4 className="text-[10px] font-black text-white uppercase tracking-[0.2em]">Platform</h4>
+            <div className="flex flex-col gap-3 text-xs font-bold text-slate-400">
+              <a href="#how-it-works" className="hover:text-white hover:translate-x-0.5 transition-all duration-200">Workflow</a>
+              <a href="#features" className="hover:text-white hover:translate-x-0.5 transition-all duration-200">Queue System</a>
+              <a href="#isolation" className="hover:text-white hover:translate-x-0.5 transition-all duration-200">Data Isolation</a>
+            </div>
           </div>
 
-          <div className="flex items-center gap-2 text-xs font-bold text-slate-400">
-            <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
-            <span className="text-emerald-500 uppercase tracking-wider">Operations Sync Active</span>
+          {/* Links Column 2: Modules */}
+          <div className="md:col-span-2 space-y-4">
+            <h4 className="text-[10px] font-black text-white uppercase tracking-[0.2em]">Modules</h4>
+            <div className="flex flex-col gap-3 text-xs font-bold text-slate-400">
+              <a href="#features" className="hover:text-white hover:translate-x-0.5 transition-all duration-200">Pharmacy Stock</a>
+              <a href="#features" className="hover:text-white hover:translate-x-0.5 transition-all duration-200">Analytics Panel</a>
+              <a href="#features" className="hover:text-white hover:translate-x-0.5 transition-all duration-200">Display Boards</a>
+            </div>
           </div>
+
+          {/* Links Column 3: Corporate */}
+          <div className="md:col-span-2 space-y-4">
+            <h4 className="text-[10px] font-black text-white uppercase tracking-[0.2em]">Corporate</h4>
+            <div className="flex flex-col gap-3 text-xs font-bold text-slate-400">
+              <a href="#pricing" className="hover:text-white hover:translate-x-0.5 transition-all duration-200">Pricing Tiers</a>
+              <a href="#demo" className="hover:text-white hover:translate-x-0.5 transition-all duration-200">Contact Support</a>
+              <a href="#demo" className="hover:text-white hover:translate-x-0.5 transition-all duration-200">Privacy Policy</a>
+            </div>
+          </div>
+
+          {/* Status Column */}
+          <div className="md:col-span-2 flex flex-col justify-start md:items-end gap-3">
+            <h4 className="text-[10px] font-black text-white uppercase tracking-[0.2em] md:text-right w-full">Status</h4>
+            {/* Blinking Live Operational Status Indicator */}
+            <div className="flex items-center gap-2 bg-[#10B981]/10 border border-[#10B981]/25 px-3 py-1.5 rounded-full text-xs font-black text-[#10B981] shadow-[0_2px_10px_rgba(16,185,129,0.1)] relative">
+              <span className="w-2 h-2 bg-[#10B981] rounded-full animate-ping" />
+              <span className="w-2 h-2 bg-[#10B981] rounded-full absolute" />
+              <span className="uppercase tracking-widest text-[9px] ml-3">Systems Operational</span>
+            </div>
+          </div>
+
         </div>
-        <div className="max-w-7xl mx-auto border-t border-slate-800 mt-8 pt-6 flex flex-col sm:flex-row justify-between items-center gap-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-          <div className="flex items-center gap-1">
-            <Heart className="w-3.5 h-3.5 text-rose-500" />
+
+        {/* Divider line */}
+        <div className="max-w-7xl mx-auto border-t border-white/[0.06] mt-12 pt-8 flex flex-col sm:flex-row justify-between items-center gap-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest relative z-10">
+          <div className="flex items-center gap-2 hover:text-white transition-colors duration-300">
+            <Heart className="w-3.5 h-3.5 text-rose-500 fill-rose-500 animate-pulse" />
             <span>Built for scalable healthcare SaaS networks</span>
           </div>
           <div>
-            <span>© {new Date().getFullYear()} MedQueue Platform. All Rights Reserved.</span>
+            <span>© {new Date().getFullYear()} MedQueue Cloud. All Rights Reserved.</span>
           </div>
         </div>
       </footer>

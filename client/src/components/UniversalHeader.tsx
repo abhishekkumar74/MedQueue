@@ -15,12 +15,14 @@ interface Props {
 }
 
 export default function UniversalHeader({ page, navigate, currentUser, handleLogout }: Props) {
-  const hospitalId = currentUser?.hospital_id || localStorage.getItem('mq_selected_hospital_id') || 'd290f1ee-6c54-4b01-90e6-d701748f0851';
+  const hospitalId = (currentUser?.role === 'SUPER_ADMIN' ? (localStorage.getItem('mq_selected_hospital_id') || currentUser?.hospital_id) : currentUser?.hospital_id) || localStorage.getItem('mq_selected_hospital_id') || 'd290f1ee-6c54-4b01-90e6-d701748f0851';
 
   // ── Hospital Context States ────────────────────────────────
   const [hospitalName, setHospitalName] = useState<string>('Apollo Clinic');
   const [hospitalLocation, setHospitalLocation] = useState<string>('Main Campus');
   const [showProfileMenu, setShowProfileMenu] = useState<boolean>(false);
+  const [showQuickActions, setShowQuickActions] = useState<boolean>(false);
+  const [showNotifications, setShowNotifications] = useState<boolean>(false);
 
   // ── Live Telemetry Metrics (fetched for emergency banner only) ───────────
   const [emergencyActive, setEmergencyActive] = useState<boolean>(false);
@@ -171,28 +173,8 @@ export default function UniversalHeader({ page, navigate, currentUser, handleLog
           </div>
         </div>
 
-        {/* ── CENTER SECTION: Navigation Links for Patients, Blank for Staff ── */}
-        {currentUser.type === 'patient' && (
-          <div className="hidden md:flex gap-1">
-            {[
-              { id: 'register', label: 'Register Token', icon: <Home className="w-4 h-4" /> },
-              { id: 'tracker', label: 'My Token Tracker', icon: <Clock className="w-4 h-4" /> },
-              { id: 'appointment', label: 'Book Appointment', icon: <Calendar className="w-4 h-4" /> },
-              { id: 'history', label: 'Health Records', icon: <FileText className="w-4 h-4" /> },
-            ].map(link => (
-              <button 
-                key={link.id} 
-                onClick={() => navigate(link.id)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
-                  page === link.id ? 'bg-[#005EB8]/10 text-[#005EB8] shadow-sm' : 'text-slate-500 hover:bg-slate-50'
-                }`}
-              >
-                {link.icon}
-                <span>{link.label}</span>
-              </button>
-            ))}
-          </div>
-        )}
+        {/* Center section removed for clean aesthetic */}
+        <div className="hidden md:flex flex-1" />
 
         {/* ── RIGHT SECTION: Controls, Global Search, Actions, Profile Dropdown ── */}
         <div className="flex items-center gap-2.5 flex-shrink-0">
@@ -249,17 +231,84 @@ export default function UniversalHeader({ page, navigate, currentUser, handleLog
           {/* Divider */}
           <div className="h-5 w-px bg-slate-200 hidden md:block" />
 
-          {/* Alarm Center & Emergency Active alerts */}
-          {emergencyActive ? (
-            <button className="w-8 h-8 rounded-xl bg-rose-50 border border-rose-100 flex items-center justify-center animate-bounce focus:outline-none">
-              <ShieldAlert className="w-4 h-4 text-rose-600 animate-pulse" />
-            </button>
-          ) : (
-            <button className="w-8 h-8 rounded-xl bg-slate-50 hover:bg-slate-100/70 border border-slate-200 flex items-center justify-center relative focus:outline-none">
-              <Bell className="w-4 h-4 text-slate-500" />
-              <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-[#00A3AD] border-2 border-white" />
-            </button>
+          {/* Patient Quick Actions Dropdown (Desktop only) */}
+          {currentUser.type === 'patient' && (
+            <div className="relative">
+              <button 
+                onClick={() => { setShowQuickActions(!showQuickActions); setShowNotifications(false); }}
+                className="flex items-center gap-1.5 px-3.5 py-1.5 bg-[#005EB8] hover:bg-[#004a96] text-white text-[11px] font-black rounded-xl shadow-sm transition-all focus:outline-none active:scale-95"
+              >
+                <span>Quick Actions</span>
+                <ChevronDown className={`w-3 h-3 transition-transform duration-250 ${showQuickActions ? 'rotate-180' : ''}`} />
+              </button>
+              {showQuickActions && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setShowQuickActions(false)} />
+                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-2xl shadow-xl border border-slate-150 py-1.5 z-50 overflow-hidden text-left animate-fade-in font-sans">
+                    <button 
+                      onClick={() => { navigate('register'); setShowQuickActions(false); }} 
+                      className="w-full text-left px-4 py-2.5 text-xs font-bold text-slate-600 hover:bg-slate-50 flex items-center gap-2 transition-colors"
+                    >
+                      <Building2 className="w-3.5 h-3.5 text-[#005EB8]" /> Patient Workspace
+                    </button>
+                    <button 
+                      onClick={() => { navigate('appointment'); setShowQuickActions(false); }} 
+                      className="w-full text-left px-4 py-2.5 text-xs font-bold text-slate-600 hover:bg-slate-50 flex items-center gap-2 transition-colors"
+                    >
+                      <Calendar className="w-3.5 h-3.5 text-[#00A3AD]" /> Book Appointment
+                    </button>
+                    <button 
+                      onClick={() => { navigate('history'); setShowQuickActions(false); }} 
+                      className="w-full text-left px-4 py-2.5 text-xs font-bold text-slate-600 hover:bg-slate-50 flex items-center gap-2 transition-colors"
+                    >
+                      <FileText className="w-3.5 h-3.5 text-violet-500" /> Medical Records
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
           )}
+
+          {/* Alarm Center & Emergency Active alerts with Animated notifications */}
+          <div className="relative">
+            {emergencyActive ? (
+              <button className="w-8 h-8 rounded-xl bg-rose-50 border border-rose-100 flex items-center justify-center animate-bounce focus:outline-none">
+                <ShieldAlert className="w-4 h-4 text-rose-600 animate-pulse" />
+              </button>
+            ) : (
+              <button 
+                onClick={() => { setShowNotifications(!showNotifications); setShowQuickActions(false); }}
+                className="w-8 h-8 rounded-xl bg-slate-50 hover:bg-slate-100/70 border border-slate-200 flex items-center justify-center relative focus:outline-none transition-all active:scale-95"
+              >
+                <Bell className="w-4 h-4 text-slate-500" />
+                <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[#00A3AD] border-2 border-white animate-ping" />
+                <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[#00A3AD] border-2 border-white" />
+              </button>
+            )}
+
+            {showNotifications && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setShowNotifications(false)} />
+                <div className="absolute right-0 mt-2 w-72 bg-white rounded-2xl shadow-xl border border-slate-150 py-2.5 z-50 overflow-hidden text-left animate-fade-in font-sans">
+                  <div className="px-4 py-2 border-b border-slate-100">
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Active Notifications</span>
+                  </div>
+                  <div className="p-3 space-y-2 max-h-60 overflow-y-auto">
+                    <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-100 text-xs">
+                      <div className="font-extrabold text-slate-700">All Systems Nominal</div>
+                      <div className="text-[10px] text-slate-400 mt-0.5">MedQueue operations nodes are fully synced and active.</div>
+                    </div>
+                    {currentUser.type === 'patient' && (
+                      <div className="p-2.5 bg-blue-50/50 rounded-xl border border-blue-100/30 text-xs">
+                        <div className="font-extrabold text-[#005EB8]">Smart Wait Tracking</div>
+                        <div className="text-[10px] text-slate-400 mt-0.5">Register a token to receive real-time queue notifications in this drawer.</div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
 
           {/* User profile with initials & dropdown menu */}
           <div className="relative">

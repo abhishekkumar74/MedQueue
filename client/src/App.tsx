@@ -95,7 +95,7 @@ export default function App() {
 
   // Real-time listener for current hospital status
   useEffect(() => {
-    const hospId = user?.hospital_id || localStorage.getItem('mq_selected_hospital_id') || 'd290f1ee-6c54-4b01-90e6-d701748f0851';
+    const hospId = (user?.role === 'SUPER_ADMIN' ? (localStorage.getItem('mq_selected_hospital_id') || user?.hospital_id) : user?.hospital_id) || localStorage.getItem('mq_selected_hospital_id') || 'd290f1ee-6c54-4b01-90e6-d701748f0851';
     
     if (page === 'landing' || page === 'super-admin-login' || page === 'super-admin') {
       setSubscriptionStatus('ACTIVE');
@@ -203,12 +203,7 @@ export default function App() {
           }
         }
       } else {
-        const slug = getTenantSlug();
-        if (slug) {
-          setPage('patient-login');
-        } else {
-          setPage('landing');
-        }
+        setPage('landing');
       }
       setAuthLoading(false);
     }
@@ -328,12 +323,6 @@ export default function App() {
 
   // ── Landing ───────────────────────────────────────────
   if (page === 'landing') {
-    if (tenant) {
-      return <PatientLoginPage
-        onLogin={handlePatientLogin}
-        onBack={() => setPage('staff-login')}
-      />;
-    }
     return <LandingPage
       onGetStarted={() => setPage('patient-login')}
       onStaffLogin={() => setPage('staff-login')}
@@ -527,20 +516,20 @@ export default function App() {
 
       {/* Mobile bottom nav for patients */}
       {user.type === 'patient' && (
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-40 md:hidden">
+        <div className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-slate-100 z-40 md:hidden shadow-[0_-4px_16px_rgba(0,0,0,0.03)]">
           <div className="grid grid-cols-4 h-16">
             {[
-              { id: 'register', label: 'Register', icon: <Home className="w-5 h-5" /> },
-              { id: 'tracker', label: 'Token', icon: <Clock className="w-5 h-5" /> },
-              { id: 'appointment', label: 'Schedule', icon: <Calendar className="w-5 h-5" /> },
-              { id: 'history', label: 'History', icon: <FileText className="w-5 h-5" /> },
+              { id: 'register', label: 'Workspace', icon: <Home className="w-5.5 h-5.5" /> },
+              { id: 'tracker', label: 'Live Queue', icon: <Clock className="w-5.5 h-5.5" /> },
+              { id: 'appointment', label: 'Book Doc', icon: <Calendar className="w-5.5 h-5.5" /> },
+              { id: 'history', label: 'Health Vault', icon: <FileText className="w-5.5 h-5.5" /> },
             ].map(link => (
               <button key={link.id} onClick={() => navigate(link.id)}
-                className={`flex flex-col items-center justify-center gap-0.5 transition-colors ${
-                  page === link.id ? 'text-[#005EB8]' : 'text-gray-400'
+                className={`flex flex-col items-center justify-center gap-1.5 transition-all duration-300 ${
+                  page === link.id ? 'text-[#005EB8] scale-105 font-extrabold' : 'text-gray-400 font-semibold'
                 }`}>
                 {link.icon}
-                <span className="text-xs font-medium">{link.label}</span>
+                <span className="text-[10px] uppercase tracking-wider">{link.label}</span>
               </button>
             ))}
           </div>

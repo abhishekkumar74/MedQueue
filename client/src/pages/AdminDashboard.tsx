@@ -98,7 +98,7 @@ interface SecurityLogRow {
 }
 
 export default function AdminDashboard({ currentUser }: Props) {
-  const hospitalId = currentUser?.hospital_id || 'd290f1ee-6c54-4b01-90e6-d701748f0851';
+  const hospitalId = (currentUser?.role === 'SUPER_ADMIN' ? (localStorage.getItem('mq_selected_hospital_id') || currentUser?.hospital_id) : currentUser?.hospital_id) || 'd290f1ee-6c54-4b01-90e6-d701748f0851';
 
   // ── Navigation Tabs ───────────────────────────────────────
   const [activeTab, setActiveTab] = useState<'dashboard' | 'queue' | 'doctors' | 'staff' | 'patients' | 'appointments' | 'pharmacy' | 'analytics' | 'system'>('dashboard');
