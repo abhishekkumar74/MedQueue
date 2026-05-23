@@ -200,7 +200,7 @@ export default function LandingPage({ onGetStarted, onStaffLogin }: Props) {
       </nav>
 
       {/* ── 1. HERO SECTION (Full background image with content overlays) ── */}
-      <section className="relative min-h-screen flex items-center justify-center pt-24 pb-16 overflow-hidden">
+      <section className="relative min-h-screen py-28 lg:py-0 flex items-center justify-center overflow-hidden">
         
         {/* Full screen Background Image */}
         <div className="absolute inset-0 z-0">
@@ -209,17 +209,17 @@ export default function LandingPage({ onGetStarted, onStaffLogin }: Props) {
             alt="MedQueue personalized wellness solutions background" 
             className="w-full h-full object-cover filter brightness-[0.98] contrast-[1.01]" 
           />
-          {/* Light-theme soft gradient overlay to guarantee perfect readability on all screens */}
-          <div className="absolute inset-0 bg-gradient-to-r from-white/95 via-white/85 to-white/10 md:bg-gradient-to-r md:from-white/90 md:via-white/70 md:to-white/10" />
+          {/* Light-theme soft vertical gradient overlay on mobile and horizontal on desktop to guarantee perfect readability */}
+          <div className="absolute inset-0 bg-gradient-to-b from-white/98 via-white/95 to-white/90 lg:bg-gradient-to-r lg:from-white/95 lg:via-white/85 lg:to-white/10" />
         </div>
 
         {/* Ambient background glows for tech feel */}
         <div className="absolute top-[-10%] left-[-10%] w-[60%] h-[60%] bg-gradient-to-tr from-[#005EB8]/10 to-[#00A3AD]/10 rounded-full blur-[130px] pointer-events-none animate-pulse-glow" />
 
-        <div className="relative max-w-7xl mx-auto px-6 grid lg:grid-cols-12 gap-12 items-center w-full z-10">
+        <div className="relative max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center w-full z-10">
           
           {/* Left Hero Pitch: Borderless direct text overlay on background image */}
-          <div className="lg:col-span-7 space-y-7 text-left">
+          <div className="col-span-1 lg:col-span-7 space-y-7 text-left px-4 md:px-0">
             <div className="inline-flex items-center gap-1.5 bg-[#005EB8]/10 text-[#005EB8] text-[10px] font-black px-3.5 py-1.5 rounded-full uppercase tracking-widest border border-[#005EB8]/20">
               <Sparkles className="w-3.5 h-3.5 text-[#00A3AD] animate-spin" style={{ animationDuration: '6s' }} />
               Enterprise Healthcare Platform
@@ -265,37 +265,37 @@ export default function LandingPage({ onGetStarted, onStaffLogin }: Props) {
           <div className="lg:col-span-5 h-[350px] hidden lg:block" />
         </div>
 
-        {/* ── TRUSTED BY CLINICAL BRANDS (Flat, Borderless, Side-by-Side Logo Layout matching 3rd Image) ── */}
-        <div className="absolute bottom-0 left-0 right-0 z-10 bg-gradient-to-t from-white via-white/90 to-transparent pt-12 pb-6 border-b border-slate-150/40">
-          <div className="max-w-7xl mx-auto px-6 text-center space-y-3.5">
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
-              Trusted by Modern Healthcare Teams
-            </p>
-            
-            {/* Clean Flat Side-by-side Brands List (Zero rect cards!) */}
-            <div className="flex flex-wrap items-center justify-center gap-8 sm:gap-14 md:gap-20 pt-2 pb-2">
-              {[
-                { name: 'Apollo Clinics', color: 'hover:text-[#005EB8]', icon: <Activity className="w-5 h-5 text-slate-400 group-hover:text-[#005EB8] transition-colors" /> },
-                { name: 'MAX Health', color: 'hover:text-[#00A3AD]', icon: <Heart className="w-5 h-5 text-slate-400 group-hover:text-[#00A3AD] transition-colors" /> },
-                { name: 'Fortis Clinic', color: 'hover:text-emerald-600', icon: <Stethoscope className="w-5 h-5 text-slate-400 group-hover:text-emerald-600 transition-colors" /> },
-                { name: 'Manipal Hub', color: 'hover:text-indigo-600', icon: <Building2 className="w-5 h-5 text-slate-400 group-hover:text-indigo-600 transition-colors" /> },
-                { name: 'Narayana Core', color: 'hover:text-rose-500', icon: <Activity className="w-5 h-5 text-slate-400 group-hover:text-rose-500 transition-colors" /> }
-              ].map((item, idx) => (
-                <div 
-                  key={idx}
-                  className="flex items-center gap-2 text-slate-400 hover:text-slate-650 transition-all duration-300 cursor-pointer group hover:scale-105 font-sans"
-                >
-                  {item.icon}
-                  <span className={`text-[11px] font-black tracking-[0.15em] uppercase transition-colors ${item.color}`}>
-                    {item.name}
-                  </span>
-                </div>
-              ))}
-            </div>
+      </section>
+
+      {/* ── TRUSTED BY CLINICAL BRANDS (Flat, Borderless, Side-by-Side Logo Layout matching 3rd Image) ── */}
+      <div className="bg-white border-b border-slate-150/45 py-10 relative z-10">
+        <div className="max-w-7xl mx-auto px-6 text-center space-y-3.5">
+          <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
+            Trusted by Modern Healthcare Teams
+          </p>
+          
+          {/* Stack vertically on mobile (`flex-col`), side-by-side on desktop (`md:flex-row`) */}
+          <div className="flex flex-col md:flex-row items-center justify-center gap-6 md:gap-14 lg:gap-20 pt-2 pb-2">
+            {[
+              { name: 'Apollo Clinics', color: 'hover:text-[#005EB8]', icon: <Activity className="w-5 h-5 text-slate-400 group-hover:text-[#005EB8] transition-colors" /> },
+              { name: 'MAX Health', color: 'hover:text-[#00A3AD]', icon: <Heart className="w-5 h-5 text-slate-400 group-hover:text-[#00A3AD] transition-colors" /> },
+              { name: 'Fortis Clinic', color: 'hover:text-emerald-600', icon: <Stethoscope className="w-5 h-5 text-slate-400 group-hover:text-emerald-600 transition-colors" /> },
+              { name: 'Manipal Hub', color: 'hover:text-indigo-600', icon: <Building2 className="w-5 h-5 text-slate-400 group-hover:text-indigo-600 transition-colors" /> },
+              { name: 'Narayana Core', color: 'hover:text-rose-500', icon: <Activity className="w-5 h-5 text-slate-400 group-hover:text-rose-500 transition-colors" /> }
+            ].map((item, idx) => (
+              <div 
+                key={idx}
+                className="flex items-center gap-2 text-slate-400 hover:text-slate-650 transition-all duration-300 cursor-pointer group hover:scale-105 font-sans"
+              >
+                {item.icon}
+                <span className={`text-[11px] font-black tracking-[0.15em] uppercase transition-colors ${item.color}`}>
+                  {item.name}
+                </span>
+              </div>
+            ))}
           </div>
         </div>
-
-      </section>
+      </div>
 
       {/* ── 2. HOW MEDQUEUE WORKS ── */}
       <section id="how-it-works" className="py-20 bg-white border-y border-slate-150 relative">
@@ -921,10 +921,10 @@ export default function LandingPage({ onGetStarted, onStaffLogin }: Props) {
         <div className="absolute top-0 left-1/4 -translate-y-1/2 w-[500px] h-[500px] bg-[#005EB8]/10 rounded-full blur-[120px] pointer-events-none animate-pulse-glow" />
         <div className="absolute top-0 right-1/4 -translate-y-1/2 w-[500px] h-[500px] bg-[#00A3AD]/10 rounded-full blur-[120px] pointer-events-none animate-pulse-glow" />
 
-        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-12 relative z-10">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-12 gap-10 md:gap-12 relative z-10">
           
           {/* Brand and Tagline Column */}
-          <div className="md:col-span-4 space-y-6">
+          <div className="col-span-1 sm:col-span-2 md:col-span-4 space-y-6">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-[#005EB8] to-[#00A3AD] flex items-center justify-center shadow-lg shadow-[#005EB8]/20 relative group overflow-hidden">
                 <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -963,37 +963,37 @@ export default function LandingPage({ onGetStarted, onStaffLogin }: Props) {
           </div>
 
           {/* Links Column 1: Platform */}
-          <div className="md:col-span-2 space-y-4">
+          <div className="col-span-1 md:col-span-2 space-y-4">
             <h4 className="text-[10px] font-black text-white uppercase tracking-[0.2em]">Platform</h4>
             <div className="flex flex-col gap-3 text-xs font-bold text-slate-400">
-              <a href="#how-it-works" className="hover:text-white hover:translate-x-0.5 transition-all duration-200">Workflow</a>
-              <a href="#features" className="hover:text-white hover:translate-x-0.5 transition-all duration-200">Queue System</a>
-              <a href="#isolation" className="hover:text-white hover:translate-x-0.5 transition-all duration-200">Data Isolation</a>
+              <a href="#how-it-works" className="hover:text-white hover:translate-x-0.5 transition-all duration-200">Queue System</a>
+              <a href="#features" className="hover:text-white hover:translate-x-0.5 transition-all duration-200">Pharmacy</a>
+              <a href="#features" className="hover:text-white hover:translate-x-0.5 transition-all duration-200">Analytics</a>
             </div>
           </div>
 
-          {/* Links Column 2: Modules */}
-          <div className="md:col-span-2 space-y-4">
-            <h4 className="text-[10px] font-black text-white uppercase tracking-[0.2em]">Modules</h4>
+          {/* Links Column 2: Resources */}
+          <div className="col-span-1 md:col-span-2 space-y-4">
+            <h4 className="text-[10px] font-black text-white uppercase tracking-[0.2em]">Resources</h4>
             <div className="flex flex-col gap-3 text-xs font-bold text-slate-400">
-              <a href="#features" className="hover:text-white hover:translate-x-0.5 transition-all duration-200">Pharmacy Stock</a>
-              <a href="#features" className="hover:text-white hover:translate-x-0.5 transition-all duration-200">Analytics Panel</a>
-              <a href="#features" className="hover:text-white hover:translate-x-0.5 transition-all duration-200">Display Boards</a>
+              <a href="#pricing" className="hover:text-white hover:translate-x-0.5 transition-all duration-200">Pricing</a>
+              <a href="#demo" className="hover:text-white hover:translate-x-0.5 transition-all duration-200">Contact</a>
+              <a href="#demo" className="hover:text-white hover:translate-x-0.5 transition-all duration-200">Privacy</a>
             </div>
           </div>
 
           {/* Links Column 3: Corporate */}
-          <div className="md:col-span-2 space-y-4">
+          <div className="col-span-1 md:col-span-2 space-y-4">
             <h4 className="text-[10px] font-black text-white uppercase tracking-[0.2em]">Corporate</h4>
             <div className="flex flex-col gap-3 text-xs font-bold text-slate-400">
-              <a href="#pricing" className="hover:text-white hover:translate-x-0.5 transition-all duration-200">Pricing Tiers</a>
-              <a href="#demo" className="hover:text-white hover:translate-x-0.5 transition-all duration-200">Contact Support</a>
-              <a href="#demo" className="hover:text-white hover:translate-x-0.5 transition-all duration-200">Privacy Policy</a>
+              <a href="#isolation" className="hover:text-white hover:translate-x-0.5 transition-all duration-200">Data Isolation</a>
+              <a href="#how-it-works" className="hover:text-white hover:translate-x-0.5 transition-all duration-200">Workflow</a>
+              <a href="#features" className="hover:text-white hover:translate-x-0.5 transition-all duration-200">Display Boards</a>
             </div>
           </div>
 
           {/* Status Column */}
-          <div className="md:col-span-2 flex flex-col justify-start md:items-end gap-3">
+          <div className="col-span-1 sm:col-span-2 md:col-span-2 flex flex-col justify-start md:items-end gap-3">
             <h4 className="text-[10px] font-black text-white uppercase tracking-[0.2em] md:text-right w-full">Status</h4>
             {/* Blinking Live Operational Status Indicator */}
             <div className="flex items-center gap-2 bg-[#10B981]/10 border border-[#10B981]/25 px-3 py-1.5 rounded-full text-xs font-black text-[#10B981] shadow-[0_2px_10px_rgba(16,185,129,0.1)] relative">
