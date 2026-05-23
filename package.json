@@ -11,12 +11,9 @@
     "build:client": "npm run build --prefix client",
     "build:server": "npm run build --prefix server",
     "install:all": "npm install --prefix client && npm install --prefix server",
+    "postinstall": "npm install --prefix client",
     "preview": "npm run preview --prefix client"
   },
-  "workspaces": [
-    "client",
-    "server"
-  ],
   "devDependencies": {
     "concurrently": "^8.2.2"
   }
