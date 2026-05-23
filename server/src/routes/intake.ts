@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { db } from '../db.js';
+import { getTenantHospitalId, filterTenant } from '../utils/tenant.js';
 
 const router = Router();
 
@@ -7,11 +8,14 @@ const router = Router();
 router.get('/token/:tokenId', async (req: Request, res: Response) => {
   const { tokenId } = req.params;
   try {
-    const { data, error } = await db
+    let query = db
       .from('patient_intake')
       .select('*')
-      .eq('token_id', tokenId)
-      .maybeSingle();
+      .eq('token_id', tokenId);
+    
+    query = filterTenant(query, req.user);
+    const { data, error } = await query.maybeSingle();
+
     if (error) return res.status(400).json({ error: error.message });
     return res.json(data ?? null);
   } catch (e) {
@@ -25,18 +29,22 @@ router.post('/start', async (req: Request, res: Response) => {
   if (!token_id) return res.status(400).json({ error: 'token_id required' });
 
   try {
-    const { data: token, error: te } = await db
+    let tokenQuery = db
       .from('tokens')
-      .select('patient_id')
-      .eq('id', token_id)
-      .maybeSingle();
+      .select('patient_id, hospital_id')
+      .eq('id', token_id);
 
-    if (te || !token) return res.status(404).json({ error: 'Token not found' });
+    tokenQuery = filterTenant(tokenQuery, req.user);
+    const { data: token, error: te } = await tokenQuery.maybeSingle();
+
+    if (te || !token) return res.status(404).json({ error: 'Token not found or access denied' });
     if (!token.patient_id) return res.status(400).json({ error: 'Patient not linked to token' });
+
+    const hospitalId = getTenantHospitalId(req.user, token.hospital_id);
 
     const { data: intake, error: ie } = await db
       .from('patient_intake')
-      .insert({ token_id, patient_id: token.patient_id })
+      .insert({ token_id, patient_id: token.patient_id, hospital_id: hospitalId })
       .select()
       .single();
 
@@ -53,6 +61,11 @@ router.put('/:id', async (req: Request, res: Response) => {
   const { bp, sugar, temperature, symptoms, notes } = req.body;
 
   try {
+    let checkQuery = db.from('patient_intake').select('hospital_id, token_id').eq('id', id);
+    checkQuery = filterTenant(checkQuery, req.user);
+    const { data: check } = await checkQuery.maybeSingle();
+    if (!check) return res.status(403).json({ error: 'Intake record not found in your hospital context' });
+
     const { data, error } = await db
       .from('patient_intake')
       .update({ bp: bp ?? '', sugar: sugar ?? '', temperature: temperature ?? '', symptoms: symptoms ?? '', notes: notes ?? '', updated_at: new Date().toISOString() })

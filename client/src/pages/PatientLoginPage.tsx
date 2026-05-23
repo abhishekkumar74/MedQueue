@@ -1,11 +1,8 @@
-/**
- * Patient-only login — phone + OTP
- * Staff never sees this page
- */
 import { useState } from 'react';
 import { AuthUser, requestOtp, verifyOtp } from '../lib/auth';
 import { supabase } from '../lib/supabase';
 import PhoneInput, { isValidPhone } from '../components/PhoneInput';
+import HospitalSelector from '../components/HospitalSelector';
 import { Activity, Loader2, AlertCircle, ArrowLeft, User, MapPin, Hash } from 'lucide-react';
 
 type Mode = 'phone' | 'otp' | 'register';
@@ -67,11 +64,12 @@ export default function PatientLoginPage({ onLogin, onBack }: Props) {
     if (isNaN(age) || age < 1 || age > 120) return setError('Enter a valid age (1-120)');
     setLoading(true); setError('');
     try {
+      const hospitalId = localStorage.getItem('mq_selected_hospital_id') || 'd290f1ee-6c54-4b01-90e6-d701748f0851';
       const { error } = await supabase.from('patients').update({
-        name: regForm.name.trim(), age, address: regForm.address.trim(),
+        name: regForm.name.trim(), age, address: regForm.address.trim(), hospital_id: hospitalId
       }).eq('id', newPatientId);
       if (error) throw new Error(error.message);
-      onLogin({ id: newPatientId, name: regForm.name.trim(), type: 'patient', phone, age, address: regForm.address.trim() });
+      onLogin({ id: newPatientId, name: regForm.name.trim(), type: 'patient', phone, age, address: regForm.address.trim(), hospital_id: hospitalId });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save details');
     } finally { setLoading(false); }
@@ -106,6 +104,10 @@ export default function PatientLoginPage({ onLogin, onBack }: Props) {
               <div>
                 <h2 className="text-xl font-bold text-gray-800">Patient Login</h2>
                 <p className="text-sm text-gray-500 mt-1">Enter your 10-digit mobile number</p>
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5 font-sans">Select Clinic / Hospital *</label>
+                <HospitalSelector className="w-full" />
               </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1.5">Mobile Number *</label>

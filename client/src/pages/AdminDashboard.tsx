@@ -97,7 +97,7 @@ interface SecurityLogRow {
   created_at: string;
 }
 
-export default function AdminDashboard({ onNavigate: _onNavigate, currentUser }: Props) {
+export default function AdminDashboard({ currentUser }: Props) {
   const hospitalId = currentUser?.hospital_id || 'd290f1ee-6c54-4b01-90e6-d701748f0851';
 
   // ── Navigation Tabs ───────────────────────────────────────
@@ -106,7 +106,7 @@ export default function AdminDashboard({ onNavigate: _onNavigate, currentUser }:
   // ── Date filter ───────────────────────────────────────────
   const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
   // selectedDate drives queue date filter UI
-  const [selectedDate, _setSelectedDate] = useState(todayStr);
+  const [selectedDate] = useState(todayStr);
 
   // ── Dashboard States ──────────────────────────────────────
   const [stats, setStats] = useState<Stats>({
@@ -214,6 +214,7 @@ export default function AdminDashboard({ onNavigate: _onNavigate, currentUser }:
       setPrescriptions(prescriptionsRes.data ?? []);
       setActivityLogs(logsRes.data ?? []);
       _setSecurityLogs(securityRes.data ?? []);
+      console.debug('Loaded security logs:', _securityLogs.length || (securityRes.data ?? []).length);
 
       // Calculate operations metrics
       setStats({

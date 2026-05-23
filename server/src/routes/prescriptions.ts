@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { db } from '../db.js';
 import { requireRole } from '../middleware/auth.js';
+import { getTenantHospitalId, filterTenant } from '../utils/tenant.js';
 
 const router = Router();
 
@@ -12,6 +13,8 @@ router.post('/', requireRole('DOCTOR', 'ADMIN'), async (req: Request, res: Respo
   if (!diagnosis || !medications || medications.length === 0) {
     return res.status(400).json({ error: 'diagnosis and at least one medication required' });
   }
+
+  const hospitalId = getTenantHospitalId(req.user, req.body.hospital_id);
 
   try {
     const { data: intake } = await db
@@ -30,6 +33,7 @@ router.post('/', requireRole('DOCTOR', 'ADMIN'), async (req: Request, res: Respo
         sugar: intake?.sugar ?? '',
         symptoms: intake?.symptoms ?? '',
         doctor_notes: doctor_notes ?? '',
+        hospital_id: hospitalId,
       })
       .select('id')
       .single();
@@ -38,7 +42,16 @@ router.post('/', requireRole('DOCTOR', 'ADMIN'), async (req: Request, res: Respo
 
     const { data: prescription, error: pe } = await db
       .from('prescriptions')
-      .insert({ token_id, patient_id, visit_id: visit.id, diagnosis, medications, status: 'PENDING', notes: '' })
+      .insert({
+        token_id,
+        patient_id,
+        visit_id: visit.id,
+        diagnosis,
+        medications,
+        status: 'PENDING',
+        notes: '',
+        hospital_id: hospitalId,
+      })
       .select()
       .single();
 
@@ -62,11 +75,13 @@ router.get('/pending', async (req: Request, res: Response) => {
     : '*, tokens(*), patients(*)';
 
   try {
-    const { data, error } = await db
+    let query = db
       .from('prescriptions')
       .select(selectFields)
-      .in('status', ['PENDING', 'IN_PROGRESS'])
-      .order('created_at', { ascending: true });
+      .in('status', ['PENDING', 'IN_PROGRESS']);
+    
+    query = filterTenant(query, req.user);
+    const { data, error } = await query.order('created_at', { ascending: true });
 
     if (error) return res.status(400).json({ error: error.message });
     return res.json(data ?? []);
@@ -81,10 +96,11 @@ router.post('/:id/dispense', requireRole('PHARMACY', 'ADMIN'), async (req: Reque
   const { dispensed_by } = req.body;
 
   try {
-    const { data: current, error: ge } = await db
-      .from('prescriptions').select('status').eq('id', id).single();
+    let checkQuery = db.from('prescriptions').select('hospital_id, status').eq('id', id);
+    checkQuery = filterTenant(checkQuery, req.user);
+    const { data: current } = await checkQuery.maybeSingle();
 
-    if (ge) return res.status(404).json({ error: 'Prescription not found' });
+    if (!current) return res.status(403).json({ error: 'Prescription not found in your hospital context' });
     if (current.status === 'DISPENSED') return res.status(409).json({ error: 'Already dispensed' });
     if (current.status === 'CANCELLED') return res.status(409).json({ error: 'Cannot dispense cancelled prescription' });
 

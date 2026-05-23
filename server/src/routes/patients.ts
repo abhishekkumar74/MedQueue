@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { db } from '../db.js';
+import { filterTenant } from '../utils/tenant.js';
 
 const router = Router();
 
@@ -16,13 +17,19 @@ router.get('/history/:phone', async (req: Request, res: Response) => {
   }
 
   try {
-    const { data: patient } = await db
-      .from('patients')
+    let patientQuery = db.from('patients')
       .select('*')
-      .eq('phone', decodeURIComponent(phone))
-      .maybeSingle();
+      .eq('phone', decodeURIComponent(phone));
+    
+    patientQuery = filterTenant(patientQuery, req.user);
+    const { data: patient } = await patientQuery.maybeSingle();
 
     if (!patient) return res.json({ patient: null, visits: [] });
+
+    // Patient can only see their own data
+    if (userType === 'patient' && req.user?.sub !== patient.id) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
 
     // Ward boy sees basic info only (no doctor notes)
     if (role === 'WARD_BOY') {
@@ -38,17 +45,13 @@ router.get('/history/:phone', async (req: Request, res: Response) => {
       });
     }
 
-    // Doctor/Admin/Patient sees full history
-    const { data: visits } = await db
-      .from('visits')
+    // Doctor/Admin sees full history
+    let visitsQuery = db.from('visits')
       .select('*, tokens(*)')
-      .eq('patient_id', patient.id)
-      .order('created_at', { ascending: false });
-
-    // Patient can only see their own data
-    if (userType === 'patient' && req.user?.sub !== patient.id) {
-      return res.status(403).json({ error: 'Access denied' });
-    }
+      .eq('patient_id', patient.id);
+    
+    visitsQuery = filterTenant(visitsQuery, req.user);
+    const { data: visits } = await visitsQuery.order('created_at', { ascending: false });
 
     return res.json({ patient, visits: visits ?? [] });
   } catch (e) {
@@ -61,11 +64,12 @@ router.get('/lookup/:phone', async (req: Request, res: Response) => {
   const { phone } = req.params;
 
   try {
-    const { data: patient } = await db
-      .from('patients')
+    let patientQuery = db.from('patients')
       .select('id, name, phone, age, address')
-      .eq('phone', decodeURIComponent(phone))
-      .maybeSingle();
+      .eq('phone', decodeURIComponent(phone));
+    
+    patientQuery = filterTenant(patientQuery, req.user);
+    const { data: patient } = await patientQuery.maybeSingle();
 
     // Also get their QR token if exists
     let qrToken = null;
@@ -103,6 +107,14 @@ router.put('/:id', async (req: Request, res: Response) => {
   }
 
   try {
+    // Staff user: ensure the patient belongs to their hospital context
+    if (userType === 'staff') {
+      let checkQuery = db.from('patients').select('hospital_id').eq('id', id);
+      checkQuery = filterTenant(checkQuery, req.user);
+      const { data: check } = await checkQuery.maybeSingle();
+      if (!check) return res.status(403).json({ error: 'Patient not found in your hospital context' });
+    }
+
     const { data, error } = await db
       .from('patients')
       .update({ name, age, address })

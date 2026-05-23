@@ -14,6 +14,7 @@ export interface JwtPayload {
   type: UserType;
   role?: string;        // staff role
   name: string;
+  hospital_id?: string;
   iat?: number;
   exp?: number;
 }

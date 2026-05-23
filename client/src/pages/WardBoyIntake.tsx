@@ -51,7 +51,8 @@ export default function WardBoyIntake({ token, onDone }: { token: Token; onDone?
           .from('staff_users')
           .select('id, name, department, room_number')
           .eq('role', 'DOCTOR')
-          .eq('is_active', true);
+          .eq('is_active', true)
+          .neq('is_deleted', true);
 
         if (token.department) {
           query.eq('department', token.department);

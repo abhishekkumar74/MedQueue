@@ -63,8 +63,8 @@ export default function StaffDashboard({ onNavigate, currentUser }: Props) {
     );
   }
 
-  // ── ADMIN: full overview ──────────────────────────────────
-  if (role === 'ADMIN') {
+  // ── ADMIN / SUPER_ADMIN: full overview ────────────────────
+  if (role === 'ADMIN' || role === 'SUPER_ADMIN') {
     return <AdminDashboard onNavigate={onNavigate} currentUser={currentUser} />;
   }
 

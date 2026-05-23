@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { db } from '../db.js';
+import { getTenantHospitalId, filterTenant } from '../utils/tenant.js';
 
 const router = Router();
 
@@ -11,8 +12,10 @@ router.post('/', async (req: Request, res: Response) => {
     return res.status(400).json({ error: 'phone, patient_name, department, appointment_date, and time_slot required' });
   }
 
+  const hospitalId = getTenantHospitalId(req.user, req.body.hospital_id);
+
   try {
-    // Check slot conflict
+    // Check slot conflict within the same hospital context
     if (doctor_id) {
       const { data: existing } = await db
         .from('appointments')
@@ -20,12 +23,18 @@ router.post('/', async (req: Request, res: Response) => {
         .eq('doctor_id', doctor_id)
         .eq('appointment_date', appointment_date)
         .eq('time_slot', time_slot)
+        .eq('hospital_id', hospitalId)
         .maybeSingle();
 
       if (existing) return res.status(409).json({ error: 'Time slot already booked' });
     }
 
-    const { data: patient } = await db.from('patients').select('id').eq('phone', phone).maybeSingle();
+    const { data: patient } = await db
+      .from('patients')
+      .select('id')
+      .eq('phone', phone)
+      .eq('hospital_id', hospitalId)
+      .maybeSingle();
 
     const { data, error } = await db
       .from('appointments')
@@ -39,6 +48,7 @@ router.post('/', async (req: Request, res: Response) => {
         time_slot,
         status: 'SCHEDULED',
         consultation_fee,
+        hospital_id: hospitalId,
       })
       .select()
       .single();
@@ -52,16 +62,22 @@ router.post('/', async (req: Request, res: Response) => {
 
 // GET /api/appointments/slots?date=YYYY-MM-DD&doctor_id=xxx
 router.get('/slots', async (req: Request, res: Response) => {
-  const { date, doctor_id } = req.query as { date?: string; doctor_id?: string };
+  const { date, doctor_id, hospital_id } = req.query as { date?: string; doctor_id?: string; hospital_id?: string };
 
   if (!date) return res.status(400).json({ error: 'date query parameter required' });
 
+  const targetHospital = hospital_id || req.user?.hospital_id;
+
   try {
-    const query = db
+    let query = db
       .from('appointments')
       .select('time_slot')
       .eq('appointment_date', date)
       .in('status', ['SCHEDULED', 'CONFIRMED']);
+
+    if (targetHospital) {
+      query = query.eq('hospital_id', targetHospital);
+    }
 
     if (doctor_id) query.eq('doctor_id', doctor_id);
 

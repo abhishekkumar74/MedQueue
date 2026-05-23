@@ -8,6 +8,29 @@
  */
 import { supabase } from './supabase';
 import { todayStartUTC } from './dateUtils';
+import { getCachedUser } from './auth';
+
+// ─── TENANT ROUTING ──────────────────────────────────────────────────────────
+
+export function getSelectedHospitalId(): string {
+  const cachedUser = getCachedUser();
+  if (cachedUser?.hospital_id) {
+    return cachedUser.hospital_id;
+  }
+  return localStorage.getItem('mq_selected_hospital_id') || 'd290f1ee-6c54-4b01-90e6-d701748f0851'; // Fallback: Apollo Clinic
+}
+
+export function setSelectedHospitalId(id: string) {
+  localStorage.setItem('mq_selected_hospital_id', id);
+}
+
+function getHospitalFilter() {
+  const user = getCachedUser();
+  if (user?.role === 'SUPER_ADMIN') {
+    return null; // Super Admin bypasses logical separation filters
+  }
+  return getSelectedHospitalId();
+}
 
 // ─── TOKEN REGISTRATION ──────────────────────────────────────────────────────
 
@@ -20,12 +43,17 @@ export async function registerToken(params: {
   department?: string;
 }) {
   const { phone, name, age, address, priority = 2, department } = params;
+  const hospitalId = getSelectedHospitalId();
 
-  // Upsert patient
+  // Upsert patient linked to the hospital
   let patientId: string | null = null;
   if (name) {
     const { data: existing } = await supabase
-      .from('patients').select('id').eq('phone', phone).maybeSingle();
+      .from('patients')
+      .select('id')
+      .eq('phone', phone)
+      .eq('hospital_id', hospitalId)
+      .maybeSingle();
 
     if (existing) {
       patientId = existing.id;
@@ -35,31 +63,38 @@ export async function registerToken(params: {
     } else {
       const { data: created, error } = await supabase
         .from('patients')
-        .insert({ phone, name, age: age ?? 0, address: address ?? '' })
+        .insert({ phone, name, age: age ?? 0, address: address ?? '', hospital_id: hospitalId })
         .select('id').single();
       if (error) throw new Error(error.message);
       patientId = created.id;
     }
   }
 
-  // Get today's max token number (IST date, UTC-aware query)
+  // Get today's max token number for this hospital and department (composite key daily sequencer)
   const todayStart = todayStartUTC();
   const { data: lastToken } = await supabase
-    .from('tokens').select('token_number')
+    .from('tokens')
+    .select('token_number')
+    .eq('hospital_id', hospitalId)
+    .eq('department', department ?? '')
     .gte('created_at', todayStart)
     .order('token_number', { ascending: false })
-    .limit(1).maybeSingle();
+    .limit(1)
+    .maybeSingle();
 
   const tokenNumber = (lastToken?.token_number ?? 0) + 1;
 
   const { data: token, error: te } = await supabase
     .from('tokens')
     .insert({
-      phone, patient_id: patientId,
-      status: 'WAITING', priority,
+      phone,
+      patient_id: patientId,
+      status: 'WAITING',
+      priority,
       token_number: tokenNumber,
       intake_status: 'ARRIVED',
       department: department ?? null,
+      hospital_id: hospitalId,
     })
     .select('*, patients(*)').single();
 
@@ -70,12 +105,18 @@ export async function registerToken(params: {
 // ─── QUEUE ───────────────────────────────────────────────────────────────────
 
 export async function getQueue(department?: string) {
+  const hospitalFilter = getHospitalFilter();
+
   let waitingQuery = supabase
     .from('tokens')
     .select('*, patients(*), patient_intake(*)')
     .eq('status', 'WAITING')
     .order('priority', { ascending: true })
     .order('created_at', { ascending: true });
+
+  if (hospitalFilter) {
+    waitingQuery = waitingQuery.eq('hospital_id', hospitalFilter);
+  }
 
   // Filter by department if provided (for doctor role)
   if (department) {
@@ -92,6 +133,10 @@ export async function getQueue(department?: string) {
     .order('created_at', { ascending: false })
     .limit(1);
 
+  if (hospitalFilter) {
+    servingQuery = servingQuery.eq('hospital_id', hospitalFilter);
+  }
+
   if (department) {
     servingQuery = servingQuery.eq('department', department);
   }
@@ -105,23 +150,35 @@ export async function getQueue(department?: string) {
 
 export async function getTokenStatus(phone: string) {
   const todayStart = todayStartUTC();
+  const hospitalFilter = getHospitalFilter();
 
-  const { data: token } = await supabase
+  let tokenQuery = supabase
     .from('tokens').select('*, patients(*)')
     .eq('phone', phone)
     .gte('created_at', todayStart)
     .order('created_at', { ascending: false })
-    .limit(1).maybeSingle();
+    .limit(1);
+
+  if (hospitalFilter) {
+    tokenQuery = tokenQuery.eq('hospital_id', hospitalFilter);
+  }
+
+  const { data: token } = await tokenQuery.maybeSingle();
 
   if (!token) return { token: null, ahead: 0 };
 
   let ahead = 0;
   if (token.status === 'WAITING') {
-    const { count } = await supabase
+    let aheadQuery = supabase
       .from('tokens')
       .select('*', { count: 'exact', head: true })
       .eq('status', 'WAITING')
       .or(`priority.lt.${token.priority},and(priority.eq.${token.priority},created_at.lt.${token.created_at})`);
+
+    if (hospitalFilter) {
+      aheadQuery = aheadQuery.eq('hospital_id', hospitalFilter);
+    }
+    const { count } = await aheadQuery;
     ahead = count ?? 0;
   }
 
@@ -131,9 +188,11 @@ export async function getTokenStatus(phone: string) {
 // ─── CALL NEXT PATIENT ────────────────────────────────────────────────────────
 
 export async function callNextPatient(department?: string) {
+  const hospitalId = getSelectedHospitalId(); // Always call within current hospital context
+
   // Mark current serving patient as done (only in same department if filtered)
   let currentQuery = supabase
-    .from('tokens').select('id').eq('status', 'SERVING');
+    .from('tokens').select('id').eq('status', 'SERVING').eq('hospital_id', hospitalId);
   if (department) currentQuery = currentQuery.eq('department', department);
   const { data: current } = await currentQuery.maybeSingle();
 
@@ -146,6 +205,7 @@ export async function callNextPatient(department?: string) {
   let nextQuery = supabase
     .from('tokens').select('*')
     .eq('status', 'WAITING').eq('intake_status', 'READY_FOR_DOCTOR')
+    .eq('hospital_id', hospitalId)
     .order('priority', { ascending: true })
     .order('created_at', { ascending: true })
     .limit(1);
@@ -198,14 +258,19 @@ export async function getIntakeByToken(tokenId: string) {
 }
 
 export async function startIntake(tokenId: string) {
+  const hospitalId = getSelectedHospitalId();
   const { data: token, error: te } = await supabase
-    .from('tokens').select('patient_id').eq('id', tokenId).maybeSingle();
+    .from('tokens').select('patient_id, hospital_id').eq('id', tokenId).maybeSingle();
   if (te || !token) throw new Error('Token not found');
   if (!token.patient_id) throw new Error('Patient not linked to token');
 
   const { data: intake, error: ie } = await supabase
     .from('patient_intake')
-    .insert({ token_id: tokenId, patient_id: token.patient_id })
+    .insert({
+      token_id: tokenId,
+      patient_id: token.patient_id,
+      hospital_id: token.hospital_id ?? hospitalId
+    })
     .select().single();
   if (ie) throw new Error(ie.message);
   return { success: true, intake };
@@ -238,6 +303,7 @@ export async function createPrescription(params: {
   doctor_notes?: string;
 }) {
   const { token_id, patient_id, diagnosis, medications, doctor_notes } = params;
+  const hospitalId = getSelectedHospitalId();
 
   const { data: intake } = await supabase
     .from('patient_intake').select('bp, sugar, symptoms')
@@ -246,10 +312,13 @@ export async function createPrescription(params: {
   const { data: visit, error: ve } = await supabase
     .from('visits')
     .insert({
-      patient_id, token_id,
-      bp: intake?.bp ?? '', sugar: intake?.sugar ?? '',
+      patient_id,
+      token_id,
+      bp: intake?.bp ?? '',
+      sugar: intake?.sugar ?? '',
       symptoms: intake?.symptoms ?? '',
       doctor_notes: doctor_notes ?? '',
+      hospital_id: hospitalId,
     })
     .select('id').single();
   if (ve) throw new Error(ve.message);
@@ -257,8 +326,14 @@ export async function createPrescription(params: {
   const { data: prescription, error: pe } = await supabase
     .from('prescriptions')
     .insert({
-      token_id, patient_id, visit_id: visit.id,
-      diagnosis, medications, status: 'PENDING', notes: '',
+      token_id,
+      patient_id,
+      visit_id: visit.id,
+      diagnosis,
+      medications,
+      status: 'PENDING',
+      notes: '',
+      hospital_id: hospitalId,
     })
     .select().single();
   if (pe) throw new Error(pe.message);
@@ -271,11 +346,19 @@ export async function createPrescription(params: {
 }
 
 export async function getPendingPrescriptions() {
-  const { data, error } = await supabase
+  const hospitalFilter = getHospitalFilter();
+
+  let query = supabase
     .from('prescriptions')
     .select('*, tokens(*), patients(*)')
     .in('status', ['PENDING', 'IN_PROGRESS'])
     .order('created_at', { ascending: true });
+
+  if (hospitalFilter) {
+    query = query.eq('hospital_id', hospitalFilter);
+  }
+
+  const { data, error } = await query;
   if (error) throw new Error(error.message);
   return data ?? [];
 }
@@ -311,27 +394,39 @@ export async function bookAppointment(params: {
   consultation_fee?: number;
 }) {
   const { phone, patient_name, department, doctor_id, appointment_date, time_slot, consultation_fee = 0 } = params;
+  const hospitalId = getSelectedHospitalId();
 
   if (doctor_id) {
     const { data: existing } = await supabase
       .from('appointments').select('id')
       .eq('doctor_id', doctor_id)
       .eq('appointment_date', appointment_date)
-      .eq('time_slot', time_slot).maybeSingle();
+      .eq('time_slot', time_slot)
+      .eq('hospital_id', hospitalId)
+      .maybeSingle();
     if (existing) throw new Error('Time slot already booked');
   }
 
   const { data: patient } = await supabase
-    .from('patients').select('id').eq('phone', phone).maybeSingle();
+    .from('patients')
+    .select('id')
+    .eq('phone', phone)
+    .eq('hospital_id', hospitalId)
+    .maybeSingle();
 
   const { data, error } = await supabase
     .from('appointments')
     .insert({
       patient_id: patient?.id ?? null,
-      phone, patient_name, department,
+      phone,
+      patient_name,
+      department,
       doctor_id: doctor_id ?? null,
-      appointment_date, time_slot,
-      status: 'SCHEDULED', consultation_fee,
+      appointment_date,
+      time_slot,
+      status: 'SCHEDULED',
+      consultation_fee,
+      hospital_id: hospitalId,
     })
     .select().single();
   if (error) throw new Error(error.message);
@@ -339,10 +434,16 @@ export async function bookAppointment(params: {
 }
 
 export async function getAppointmentSlots(date: string, doctorId?: string) {
-  const query = supabase
+  const hospitalFilter = getHospitalFilter();
+
+  let query = supabase
     .from('appointments').select('time_slot')
     .eq('appointment_date', date)
     .in('status', ['SCHEDULED', 'CONFIRMED']);
+
+  if (hospitalFilter) {
+    query = query.eq('hospital_id', hospitalFilter);
+  }
 
   if (doctorId) query.eq('doctor_id', doctorId);
 
@@ -366,15 +467,29 @@ export async function getAppointmentSlots(date: string, doctorId?: string) {
 // ─── PATIENT HISTORY ──────────────────────────────────────────────────────────
 
 export async function getPatientHistory(phone: string) {
-  const { data: patient } = await supabase
-    .from('patients').select('*').eq('phone', phone).maybeSingle();
+  const hospitalFilter = getHospitalFilter();
+
+  let patientQuery = supabase
+    .from('patients').select('*').eq('phone', phone);
+
+  if (hospitalFilter) {
+    patientQuery = patientQuery.eq('hospital_id', hospitalFilter);
+  }
+
+  const { data: patient } = await patientQuery.maybeSingle();
 
   if (!patient) return { patient: null, visits: [] };
 
-  const { data: visits } = await supabase
+  let visitsQuery = supabase
     .from('visits').select('*, tokens(*)')
     .eq('patient_id', patient.id)
     .order('created_at', { ascending: false });
+
+  if (hospitalFilter) {
+    visitsQuery = visitsQuery.eq('hospital_id', hospitalFilter);
+  }
+
+  const { data: visits } = await visitsQuery;
 
   return { patient, visits: visits ?? [] };
 }

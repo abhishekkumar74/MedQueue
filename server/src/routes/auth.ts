@@ -23,6 +23,7 @@ router.post('/staff/login', async (req: Request, res: Response) => {
       .select('*')
       .eq('email', email.toLowerCase().trim())
       .eq('is_active', true)
+      .neq('is_deleted', true)
       .single();
 
     if (error || !user) return res.status(401).json({ error: 'Invalid credentials' });
@@ -35,6 +36,7 @@ router.post('/staff/login', async (req: Request, res: Response) => {
       type: 'staff',
       role: user.role,
       name: user.name,
+      hospital_id: user.hospital_id,
     });
     const refreshToken = await createRefreshToken(user.id, 'staff');
 
@@ -48,6 +50,7 @@ router.post('/staff/login', async (req: Request, res: Response) => {
         role: user.role,
         department: user.department,
         room_number: user.room_number,
+        hospital_id: user.hospital_id,
       },
     });
   } catch (e) {
@@ -127,6 +130,7 @@ router.post('/patient/verify-otp', async (req: Request, res: Response) => {
       sub: patient.id,
       type: 'patient',
       name: patient.name || phone,
+      hospital_id: patient.hospital_id,
     });
     const refreshToken = await createRefreshToken(patient.id, 'patient');
 
@@ -172,6 +176,7 @@ router.post('/patient/qr-login', async (req: Request, res: Response) => {
       sub: qr.patient_id,
       type: 'patient',
       name: (patient.name as string) || (patient.phone as string),
+      hospital_id: patient.hospital_id as string | undefined,
     });
     const refreshToken = await createRefreshToken(qr.patient_id, 'patient');
 
@@ -194,19 +199,22 @@ router.post('/refresh', async (req: Request, res: Response) => {
 
     let name = '';
     let role: string | undefined;
+    let hospital_id: string | undefined;
 
     if (userType === 'staff') {
       const { data: user } = await db
-        .from('staff_users').select('name, role').eq('id', userId).single();
+        .from('staff_users').select('name, role, hospital_id').eq('id', userId).single();
       name = user?.name ?? '';
       role = user?.role;
+      hospital_id = user?.hospital_id;
     } else {
       const { data: patient } = await db
-        .from('patients').select('name, phone').eq('id', userId).single();
+        .from('patients').select('name, phone, hospital_id').eq('id', userId).single();
       name = patient?.name || patient?.phone || '';
+      hospital_id = patient?.hospital_id;
     }
 
-    const accessToken = signAccessToken({ sub: userId, type: userType, role, name });
+    const accessToken = signAccessToken({ sub: userId, type: userType, role, name, hospital_id });
 
     return res.json({ accessToken, refreshToken: newRefreshToken });
   } catch (e) {
@@ -228,14 +236,14 @@ router.get('/me', requireAuth, async (req: Request, res: Response) => {
   if (user.type === 'staff') {
     const { data } = await db
       .from('staff_users')
-      .select('id, name, email, role, department, room_number, is_active')
+      .select('id, name, email, role, department, room_number, hospital_id, is_active')
       .eq('id', user.sub)
       .single();
     return res.json({ type: 'staff', ...data });
   } else {
     const { data } = await db
       .from('patients')
-      .select('id, name, phone, age, address')
+      .select('id, name, phone, age, address, hospital_id')
       .eq('id', user.sub)
       .single();
 
@@ -253,7 +261,7 @@ router.get('/me', requireAuth, async (req: Request, res: Response) => {
 
 // ── POST /api/auth/staff/create (Admin only) ──────────────
 router.post('/staff/create', requireAuth, async (req: Request, res: Response) => {
-  if (req.user?.role !== 'ADMIN') {
+  if (req.user?.role !== 'ADMIN' && req.user?.role !== 'SUPER_ADMIN') {
     return res.status(403).json({ error: 'Admin access required' });
   }
 
@@ -262,12 +270,25 @@ router.post('/staff/create', requireAuth, async (req: Request, res: Response) =>
     return res.status(400).json({ error: 'name, email, password, role required' });
   }
 
+  let targetHospitalId = req.user.hospital_id;
+  if (req.user.role === 'SUPER_ADMIN') {
+    targetHospitalId = req.body.hospital_id || targetHospitalId || 'd290f1ee-6c54-4b01-90e6-d701748f0851';
+  }
+
   try {
     const hash = await bcrypt.hash(password, 12);
     const { data, error } = await db
       .from('staff_users')
-      .insert({ name, email: email.toLowerCase(), password_hash: hash, role, department, room_number })
-      .select('id, name, email, role, department, room_number')
+      .insert({
+        name,
+        email: email.toLowerCase(),
+        password_hash: hash,
+        role,
+        department,
+        room_number,
+        hospital_id: targetHospitalId
+      })
+      .select('id, name, email, role, department, room_number, hospital_id')
       .single();
 
     if (error) return res.status(400).json({ error: error.message });
@@ -280,6 +301,7 @@ router.post('/staff/create', requireAuth, async (req: Request, res: Response) =>
         specialty: department ?? 'General',
         department: department ?? 'general',
         room_number: room_number ?? null,
+        hospital_id: targetHospitalId
       });
     }
 

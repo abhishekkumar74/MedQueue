@@ -1061,7 +1061,7 @@ export default function SuperAdminDashboard({ currentUser: _currentUser, onNavig
           <div className="flex flex-col xl:flex-row items-start xl:items-center justify-between gap-6 border-b border-slate-200/60 pb-6 mb-6">
             <div>
               <span className="text-[9px] bg-[#F0F6FC] border border-blue-50 text-[#005EB8] font-black px-3 py-1 rounded-md uppercase tracking-wider">
-                Healthcare SaaS Admin Operations Control Center
+                Healthcare SaaS Admin Operations Control Center • Admin: {_currentUser?.name || _currentUser?.email}
               </span>
               <h1 className="text-2xl font-black text-slate-950 mt-2 capitalize tracking-tight flex items-center gap-2">
                 {activeTab.replace('-', ' ')} Platform Ledger

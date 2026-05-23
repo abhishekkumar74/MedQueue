@@ -5,7 +5,7 @@
  */
 import { supabase } from './supabase';
 
-export type UserRole = 'ADMIN' | 'DOCTOR' | 'WARD_BOY' | 'PHARMACY';
+export type UserRole = 'ADMIN' | 'DOCTOR' | 'WARD_BOY' | 'PHARMACY' | 'SUPER_ADMIN';
 export type UserType = 'staff' | 'patient';
 
 export interface AuthUser {
@@ -19,6 +19,7 @@ export interface AuthUser {
   address?: string;
   department?: string;
   room_number?: string;
+  hospital_id?: string;
 }
 
 // ── Storage ───────────────────────────────────────────────
@@ -83,6 +84,7 @@ export async function loginStaff(email: string, password: string): Promise<AuthU
     .select('*')
     .eq('email', normalizedEmail)
     .eq('is_active', true)
+    .neq('is_deleted', true)
     .single();
 
   if (error) {
@@ -94,6 +96,10 @@ export async function loginStaff(email: string, password: string): Promise<AuthU
   if (!staff) {
     recordFailedAttempt(normalizedEmail);
     throw new Error('No account found with this email');
+  }
+
+  if (staff.role === 'SUPER_ADMIN') {
+    throw new Error('Access denied. Super Admin accounts are restricted to the secure portal.');
   }
 
   const isValid = await verifyPassword(password, staff.password_hash);
@@ -114,6 +120,141 @@ export async function loginStaff(email: string, password: string): Promise<AuthU
     phone: staff.phone ?? undefined,   // ← store staff phone too
     department: staff.department,
     room_number: staff.room_number,
+    hospital_id: staff.hospital_id ?? undefined,
+  };
+
+  setCachedUser(user);
+  return user;
+}
+
+export async function requestSuperAdminOtp(email: string, password: string): Promise<{ success: boolean; email: string; otp: string }> {
+  const normalizedEmail = email.toLowerCase().trim();
+
+  // Check brute force block
+  checkRateLimit(normalizedEmail);
+
+  const { data: staff, error } = await supabase
+    .from('staff_users')
+    .select('*')
+    .eq('email', normalizedEmail)
+    .eq('role', 'SUPER_ADMIN')
+    .eq('is_active', true)
+    .neq('is_deleted', true)
+    .single();
+
+  if (error || !staff) {
+    recordFailedAttempt(normalizedEmail);
+    throw new Error('Access denied. Invalid credentials or unauthorized Super Admin user.');
+  }
+
+  const isValid = await verifyPassword(password, staff.password_hash);
+  if (!isValid) {
+    recordFailedAttempt(normalizedEmail);
+    throw new Error('Incorrect password');
+  }
+
+  // Credentials correct — clear failed attempts and generate OTP code
+  clearFailedAttempts(normalizedEmail);
+
+  const code = Math.floor(100000 + Math.random() * 900000).toString();
+  const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString(); // 10 mins expiry
+
+  // Try to clean older codes in DB
+  try {
+    await supabase.from('email_otps').delete().eq('email', normalizedEmail);
+  } catch (err) {
+    console.debug('Failed to clean older codes', err);
+  }
+
+  // Attempt DB insertion
+  try {
+    const { error: insErr } = await supabase.from('email_otps').insert({
+      email: normalizedEmail,
+      code,
+      expires_at: expiresAt,
+      used: false,
+    });
+    if (insErr) throw insErr;
+  } catch (dbErr) {
+    console.warn('DB email_otps insert failed, using fallback simulation:', dbErr);
+  }
+
+  // Store in localStorage for simulation fallback or developer sanity
+  localStorage.setItem(`mq_superadmin_otp_${normalizedEmail}`, JSON.stringify({
+    code,
+    expiresAt,
+    used: false
+  }));
+
+  console.log(`[MedQueue SECURE PORTAL] Generated OTP for ${normalizedEmail}: ${code}`);
+  return { success: true, email: staff.email, otp: code };
+}
+
+export async function verifySuperAdminOtp(email: string, code: string): Promise<AuthUser> {
+  const normalizedEmail = email.toLowerCase().trim();
+  let verified = false;
+
+  // Try to verify via database email_otps
+  try {
+    const { data: otpRecord, error } = await supabase
+      .from('email_otps')
+      .select('*')
+      .eq('email', normalizedEmail)
+      .eq('code', code)
+      .eq('used', false)
+      .gt('expires_at', new Date().toISOString())
+      .single();
+
+    if (!error && otpRecord) {
+      verified = true;
+      await supabase.from('email_otps').update({ used: true }).eq('id', otpRecord.id);
+    }
+  } catch (dbErr) {
+    console.warn('DB email_otps verification failed, attempting simulation:', dbErr);
+  }
+
+  // Fallback to simulation check
+  if (!verified) {
+    const simRaw = localStorage.getItem(`mq_superadmin_otp_${normalizedEmail}`);
+    if (simRaw) {
+      try {
+        const sim = JSON.parse(simRaw);
+        if (sim.code === code && !sim.used && new Date(sim.expiresAt) > new Date()) {
+          verified = true;
+          sim.used = true;
+          localStorage.setItem(`mq_superadmin_otp_${normalizedEmail}`, JSON.stringify(sim));
+        }
+      } catch (err) {
+        console.debug('Failed to parse simulation', err);
+      }
+    }
+  }
+
+  if (!verified) {
+    throw new Error('Invalid or expired verification code');
+  }
+
+  // Fetch verified Super Admin
+  const { data: staff, error } = await supabase
+    .from('staff_users')
+    .select('*')
+    .eq('email', normalizedEmail)
+    .eq('role', 'SUPER_ADMIN')
+    .eq('is_active', true)
+    .neq('is_deleted', true)
+    .single();
+
+  if (error || !staff) {
+    throw new Error('Super Admin account not found or deactivated');
+  }
+
+  const user: AuthUser = {
+    id: staff.id,
+    name: staff.name,
+    type: 'staff',
+    role: 'SUPER_ADMIN',
+    email: staff.email,
+    hospital_id: staff.hospital_id ?? undefined,
   };
 
   setCachedUser(user);
@@ -178,17 +319,20 @@ export async function verifyOtp(phone: string, code: string): Promise<AuthUser> 
 
   await supabase.from('otps').update({ used: true }).eq('id', otp.id);
 
+  const hospitalId = localStorage.getItem('mq_selected_hospital_id') || 'd290f1ee-6c54-4b01-90e6-d701748f0851';
+
   // Get or create patient
   let { data: patient } = await supabase
     .from('patients')
     .select('*')
     .eq('phone', phone)
+    .eq('hospital_id', hospitalId)
     .maybeSingle();
 
   if (!patient) {
     const { data: created, error: ce } = await supabase
       .from('patients')
-      .insert({ phone, name: '', age: 0, address: '' })
+      .insert({ phone, name: '', age: 0, address: '', hospital_id: hospitalId })
       .select()
       .single();
     if (ce) throw new Error(ce.message);
@@ -202,6 +346,7 @@ export async function verifyOtp(phone: string, code: string): Promise<AuthUser> 
     phone: patient.phone,
     age: patient.age,
     address: patient.address,
+    hospital_id: patient.hospital_id ?? undefined,
   };
 
   setCachedUser(user);
