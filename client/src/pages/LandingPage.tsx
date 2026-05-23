@@ -159,48 +159,85 @@ export default function LandingPage({ onGetStarted, onStaffLogin }: Props) {
           </button>
         </div>
 
-        {/* Mobile menu */}
+        {/* Mobile menu - Vertical Way for premium mobile design */}
         {menuOpen && (
-          <div className="md:hidden bg-white border-b border-slate-100 px-6 py-4 space-y-4 shadow-lg">
-            <a href="#how-it-works" onClick={() => setMenuOpen(false)} className="block text-xs font-bold text-slate-600">Platform Workflow</a>
-            <a href="#features" onClick={() => setMenuOpen(false)} className="block text-xs font-bold text-slate-600">Core Modules</a>
-            <a href="#isolation" onClick={() => setMenuOpen(false)} className="block text-xs font-bold text-slate-600">Data Security</a>
-            <a href="#pricing" onClick={() => setMenuOpen(false)} className="block text-xs font-bold text-slate-600">SaaS Plans</a>
-            <div className="pt-2 border-t border-slate-100 flex flex-col gap-2">
-              <button onClick={() => { setMenuOpen(false); onStaffLogin(); }} className="w-full py-2.5 border border-slate-200 text-slate-700 rounded-xl text-xs font-bold bg-slate-50">Staff Portal</button>
-              <button onClick={() => { setMenuOpen(false); onGetStarted(); }} className="w-full py-2.5 bg-[#005EB8] text-white rounded-xl text-xs font-bold">Patient Login</button>
+          <div className="md:hidden absolute top-14 left-4 right-4 bg-white/95 backdrop-blur-xl border border-slate-150 rounded-3xl p-5 shadow-2xl space-y-3.5 z-50 animate-fade-in font-sans">
+            <div className="flex flex-col gap-2">
+              {[
+                { id: '#how-it-works', label: 'Platform Workflow', icon: <Layers className="w-4 h-4 text-[#005EB8]" /> },
+                { id: '#features', label: 'Core Modules', icon: <Activity className="w-4 h-4 text-[#00A3AD]" /> },
+                { id: '#isolation', label: 'Data Security', icon: <Shield className="w-4 h-4 text-emerald-500" /> },
+                { id: '#pricing', label: 'SaaS Plans', icon: <Sparkles className="w-4 h-4 text-violet-500" /> },
+                { id: '#demo', label: 'Schedule Setup', icon: <Building2 className="w-4 h-4 text-amber-500" /> },
+              ].map(item => (
+                <a 
+                  key={item.id} 
+                  href={item.id} 
+                  onClick={() => setMenuOpen(false)} 
+                  className="flex items-center gap-3.5 p-3 hover:bg-slate-50 rounded-2xl text-xs font-black text-slate-700 transition-colors border border-transparent hover:border-slate-100/50"
+                >
+                  {item.icon}
+                  <span>{item.label}</span>
+                </a>
+              ))}
+            </div>
+            <div className="pt-3.5 border-t border-slate-100 flex flex-col gap-2">
+              <button 
+                onClick={() => { setMenuOpen(false); onStaffLogin(); }} 
+                className="w-full py-3 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-750 rounded-2xl text-xs font-black transition-colors"
+              >
+                Staff Portal
+              </button>
+              <button 
+                onClick={() => { setMenuOpen(false); onGetStarted(); }} 
+                className="w-full py-3 bg-[#005EB8] hover:bg-[#004a96] text-white rounded-2xl text-xs font-black shadow-md shadow-blue-500/10 transition-colors"
+              >
+                Patient Login
+              </button>
             </div>
           </div>
         )}
       </nav>
 
-      {/* ── 1. HERO SECTION ── */}
-      <section className="relative min-h-screen flex flex-col justify-center pt-28 pb-16 overflow-hidden bg-gradient-to-b from-[#F8FAFC] to-[#F1F5F9]">
-        {/* Background Gradients with animated pulse and rotation blur */}
-        <div className="absolute top-[-10%] left-[-10%] w-[60%] h-[60%] bg-gradient-to-tr from-[#005EB8]/10 to-[#00A3AD]/10 rounded-full blur-[130px] pointer-events-none animate-pulse-glow" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-gradient-to-br from-[#00A3AD]/10 to-[#005EB8]/10 rounded-full blur-[130px] pointer-events-none animate-pulse-glow" />
+      {/* ── 1. HERO SECTION (Full background image with content overlays) ── */}
+      <section className="relative min-h-screen flex items-center justify-center pt-24 pb-16 overflow-hidden">
+        
+        {/* Full screen Background Image */}
+        <div className="absolute inset-0 z-0">
+          <img 
+            src="/healthcare_hero.png" 
+            alt="MedQueue personalized wellness solutions background" 
+            className="w-full h-full object-cover filter brightness-[0.98] contrast-[1.01]" 
+          />
+          {/* Light-theme soft gradient overlay to guarantee perfect readability on all screens */}
+          <div className="absolute inset-0 bg-gradient-to-r from-white/95 via-white/85 to-white/10 md:bg-gradient-to-r md:from-white/90 md:via-white/70 md:to-white/10" />
+        </div>
 
-        <div className="relative max-w-7xl mx-auto px-6 grid lg:grid-cols-12 gap-16 items-center w-full z-10">
-          {/* Left Hero Pitch */}
-          <div className="lg:col-span-6 space-y-7 text-left">
+        {/* Ambient background glows for tech feel */}
+        <div className="absolute top-[-10%] left-[-10%] w-[60%] h-[60%] bg-gradient-to-tr from-[#005EB8]/10 to-[#00A3AD]/10 rounded-full blur-[130px] pointer-events-none animate-pulse-glow" />
+
+        <div className="relative max-w-7xl mx-auto px-6 grid lg:grid-cols-12 gap-12 items-center w-full z-10">
+          
+          {/* Left Hero Pitch: Elegant glassmorphic EHR card overlay */}
+          <div className="lg:col-span-7 space-y-7 text-left bg-white/90 md:bg-white/80 backdrop-blur-xl border border-white/60 p-8 sm:p-12 rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.05)] hover:scale-[1.01] transition-transform duration-300">
             <div className="inline-flex items-center gap-1.5 bg-[#005EB8]/10 text-[#005EB8] text-[10px] font-black px-3.5 py-1.5 rounded-full uppercase tracking-widest border border-[#005EB8]/20">
               <Sparkles className="w-3.5 h-3.5 text-[#00A3AD] animate-spin" style={{ animationDuration: '6s' }} />
               Enterprise Healthcare Platform
             </div>
 
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-slate-800 tracking-tight leading-[1.05]">
-              Smarter Healthcare.<br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#005EB8] to-[#00A3AD]">Better Outcomes.</span>
+            <h1 className="text-3.5xl sm:text-5xl lg:text-6xl font-black text-slate-800 tracking-tight leading-[1.08]">
+              Healthcare for<br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#005EB8] to-[#00A3AD]">Personalized Wellness.</span>
             </h1>
 
-            <p className="text-slate-500 text-sm sm:text-base leading-relaxed max-w-lg font-medium">
+            <p className="text-slate-500 text-sm sm:text-base leading-relaxed max-w-lg font-semibold">
               MedQueue unifies patient flow, staff coordination, real-time queues, and clinical operations in one intelligent platform. Built for hospitals. Designed for better care.
             </p>
 
             <div className="flex flex-wrap items-center gap-4 pt-2">
               <a 
                 href="#demo"
-                className="flex items-center gap-2 px-6 py-3.5 bg-[#005EB8] hover:bg-[#004a96] text-white font-black rounded-xl text-xs shadow-lg shadow-[#005EB8]/25 hover:shadow-[#005EB8]/45 transition-all duration-300 uppercase tracking-widest"
+                className="flex items-center gap-2 px-6 py-3.5 bg-[#005EB8] hover:bg-[#004a96] text-white font-black rounded-xl text-xs shadow-lg shadow-[#005EB8]/20 hover:shadow-[#005EB8]/30 transition-all duration-300 uppercase tracking-widest"
               >
                 Book a Live Demo
                 <ArrowRight className="w-4 h-4" />
@@ -213,7 +250,7 @@ export default function LandingPage({ onGetStarted, onStaffLogin }: Props) {
               </a>
             </div>
 
-            {/* Micro badges from mockup */}
+            {/* Micro badges */}
             <div className="flex items-center gap-5 text-xs text-slate-400 font-semibold pt-1">
               <span className="flex items-center gap-1.5">
                 <CheckCircle2 className="w-4 h-4 text-[#005EB8]" /> No Credit Card Required
@@ -224,99 +261,59 @@ export default function LandingPage({ onGetStarted, onStaffLogin }: Props) {
             </div>
           </div>
 
-          {/* Right Hero Interface Preview Card */}
-          <div className="lg:col-span-6 flex justify-center relative">
-            <div className="relative w-full max-w-lg aspect-square sm:aspect-[4/3] lg:aspect-square flex items-center justify-center">
-              
-              {/* Premium Background Glow behind 3D render */}
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-gradient-to-tr from-[#005EB8]/20 to-[#00A3AD]/20 rounded-full blur-[90px] pointer-events-none animate-pulse-glow" />
-
-              {/* FLOATING CARD A: Today's Appointments (Top Left) */}
-              <div className="absolute -top-6 -left-8 bg-white/90 backdrop-blur-md border border-white/60 rounded-2xl p-4 shadow-[0_20px_50px_rgba(0,0,0,0.08)] w-44 animate-float-slow z-20 hover:scale-105 transition-transform duration-300">
-                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">Today's Appointments</span>
-                <div className="flex items-baseline gap-2 mt-1">
-                  <span className="text-2xl font-black text-slate-800">156</span>
-                  <span className="text-[10px] font-black text-emerald-600 bg-emerald-50 border border-emerald-100/50 px-1.5 py-0.5 rounded-full">+18%</span>
-                </div>
-                {/* Micro Bar Chart */}
-                <div className="flex gap-1.5 items-end h-8 mt-3">
-                  <div className="bg-[#005EB8]/10 w-full h-[40%] rounded-sm" />
-                  <div className="bg-[#005EB8]/20 w-full h-[60%] rounded-sm" />
-                  <div className="bg-[#005EB8]/10 w-full h-[30%] rounded-sm" />
-                  <div className="bg-[#005EB8]/40 w-full h-[80%] rounded-sm" />
-                  <div className="bg-[#005EB8] w-full h-[100%] rounded-sm" />
-                </div>
-              </div>
-
-              {/* FLOATING CARD B: Live Queue Status (Top Right) */}
-              <div className="absolute -top-2 right-[-2.5rem] bg-white/90 backdrop-blur-md border border-white/60 rounded-2xl p-4 shadow-[0_20px_50px_rgba(0,0,0,0.08)] w-48 animate-float-medium z-20 hover:scale-105 transition-transform duration-300">
-                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">Live Queue Status</span>
-                <span className="text-[10px] text-slate-500 font-extrabold block mt-0.5">OPD Cardiology</span>
-                <div className="flex items-baseline gap-2 mt-1.5">
-                  <span className="text-3xl font-black text-[#005EB8]">08</span>
-                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider">Patients Ahead</span>
-                </div>
-                {/* Active Sparkline Wave */}
-                <div className="mt-2.5 h-6 w-full overflow-hidden">
-                  <svg viewBox="0 0 100 25" className="w-full h-full text-[#005EB8] stroke-current stroke-2 fill-none">
-                    <path d="M0,15 Q15,5 30,18 T60,10 T80,20 T100,8" className="animate-pulse" />
-                  </svg>
-                </div>
-              </div>
-
-              {/* FLOATING CARD C: Average Wait Time (Bottom Left) */}
-              <div className="absolute bottom-6 -left-12 bg-white/90 backdrop-blur-md border border-white/60 rounded-2xl p-4 shadow-[0_20px_50px_rgba(0,0,0,0.08)] w-44 animate-float-fast z-20 hover:scale-105 transition-transform duration-300">
-                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">Average Wait Time</span>
-                <div className="flex items-baseline gap-1 mt-1">
-                  <span className="text-3xl font-black text-slate-800">24</span>
-                  <span className="text-xs font-black text-slate-600 uppercase tracking-widest font-mono">min</span>
-                </div>
-                {/* Trend Badge */}
-                <div className="flex items-center gap-1.5 mt-2 text-[9px] font-black text-emerald-600 bg-emerald-50 border border-emerald-100/50 px-2 py-0.5 rounded-full w-max">
-                  <svg viewBox="0 0 10 10" className="w-2 h-2 fill-current">
-                    <path d="M1,7 L5,3 L9,7 Z" transform="rotate(180 5 5)" />
-                  </svg>
-                  <span>-12% vs yesterday</span>
-                </div>
-              </div>
-
-              {/* Main Premium Glass Container for our 3D Image */}
-              <div className="w-full h-full bg-white/40 backdrop-blur-xl border border-white/80 rounded-[2.5rem] p-4 shadow-[0_30px_60px_rgba(0,0,0,0.05)] overflow-hidden flex items-center justify-center relative group">
-                <div className="absolute inset-0 bg-gradient-to-tr from-[#005EB8]/5 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500" />
-                <img 
-                  src="/healthcare_hero.png" 
-                  alt="Futuristic Healthcare Operations Cloud Dashboard Mockup" 
-                  className="w-full h-full object-cover rounded-3xl shadow-sm border border-slate-100/80 transition-all duration-700 group-hover:scale-102"
-                />
-              </div>
-
+          {/* Right Hero Preview: Spans clean area allowing doctors background image to show, loaded with floating glass panels */}
+          <div className="lg:col-span-5 relative hidden lg:flex flex-col justify-between min-h-[380px] w-full">
+            
+            {/* FLOATING CARD A: Surgical Department (Top Right) */}
+            <div className="absolute top-4 right-2 bg-white/90 backdrop-blur-md border border-white/60 rounded-xl px-4 py-2 shadow-[0_10px_30px_rgba(0,0,0,0.04)] flex items-center gap-2 animate-float-slow hover:scale-105 transition-transform duration-300">
+              <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="text-[10px] font-black text-slate-700 uppercase tracking-widest">Surgical Department</span>
             </div>
+
+            {/* FLOATING CARD B: Healthy Patients (Bottom Left) */}
+            <div className="absolute bottom-10 left-4 bg-white/90 backdrop-blur-md border border-white/60 rounded-xl px-4 py-2 shadow-[0_10px_30px_rgba(0,0,0,0.04)] flex items-center gap-2 animate-float-medium hover:scale-105 transition-transform duration-300">
+              <div className="w-2 h-2 rounded-full bg-[#00A3AD] animate-pulse" />
+              <span className="text-[10px] font-black text-slate-700 uppercase tracking-widest">Healthy Patients</span>
+            </div>
+
+            {/* FLOATING CARD C: Book Appointment (Center Focus) */}
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white/95 backdrop-blur-xl border border-white/70 rounded-2xl p-4.5 shadow-[0_20px_50px_rgba(0,0,0,0.08)] w-52 animate-float-fast hover:scale-105 transition-transform duration-300">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#005EB8] to-[#00A3AD] text-white flex items-center justify-center font-bold text-xs shadow-md shadow-[#005EB8]/20">
+                  <Heart className="w-4 h-4 fill-white" />
+                </div>
+                <div>
+                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider block">Book Appointment</span>
+                  <span className="text-[10px] text-slate-700 font-extrabold block mt-0.5">Route to Least Busy Doctor</span>
+                </div>
+              </div>
+            </div>
+
           </div>
         </div>
 
-        {/* ── TRUSTED BY CLINICAL BRANDS ── */}
-        <div className="relative max-w-7xl mx-auto px-6 w-full pt-16 z-10">
-          <div className="border-t border-slate-200/60 pt-8 text-center space-y-4">
+        {/* ── TRUSTED BY CLINICAL BRANDS (Flat, Borderless, Side-by-Side Logo Layout matching 3rd Image) ── */}
+        <div className="absolute bottom-0 left-0 right-0 z-10 bg-gradient-to-t from-white via-white/90 to-transparent pt-12 pb-6 border-b border-slate-150/40">
+          <div className="max-w-7xl mx-auto px-6 text-center space-y-3.5">
             <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
               Trusted by Modern Healthcare Teams
             </p>
-            <p className="text-xs text-slate-400 font-semibold max-w-md mx-auto">
-              Hospitals, clinics, and healthcare networks love MedQueue.
-            </p>
-            <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6 pt-3">
+            
+            {/* Clean Flat Side-by-side Brands List (Zero rect cards!) */}
+            <div className="flex flex-wrap items-center justify-center gap-8 sm:gap-14 md:gap-20 pt-2 pb-2">
               {[
-                { name: 'Apollo Clinic', color: 'text-[#005EB8]' },
-                { name: 'MAX Health', color: 'text-[#00A3AD]' },
-                { name: 'Fortis', color: 'text-emerald-600' },
-                { name: 'Manipal', color: 'text-indigo-600' },
-                { name: 'Narayana', color: 'text-rose-500' }
+                { name: 'Apollo Clinics', color: 'hover:text-[#005EB8]', icon: <Activity className="w-5 h-5 text-slate-400 group-hover:text-[#005EB8] transition-colors" /> },
+                { name: 'MAX Health', color: 'hover:text-[#00A3AD]', icon: <Heart className="w-5 h-5 text-slate-400 group-hover:text-[#00A3AD] transition-colors" /> },
+                { name: 'Fortis Clinic', color: 'hover:text-emerald-600', icon: <Stethoscope className="w-5 h-5 text-slate-400 group-hover:text-emerald-600 transition-colors" /> },
+                { name: 'Manipal Hub', color: 'hover:text-indigo-600', icon: <Building2 className="w-5 h-5 text-slate-400 group-hover:text-indigo-600 transition-colors" /> },
+                { name: 'Narayana Core', color: 'hover:text-rose-500', icon: <Activity className="w-5 h-5 text-slate-400 group-hover:text-rose-500 transition-colors" /> }
               ].map((item, idx) => (
                 <div 
                   key={idx}
-                  className="bg-white hover:bg-slate-50 border border-slate-200/80 px-5 py-3 rounded-2xl flex items-center gap-2 shadow-sm transition-all duration-300 hover:-translate-y-0.5 cursor-pointer"
+                  className="flex items-center gap-2 text-slate-400 hover:text-slate-650 transition-all duration-300 cursor-pointer group hover:scale-105 font-sans"
                 >
-                  <div className={`w-2.5 h-2.5 rounded-full ${idx === 0 ? 'bg-[#005EB8]' : idx === 1 ? 'bg-[#00A3AD]' : idx === 2 ? 'bg-emerald-500' : idx === 3 ? 'bg-indigo-500' : 'bg-rose-500'} animate-pulse`} />
-                  <span className={`text-xs font-black text-slate-700 uppercase tracking-widest ${item.color}`}>
+                  {item.icon}
+                  <span className={`text-[11px] font-black tracking-[0.15em] uppercase transition-colors ${item.color}`}>
                     {item.name}
                   </span>
                 </div>
@@ -324,6 +321,7 @@ export default function LandingPage({ onGetStarted, onStaffLogin }: Props) {
             </div>
           </div>
         </div>
+
       </section>
 
       {/* ── 2. HOW MEDQUEUE WORKS ── */}
