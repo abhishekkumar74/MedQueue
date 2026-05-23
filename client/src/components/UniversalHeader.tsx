@@ -3,8 +3,8 @@ import { supabase } from '../lib/supabase';
 import { AuthUser } from '../lib/auth';
 import { 
   Pill, Activity, Bell, Search, ShieldAlert, LogOut, Settings, 
-  ChevronDown, User, Heart, RefreshCw, BarChart2, CheckCircle2,
-  Clock, Calendar, FileText, Home, Shield, Sparkles, Building2
+  ChevronDown, User, BarChart2,
+  Clock, Calendar, FileText, Home, Building2
 } from 'lucide-react';
 
 interface Props {
@@ -22,13 +22,7 @@ export default function UniversalHeader({ page, navigate, currentUser, handleLog
   const [hospitalLocation, setHospitalLocation] = useState<string>('Main Campus');
   const [showProfileMenu, setShowProfileMenu] = useState<boolean>(false);
 
-  // ── Live Telemetry Metrics ──────────────────────────────────
-  const [onlineDoctors, setOnlineDoctors] = useState<number>(3);
-  const [patientsToday, setPatientsToday] = useState<number>(24);
-  const [queueLoadText, setQueueLoadText] = useState<string>('Stable Queue');
-  const [queueLoadColor, setQueueLoadColor] = useState<string>('bg-emerald-50 text-emerald-700 border-emerald-100');
-  const [avgWaitTime, setAvgWaitTime] = useState<number>(12);
-  const [syncStatus, setSyncStatus] = useState<'SYNCING' | 'RECONNECTING'>('SYNCING');
+  // ── Live Telemetry Metrics (fetched for emergency banner only) ───────────
   const [emergencyActive, setEmergencyActive] = useState<boolean>(false);
 
   // ── Fetch dynamic hospital context and metrics ─────────────
@@ -57,46 +51,13 @@ export default function UniversalHeader({ page, navigate, currentUser, handleLog
   useEffect(() => {
     async function fetchLiveMetrics() {
       try {
-        setSyncStatus('SYNCING');
-        const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
-        const startIST = `${today}T00:00:00+05:30`;
-        const endIST = `${today}T23:59:59+05:30`;
+        // Only fetch emergency mode setting — other metrics removed from header UI
+        const settingsRes = await supabase
+          .from('system_settings')
+          .select('emergency_mode')
+          .eq('hospital_id', hospitalId)
+          .maybeSingle();
 
-        const [docRes, tokenRes, activeQueueRes, settingsRes] = await Promise.all([
-          supabase.from('doctors').select('is_available').eq('hospital_id', hospitalId),
-          supabase.from('tokens').select('id', { count: 'exact', head: true }).eq('hospital_id', hospitalId).gte('created_at', startIST).lte('created_at', endIST),
-          supabase.from('tokens').select('id', { count: 'exact', head: true }).eq('hospital_id', hospitalId).in('status', ['WAITING', 'SERVING']).gte('created_at', startIST).lte('created_at', endIST),
-          supabase.from('system_settings').select('*').eq('hospital_id', hospitalId).maybeSingle()
-        ]);
-
-        // 1. Available online doctors count
-        if (docRes.data) {
-          const count = docRes.data.filter(d => d.is_available).length;
-          setOnlineDoctors(count > 0 ? count : 4); // fallback if none seeded
-        }
-
-        // 2. Patients today
-        if (tokenRes.count !== null) {
-          setPatientsToday(tokenRes.count > 0 ? tokenRes.count : 14);
-        }
-
-        // 3. Queue load dynamic triage
-        const activeCount = activeQueueRes.count ?? 0;
-        if (activeCount > 10) {
-          setQueueLoadText('High Load');
-          setQueueLoadColor('bg-rose-50 text-rose-700 border-rose-100 animate-pulse');
-        } else if (activeCount > 4) {
-          setQueueLoadText('Moderate Load');
-          setQueueLoadColor('bg-amber-50 text-amber-700 border-amber-100');
-        } else {
-          setQueueLoadText('Stable Queue');
-          setQueueLoadColor('bg-emerald-50 text-emerald-700 border-emerald-100');
-        }
-
-        // 4. Wait time calculation
-        setAvgWaitTime(activeCount > 0 ? activeCount * 4 : 8);
-
-        // 5. Emergency Mode Status
         if (settingsRes.data) {
           setEmergencyActive(settingsRes.data.emergency_mode === true);
         }

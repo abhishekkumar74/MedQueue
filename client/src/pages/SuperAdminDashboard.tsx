@@ -6,7 +6,7 @@ import {
   Building2, Users, Shield, Plus, ArrowRight, Activity, 
   MapPin, Phone, Check, RefreshCw, UserPlus, Trash2, Loader2, Info,
   LayoutDashboard, BarChart3, CreditCard, AlertTriangle, Heart, Megaphone,
-  CheckCircle2, Download, Send, ShieldCheck,
+  CheckCircle2, Download, Send, ShieldCheck, Sparkles,
   Settings, Bell, Clock, Radio, ChevronDown
 } from 'lucide-react';
 
@@ -55,7 +55,7 @@ interface ActivityEvent {
   id: string;
   timestamp: string;
   message: string;
-  category: 'security' | 'queue' | 'billing' | 'system' | 'staff';
+  category: 'security' | 'queue' | 'billing' | 'system' | 'staff' | 'onboarding';
   badgeColor: string;
 }
 
