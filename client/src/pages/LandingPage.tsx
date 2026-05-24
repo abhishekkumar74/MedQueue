@@ -16,6 +16,7 @@ interface Props {
 export default function LandingPage({ onGetStarted, onStaffLogin }: Props) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [activeWorkflowStep, setActiveWorkflowStep] = useState<number>(0);
+  const [selectedTier, setSelectedTier] = useState<string>('');
 
   // ── Demo Booking Form State ──
   const [demoForm, setDemoForm] = useState({
@@ -36,7 +37,7 @@ export default function LandingPage({ onGetStarted, onStaffLogin }: Props) {
     }
     
     try {
-      const msg = `Onboarding Demo Request: "${demoForm.hospitalName}" (${demoForm.size}) in ${demoForm.city} requested by ${demoForm.contactPerson} (Phone: ${demoForm.phone}, Email: ${demoForm.email})`;
+      const msg = `Onboarding Demo Request for ${selectedTier || 'Professional Ops'}: "${demoForm.hospitalName}" (${demoForm.size}) in ${demoForm.city} requested by ${demoForm.contactPerson} (Phone: ${demoForm.phone}, Email: ${demoForm.email})`;
       const { error } = await supabase.from('activity_logs').insert({
         message: msg,
         category: 'onboarding',
@@ -120,13 +121,13 @@ export default function LandingPage({ onGetStarted, onStaffLogin }: Props) {
     <div className="min-h-screen bg-[#F4F8FB] font-sans text-slate-700 selection:bg-[#005EB8]/10 selection:text-[#005EB8] overflow-x-hidden">
       
       {/* ── NAVBAR ── */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-md border-b border-slate-100 shadow-[0_1px_3px_rgba(0,0,0,0.02)] h-14">
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-[#060B1E]/85 backdrop-blur-md border-b border-white/[0.08] shadow-[0_1px_3px_rgba(0,0,0,0.02)] h-14">
         <div className="max-w-7xl mx-auto px-6 h-full flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-xl bg-[#005EB8] flex items-center justify-center shadow-md shadow-[#005EB8]/20">
               <Activity className="w-4.5 h-4.5 text-white animate-pulse" />
             </div>
-            <span className="font-black text-slate-800 tracking-tight text-base flex items-center">
+            <span className="font-black text-white tracking-tight text-base flex items-center">
               MedQueue
               <span className="text-[#00A3AD] text-base font-extrabold ml-0.5">.</span>
             </span>
@@ -134,15 +135,15 @@ export default function LandingPage({ onGetStarted, onStaffLogin }: Props) {
 
           {/* Desktop Nav links */}
           <div className="hidden md:flex items-center gap-6">
-            <a href="#how-it-works" className="text-xs font-bold text-slate-500 hover:text-[#005EB8] transition-colors">Platform Workflow</a>
-            <a href="#features" className="text-xs font-bold text-slate-500 hover:text-[#005EB8] transition-colors">Core Modules</a>
-            <a href="#isolation" className="text-xs font-bold text-slate-500 hover:text-[#005EB8] transition-colors">Data Security</a>
-            <a href="#pricing" className="text-xs font-bold text-slate-500 hover:text-[#005EB8] transition-colors">SaaS Plans</a>
-            <a href="#demo" className="text-xs font-bold text-slate-500 hover:text-[#005EB8] transition-colors">Schedule Setup</a>
+            <a href="#how-it-works" className="text-xs font-bold text-slate-300 hover:text-white transition-colors">Platform Workflow</a>
+            <a href="#features" className="text-xs font-bold text-slate-300 hover:text-white transition-colors">Core Modules</a>
+            <a href="#isolation" className="text-xs font-bold text-slate-300 hover:text-white transition-colors">Data Security</a>
+            <a href="#pricing" className="text-xs font-bold text-slate-300 hover:text-white transition-colors">SaaS Plans</a>
+            <a href="#demo" className="text-xs font-bold text-slate-300 hover:text-white transition-colors">Schedule Setup</a>
           </div>
 
           <div className="hidden md:flex items-center gap-3">
-            <button onClick={onStaffLogin} className="text-xs font-extrabold text-slate-500 hover:text-[#005EB8] px-3.5 py-2 transition-colors">
+            <button onClick={onStaffLogin} className="text-xs font-extrabold text-slate-300 hover:text-white px-3.5 py-2 transition-colors">
               Staff Portal
             </button>
             <button 
@@ -154,14 +155,14 @@ export default function LandingPage({ onGetStarted, onStaffLogin }: Props) {
             </button>
           </div>
 
-          <button onClick={() => setMenuOpen(!menuOpen)} className="md:hidden text-slate-600 focus:outline-none">
+          <button onClick={() => setMenuOpen(!menuOpen)} className="md:hidden text-white focus:outline-none">
             {menuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
         </div>
 
         {/* Mobile menu - Vertical Way for premium mobile design */}
         {menuOpen && (
-          <div className="md:hidden absolute top-14 left-4 right-4 bg-white/95 backdrop-blur-xl border border-slate-150 rounded-3xl p-5 shadow-2xl space-y-3.5 z-50 animate-fade-in font-sans">
+          <div className="md:hidden absolute top-14 left-4 right-4 bg-[#0A1128]/95 backdrop-blur-xl border border-white/[0.08] rounded-3xl p-5 shadow-2xl space-y-3.5 z-50 animate-fade-in font-sans">
             <div className="flex flex-col gap-2">
               {[
                 { id: '#how-it-works', label: 'Platform Workflow', icon: <Layers className="w-4 h-4 text-[#005EB8]" /> },
@@ -174,17 +175,17 @@ export default function LandingPage({ onGetStarted, onStaffLogin }: Props) {
                   key={item.id} 
                   href={item.id} 
                   onClick={() => setMenuOpen(false)} 
-                  className="flex items-center gap-3.5 p-3 hover:bg-slate-50 rounded-2xl text-xs font-black text-slate-700 transition-colors border border-transparent hover:border-slate-100/50"
+                  className="flex items-center gap-3.5 p-3 hover:bg-white/[0.04] rounded-2xl text-xs font-black text-slate-200 transition-colors border border-transparent hover:border-white/[0.04]"
                 >
                   {item.icon}
                   <span>{item.label}</span>
                 </a>
               ))}
             </div>
-            <div className="pt-3.5 border-t border-slate-100 flex flex-col gap-2">
+            <div className="pt-3.5 border-t border-white/[0.06] flex flex-col gap-2">
               <button 
                 onClick={() => { setMenuOpen(false); onStaffLogin(); }} 
-                className="w-full py-3 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-750 rounded-2xl text-xs font-black transition-colors"
+                className="w-full py-3 bg-white/[0.02] hover:bg-white/[0.06] border border-white/[0.08] text-white rounded-2xl text-xs font-black transition-colors"
               >
                 Staff Portal
               </button>
@@ -200,37 +201,37 @@ export default function LandingPage({ onGetStarted, onStaffLogin }: Props) {
       </nav>
 
       {/* ── 1. HERO SECTION (Full background image with content overlays) ── */}
-      <section className="relative min-h-screen py-28 lg:py-0 flex items-center justify-center overflow-hidden">
+      <section className="relative min-h-[auto] py-20 lg:py-0 lg:min-h-screen flex items-center justify-center overflow-hidden bg-[#060B1E]">
         
         {/* Full screen Background Image */}
         <div className="absolute inset-0 z-0">
           <img 
             src="/healthcare_hero.png" 
             alt="MedQueue personalized wellness solutions background" 
-            className="w-full h-full object-cover filter brightness-[0.98] contrast-[1.01]" 
+            className="w-full h-full object-cover object-[center_35%] filter brightness-[0.35] contrast-[1.05]" 
           />
-          {/* Light-theme soft vertical gradient overlay on mobile and horizontal on desktop to guarantee perfect readability */}
-          <div className="absolute inset-0 bg-gradient-to-b from-white/98 via-white/95 to-white/90 lg:bg-gradient-to-r lg:from-white/95 lg:via-white/85 lg:to-white/10" />
+          {/* Deep-navy tech-oriented gradient overlay to guarantee perfect readability of white text */}
+          <div className="absolute inset-0 bg-gradient-to-b from-[#060B1E]/95 via-[#060B1E]/75 to-[#060B1E]/95 lg:bg-gradient-to-r lg:from-[#060B1E]/96 lg:via-[#060B1E]/80 lg:to-[#060B1E]/40" />
         </div>
 
         {/* Ambient background glows for tech feel */}
-        <div className="absolute top-[-10%] left-[-10%] w-[60%] h-[60%] bg-gradient-to-tr from-[#005EB8]/10 to-[#00A3AD]/10 rounded-full blur-[130px] pointer-events-none animate-pulse-glow" />
+        <div className="absolute top-[-10%] left-[-10%] w-[60%] h-[60%] bg-gradient-to-tr from-[#005EB8]/20 to-[#00A3AD]/20 rounded-full blur-[130px] pointer-events-none animate-pulse-glow" />
 
-        <div className="relative max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center w-full z-10">
+        <div className="relative max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center w-full z-10 pt-10 pb-6">
           
-          {/* Left Hero Pitch: Borderless direct text overlay on background image */}
+          {/* Left Hero Pitch: Borderless direct white text overlay on background image */}
           <div className="col-span-1 lg:col-span-7 space-y-7 text-left px-4 md:px-0">
-            <div className="inline-flex items-center gap-1.5 bg-[#005EB8]/10 text-[#005EB8] text-[10px] font-black px-3.5 py-1.5 rounded-full uppercase tracking-widest border border-[#005EB8]/20">
+            <div className="inline-flex items-center gap-1.5 bg-indigo-500/10 text-indigo-400 text-[10px] font-black px-3.5 py-1.5 rounded-full uppercase tracking-widest border border-indigo-500/20">
               <Sparkles className="w-3.5 h-3.5 text-[#00A3AD] animate-spin" style={{ animationDuration: '6s' }} />
               Enterprise Healthcare Platform
             </div>
 
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-slate-800 tracking-tight leading-[1.08] drop-shadow-[0_1px_2px_rgba(255,255,255,0.8)]">
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight leading-[1.08]">
               Healthcare for<br />
-              <span className="text-[#005EB8]">Personalized Wellness.</span>
+              <span className="text-[#00A3AD]">Personalized Wellness.</span>
             </h1>
 
-            <p className="text-slate-650 text-sm sm:text-base leading-relaxed max-w-lg font-bold drop-shadow-[0_1px_1px_rgba(255,255,255,0.9)]">
+            <p className="text-slate-300 text-sm sm:text-base leading-relaxed max-w-lg font-semibold">
               MedQueue unifies patient flow, staff coordination, real-time queues, and clinical operations in one intelligent platform. Built for hospitals. Designed for better care.
             </p>
 
@@ -244,19 +245,19 @@ export default function LandingPage({ onGetStarted, onStaffLogin }: Props) {
               </a>
               <a 
                 href="#features"
-                className="px-6 py-3.5 bg-white border border-slate-250 text-slate-700 hover:bg-slate-50 font-black rounded-xl text-xs transition-all duration-300 shadow-sm hover:shadow-md uppercase tracking-widest"
+                className="px-6 py-3.5 bg-white/5 border border-white/10 text-white hover:bg-white/10 font-black rounded-xl text-xs transition-all duration-300 shadow-sm hover:shadow-md uppercase tracking-widest"
               >
                 Explore Features
               </a>
             </div>
 
             {/* Micro badges */}
-            <div className="flex items-center gap-5 text-xs text-slate-500 font-bold pt-1">
-              <span className="flex items-center gap-1.5 drop-shadow-[0_1px_1px_rgba(255,255,255,0.9)]">
-                <CheckCircle2 className="w-4 h-4 text-[#005EB8]" /> No Credit Card Required
+            <div className="flex items-center gap-5 text-xs text-slate-400 font-bold pt-1">
+              <span className="flex items-center gap-1.5">
+                <CheckCircle2 className="w-4 h-4 text-emerald-500" /> No Credit Card Required
               </span>
-              <span className="flex items-center gap-1.5 drop-shadow-[0_1px_1px_rgba(255,255,255,0.9)]">
-                <CheckCircle2 className="w-4 h-4 text-[#005EB8]" /> 14-Day Free Trial
+              <span className="flex items-center gap-1.5">
+                <CheckCircle2 className="w-4 h-4 text-emerald-500" /> 14-Day Free Trial
               </span>
             </div>
           </div>
@@ -268,14 +269,14 @@ export default function LandingPage({ onGetStarted, onStaffLogin }: Props) {
       </section>
 
       {/* ── TRUSTED BY CLINICAL BRANDS (Flat, Borderless, Side-by-Side Logo Layout matching 3rd Image) ── */}
-      <div className="bg-white border-b border-slate-150/45 py-10 relative z-10">
+      <div className="bg-[#050A1A] border-y border-white/[0.05] py-8 relative z-10">
         <div className="max-w-7xl mx-auto px-6 text-center space-y-3.5">
-          <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
+          <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">
             Trusted by Modern Healthcare Teams
           </p>
           
-          {/* Stack vertically on mobile (`flex-col`), side-by-side on desktop (`md:flex-row`) */}
-          <div className="flex flex-col md:flex-row items-center justify-center gap-6 md:gap-14 lg:gap-20 pt-2 pb-2">
+          {/* Grid format on mobile to prevent squishing, side-by-side on desktop */}
+          <div className="grid grid-cols-2 md:flex md:flex-row items-center justify-center gap-6 md:gap-14 lg:gap-20 pt-2 pb-2">
             {[
               { name: 'Apollo Clinics', color: 'hover:text-[#005EB8]', icon: <Activity className="w-5 h-5 text-slate-400 group-hover:text-[#005EB8] transition-colors" /> },
               { name: 'MAX Health', color: 'hover:text-[#00A3AD]', icon: <Heart className="w-5 h-5 text-slate-400 group-hover:text-[#00A3AD] transition-colors" /> },
@@ -285,7 +286,9 @@ export default function LandingPage({ onGetStarted, onStaffLogin }: Props) {
             ].map((item, idx) => (
               <div 
                 key={idx}
-                className="flex items-center gap-2 text-slate-400 hover:text-slate-650 transition-all duration-300 cursor-pointer group hover:scale-105 font-sans"
+                className={`flex items-center justify-center gap-2 text-slate-400 hover:text-white transition-all duration-300 cursor-pointer group hover:scale-105 font-sans ${
+                  idx === 4 ? 'col-span-2 md:col-span-1 justify-self-center' : 'col-span-1'
+                }`}
               >
                 {item.icon}
                 <span className={`text-[11px] font-black tracking-[0.15em] uppercase transition-colors ${item.color}`}>
@@ -615,16 +618,24 @@ export default function LandingPage({ onGetStarted, onStaffLogin }: Props) {
                   ))}
                 </ul>
 
-                <a 
-                  href="#demo"
+                <button 
+                  type="button"
+                  onClick={() => {
+                    setSelectedTier(plan.name);
+                    setDemoForm(prev => ({
+                      ...prev,
+                      size: plan.name === 'Starter Setup' ? 'Under 10 beds' : plan.name === 'Professional Ops' ? '10-50 beds' : '200+ beds'
+                    }));
+                    document.getElementById('demo')?.scrollIntoView({ behavior: 'smooth' });
+                  }}
                   className={`w-full py-3 rounded-xl font-black text-xs transition-all uppercase tracking-wider text-center flex items-center justify-center gap-1 ${
                     idx === 1 
                       ? 'bg-[#005EB8] hover:bg-[#004a96] text-white shadow-md' 
                       : 'bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-700'
                   }`}
                 >
-                  Onboard This Tier ➜
-                </a>
+                  Onboard This Plan ➜
+                </button>
               </div>
             ))}
           </div>
@@ -684,6 +695,24 @@ export default function LandingPage({ onGetStarted, onStaffLogin }: Props) {
                 </div>
               ) : (
                 <form onSubmit={handleDemoSubmit} className="space-y-4">
+                  {selectedTier && (
+                    <div className="bg-[#005EB8]/10 border border-[#005EB8]/20 rounded-2xl px-4 py-2.5 flex items-center justify-between animate-fade-in mb-2">
+                      <div className="flex items-center gap-2">
+                        <Sparkles className="w-4 h-4 text-[#00A3AD] animate-pulse" />
+                        <span className="text-[11px] font-black text-[#005EB8] uppercase tracking-wider">
+                          Selected SaaS Plan: <strong className="text-slate-800 font-extrabold">{selectedTier}</strong>
+                        </span>
+                      </div>
+                      <button 
+                        type="button" 
+                        onClick={() => setSelectedTier('')} 
+                        className="text-[9px] font-extrabold text-slate-400 hover:text-slate-600 uppercase tracking-widest"
+                      >
+                        Reset
+                      </button>
+                    </div>
+                  )}
+
                   <h3 className="text-lg font-black text-slate-800 uppercase tracking-tight flex items-center gap-2 border-b border-slate-50 pb-3">
                     <Building2 className="w-5 h-5 text-[#005EB8]" />
                     Clinic Onboarding Directory

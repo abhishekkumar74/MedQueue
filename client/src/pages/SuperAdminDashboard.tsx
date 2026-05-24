@@ -1627,32 +1627,106 @@ export default function SuperAdminDashboard({ currentUser: _currentUser, onNavig
                         const rawMsg = evt.message;
                         const matchHosp = rawMsg.match(/"([^"]+)"/);
                         const hospitalName = matchHosp ? matchHosp[1] : 'New Clinic Setup';
+
+                        // Parse selected plan
+                        const matchPlan = rawMsg.match(/Request for\s+([^:]+):/);
+                        const planName = matchPlan ? matchPlan[1].trim() : 'Professional Ops';
+
+                        // Parse city
+                        const matchCity = rawMsg.match(/in\s+([^\s]+)\s+requested/) || rawMsg.match(/in\s+([^,]+),/);
+                        const city = matchCity ? matchCity[1].trim() : 'N/A';
+
+                        // Parse contact person
+                        const matchPerson = rawMsg.match(/requested by\s+([^(\n\r]+)/);
+                        const contactPerson = matchPerson ? matchPerson[1].split('(')[0].trim() : 'N/A';
+
+                        // Parse phone
+                        const matchPhone = rawMsg.match(/Phone:\s*([^\s,)]+)/) || rawMsg.match(/Phone:\s*([^\s)]+)/);
+                        const phone = matchPhone ? matchPhone[1].trim() : '';
+
+                        // Parse email
+                        const matchEmail = rawMsg.match(/Email:\s*([^\s,)]+)/) || rawMsg.match(/Email:\s*([^\s)]+)/);
+                        const email = matchEmail ? matchEmail[1].trim() : '';
+
+                        // Parse size/beds
+                        const matchSize = rawMsg.match(/\(([^)]+)\)/);
+                        const bedsSize = matchSize ? matchSize[1] : '10-50 beds';
                         
                         return (
-                          <div key={evt.id} className="bg-slate-50/50 border border-slate-100 p-4 rounded-2xl flex flex-col justify-between space-y-3.5 hover:border-indigo-200 transition-all shadow-inner">
-                            <div className="space-y-1 text-xs">
+                          <div key={evt.id} className="bg-slate-50/50 border border-slate-100 p-5 rounded-2xl flex flex-col justify-between space-y-4 hover:border-indigo-200 transition-all shadow-inner">
+                            <div className="space-y-3.5 text-xs">
                               <div className="flex items-center justify-between">
-                                <strong className="font-extrabold text-slate-800 text-[13px]">{hospitalName}</strong>
-                                <span className="text-[9px] text-slate-400 font-extrabold uppercase bg-white border border-slate-100 px-2 py-0.5 rounded">Pending Workspace</span>
+                                <strong className="font-extrabold text-slate-800 text-[14px]">{hospitalName}</strong>
+                                <span className={`text-[8px] font-black uppercase px-2.5 py-0.5 rounded-full border ${
+                                  planName.includes('Starter') 
+                                    ? 'bg-emerald-50 border-emerald-100 text-emerald-600' 
+                                    : planName.includes('Enterprise')
+                                    ? 'bg-rose-50 border-rose-100 text-rose-600 animate-pulse'
+                                    : 'bg-[#005EB8]/5 border-[#005EB8]/10 text-[#005EB8]'
+                                }`}>
+                                  {planName}
+                                </span>
                               </div>
-                              <p className="text-slate-500 font-medium leading-relaxed">{evt.message.replace('Onboarding Demo Request:', '')}</p>
-                              <span className="text-[9px] text-slate-400 font-bold block mt-1">Requested {new Date(evt.timestamp).toLocaleDateString()} at {new Date(evt.timestamp).toLocaleTimeString()}</span>
+
+                              <div className="grid grid-cols-2 gap-3 text-[10px] bg-white border border-slate-100 rounded-xl p-3 shadow-sm font-semibold text-slate-600">
+                                <div>
+                                  <span className="text-slate-400 block text-[8px] font-black uppercase tracking-wider">City Location</span>
+                                  <span className="text-slate-800 font-bold">{city}</span>
+                                </div>
+                                <div>
+                                  <span className="text-slate-400 block text-[8px] font-black uppercase tracking-wider">Contact Person</span>
+                                  <span className="text-slate-800 font-bold">{contactPerson}</span>
+                                </div>
+                                <div>
+                                  <span className="text-slate-400 block text-[8px] font-black uppercase tracking-wider">Phone</span>
+                                  {phone ? (
+                                    <a href={`tel:${phone}`} className="text-[#005EB8] hover:underline font-bold block">{phone}</a>
+                                  ) : (
+                                    <span className="text-slate-400">N/A</span>
+                                  )}
+                                </div>
+                                <div>
+                                  <span className="text-slate-400 block text-[8px] font-black uppercase tracking-wider">Email Address</span>
+                                  {email ? (
+                                    <a href={`mailto:${email}`} className="text-[#005EB8] hover:underline font-bold block truncate">{email}</a>
+                                  ) : (
+                                    <span className="text-slate-400">N/A</span>
+                                  )}
+                                </div>
+                              </div>
+
+                              <div className="flex items-center gap-1.5 text-[9px] text-slate-400 font-bold">
+                                <span>Scale: <strong className="text-slate-600 font-extrabold">{bedsSize}</strong></span>
+                                <span>•</span>
+                                <span>Requested {new Date(evt.timestamp).toLocaleDateString()}</span>
+                              </div>
                             </div>
 
                             <div className="flex gap-2 justify-end pt-2 border-t border-slate-100/50">
+                              {/* Direct WhatsApp Call/Chat */}
+                              {phone && (
+                                <a 
+                                  href={`https://wa.me/${phone.replace(/[^0-9]/g, '')}`}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="bg-[#25D366] hover:bg-[#20ba59] text-white px-3 py-1.5 rounded-xl font-black text-[9px] uppercase tracking-wider transition-all shadow-sm flex items-center justify-center gap-1 cursor-pointer"
+                                >
+                                  WhatsApp Lead
+                                </a>
+                              )}
                               <button 
                                 onClick={() => {
                                   setHospitalForm({
                                     name: hospitalName,
                                     slug: hospitalName.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').substring(0, 15),
-                                    address: 'Demo branch address setup',
-                                    phone: '9999999999'
+                                    address: `${city} Branch OPD Desk`,
+                                    phone: phone || '9999999999'
                                   });
                                   setShowAddHospital(true);
                                 }}
                                 className="bg-[#005EB8] hover:bg-[#004A94] text-white px-3 py-1.5 rounded-xl font-black text-[9px] uppercase tracking-wider transition-all shadow-sm shadow-[#005EB8]/10 cursor-pointer"
                               >
-                                Approve Onboarding & Provision
+                                Approve & Provision
                               </button>
                             </div>
                           </div>
