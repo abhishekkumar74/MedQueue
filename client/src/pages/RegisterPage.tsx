@@ -338,7 +338,7 @@ export default function RegisterPage({ onNavigate, currentUser }: {
   });
 
   return (
-    <div className="min-h-screen bg-[#F4F8FB] font-sans pb-16">
+    <div className="min-h-screen bg-[#F4F8FB] font-sans pb-24 lg:pb-16">
       
       {/* ── CENTRAL GRADIANT BG OVERLAYS ── */}
       <div className="absolute top-[-20%] left-[-15%] w-[60%] h-[50%] bg-[#005EB8]/5 rounded-full blur-[140px] pointer-events-none" />
@@ -404,7 +404,7 @@ export default function RegisterPage({ onNavigate, currentUser }: {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mt-8">
           
           {/* ── LEFT SIDEBAR TABS (DESKTOP) ── */}
-          <div className="lg:col-span-3 space-y-4">
+          <div className="hidden lg:block lg:col-span-3 space-y-4">
             <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-4 space-y-1">
               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-3.5 mb-2.5">Workspace Directories</p>
               {[
@@ -1280,6 +1280,40 @@ export default function RegisterPage({ onNavigate, currentUser }: {
         </div>
 
       </div>
+
+      {/* ── MOBILE PWA BOTTOM NAVIGATION ── */}
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-xl border-t border-slate-150 p-2 shadow-[0_-8px_30px_rgba(0,0,0,0.06)] flex items-center justify-around select-none">
+        {[
+          { id: 'workspace', label: 'Home', icon: Activity },
+          { id: 'doctors', label: 'Doctors', icon: Stethoscope },
+          { id: 'vault', label: 'Vault', icon: FileText, badge: vaultDocs.length },
+          { id: 'timeline', label: 'History', icon: Clock },
+          { id: 'family', label: 'Family', icon: User },
+        ].map(tab => {
+          const Icon = tab.icon;
+          const isActive = activeTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id as any)}
+              className="flex flex-col items-center justify-center gap-1.5 py-1 px-3.5 rounded-2xl relative transition-all active:scale-95 flex-1 min-h-[48px]"
+            >
+              <div className={`p-1.5 rounded-xl transition-all relative ${isActive ? 'bg-[#005EB8]/10 text-[#005EB8]' : 'text-slate-400 hover:text-slate-650'}`}>
+                <Icon className="w-5 h-5" />
+                {tab.badge !== undefined && tab.badge > 0 && (
+                  <span className="absolute -top-1 -right-1 text-[8px] font-black bg-rose-500 text-white w-4 h-4 rounded-full flex items-center justify-center border border-white">
+                    {tab.badge}
+                  </span>
+                )}
+              </div>
+              <span className={`text-[9px] font-black tracking-wide uppercase transition-colors ${isActive ? 'text-[#005EB8] font-black' : 'text-slate-400'}`}>
+                {tab.label}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
     </div>
   );
 }

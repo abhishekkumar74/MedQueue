@@ -208,10 +208,10 @@ export default function LandingPage({ onGetStarted, onStaffLogin }: Props) {
           <img 
             src="/healthcare_hero.png" 
             alt="MedQueue personalized wellness solutions background" 
-            className="w-full h-full object-cover object-[center_35%] filter brightness-[0.98] contrast-[1.01]" 
+            className="w-full h-full object-cover object-[center_35%] filter brightness-[0.98] contrast-[1.01] blur-[3px] lg:blur-0 transition-all duration-300" 
           />
-          {/* Light-theme soft vertical gradient overlay on mobile and horizontal on desktop to guarantee perfect readability */}
-          <div className="absolute inset-0 bg-gradient-to-b from-white/98 via-white/95 to-white/90 lg:bg-gradient-to-r lg:from-white/95 lg:via-white/85 lg:to-white/10" />
+          {/* Soft vertical gradient and premium glassmorphic backdrop blur on mobile to guarantee perfect legibility */}
+          <div className="absolute inset-0 bg-white/85 backdrop-blur-[4px] lg:backdrop-blur-0 lg:bg-gradient-to-r lg:from-white/95 lg:via-white/85 lg:to-white/10" />
         </div>
 
         {/* Ambient background glows for tech feel */}
