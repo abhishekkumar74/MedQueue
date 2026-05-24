@@ -3,10 +3,9 @@ import { registerToken, getSelectedHospitalId } from '../lib/api';
 import { Token, Priority, Department, DEPARTMENT_LABEL } from '../types';
 import { AuthUser } from '../lib/auth';
 import { supabase } from '../lib/supabase';
-import PhoneInput, { isValidPhone } from '../components/PhoneInput';
 import { 
-  User, Building2, Ticket, ChevronDown, ChevronUp, Bell, CheckCircle, Loader2, AlertCircle, MapPin, Hash,
-  Heart, Clock, Calendar, FileText, ArrowRight, Shield, Award, Sparkles, Plus, RefreshCw, Upload, Search, Download, Trash2, Edit2, Share2, Clipboard, Stethoscope, ChevronRight, Check, Activity, BarChart2, ShieldAlert
+  User, Building2, Ticket, ChevronDown, CheckCircle, Loader2, AlertCircle, MapPin,
+  Heart, Clock, FileText, Shield, Award, Plus, Upload, Search, Download, Trash2, Stethoscope, Activity, BarChart2, X
 } from 'lucide-react';
 
 const DEPARTMENTS: Department[] = [
@@ -40,8 +39,7 @@ interface VaultDoc {
   doctorName?: string;
 }
 
-export default function RegisterPage({ onNavigate, currentUser }: {
-  onNavigate: (p: string, state?: Record<string, unknown>) => void;
+export default function RegisterPage({ currentUser }: {
   currentUser?: AuthUser | null;
 }) {
   const patientPhone = currentUser?.phone || '';
@@ -483,7 +481,16 @@ export default function RegisterPage({ onNavigate, currentUser }: {
               <div className="space-y-6">
                 
                 {/* 1.1 SMART LIVE TOKEN TRACKER */}
-                {activeToken ? (
+                {loadingToken && !activeToken ? (
+                  <div className="bg-white border border-slate-100 rounded-3xl p-6 shadow-sm min-h-[140px] animate-skeleton flex flex-col md:flex-row justify-between gap-6">
+                    <div className="space-y-4 text-left flex-1">
+                      <div className="h-3 bg-slate-200 rounded w-1/4 animate-pulse" />
+                      <div className="h-6 bg-slate-200 rounded w-3/4 animate-pulse mt-2" />
+                      <div className="h-4 bg-slate-200 rounded w-1/2 animate-pulse mt-1" />
+                    </div>
+                    <div className="w-48 h-20 bg-slate-200 rounded-2xl animate-pulse flex-shrink-0" />
+                  </div>
+                ) : activeToken ? (
                   <div className="bg-white border border-slate-100 rounded-3xl p-6 shadow-sm relative overflow-hidden flex flex-col md:flex-row justify-between gap-6">
                     <div className="absolute top-0 bottom-0 left-0 w-2.5 bg-[#005EB8]" />
                     
@@ -684,12 +691,26 @@ export default function RegisterPage({ onNavigate, currentUser }: {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {hospDoctors.length === 0 ? (
+                  {loadingDocs ? (
+                    Array.from({ length: 4 }).map((_, i) => (
+                      <div key={i} className="bg-white border border-slate-100 rounded-3xl p-5 shadow-sm min-h-[170px] animate-skeleton flex flex-col justify-between">
+                        <div className="flex gap-4 items-start">
+                          <div className="w-12 h-12 bg-slate-100 rounded-2xl animate-pulse" />
+                          <div className="space-y-2 flex-1">
+                            <div className="h-4 bg-slate-200 rounded w-1/3 animate-pulse" />
+                            <div className="h-5 bg-slate-200 rounded w-3/4 animate-pulse" />
+                            <div className="h-3 bg-slate-200 rounded w-1/2 animate-pulse" />
+                          </div>
+                        </div>
+                        <div className="h-10 bg-slate-100 rounded-xl mt-4 animate-pulse" />
+                      </div>
+                    ))
+                  ) : hospDoctors.length === 0 ? (
                     <div className="col-span-2 bg-white rounded-3xl border p-8 text-center text-slate-400">
                       No doctors onboarded in this sandbox campus.
                     </div>
                   ) : (
-                    hospDoctors.map((doc, idx) => {
+                    hospDoctors.map((doc) => {
                       const queueLoad = doc.is_available ? Math.floor(Math.random() * 5) + 1 : 0;
                       return (
                         <div key={doc.id} className="bg-white hover:bg-slate-50/50 border border-slate-100 rounded-3xl p-5 shadow-sm hover:shadow-md transition-all duration-300 relative overflow-hidden flex flex-col justify-between min-h-[170px] group">

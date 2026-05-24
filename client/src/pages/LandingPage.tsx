@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import { 
-  Activity, Clock, Shield, ArrowRight, 
-  CheckCircle2, Stethoscope, Heart, Star, Menu, X,
-  Package, Database, Users, LineChart, 
+import {
+  Activity, Clock, Shield, ArrowRight,
+  CheckCircle2, Stethoscope, Heart, Menu, X,
+  Package, Database, Users, LineChart,
   Building2, Monitor, AlertTriangle, Layers, Send, Sparkles,
-  Linkedin, Github, Twitter, MessageCircle
+  Linkedin, Github, Twitter, MessageCircle, Lock
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
@@ -35,7 +35,7 @@ export default function LandingPage({ onGetStarted, onStaffLogin }: Props) {
       alert('Please fill out all required fields.');
       return;
     }
-    
+
     try {
       const msg = `Onboarding Demo Request for ${selectedTier || 'Professional Ops'}: "${demoForm.hospitalName}" (${demoForm.size}) in ${demoForm.city} requested by ${demoForm.contactPerson} (Phone: ${demoForm.phone}, Email: ${demoForm.email})`;
       const { error } = await supabase.from('activity_logs').insert({
@@ -119,7 +119,7 @@ export default function LandingPage({ onGetStarted, onStaffLogin }: Props) {
 
   return (
     <div className="min-h-screen bg-[#F4F8FB] font-sans text-slate-700 selection:bg-[#005EB8]/10 selection:text-[#005EB8] overflow-x-hidden">
-      
+
       {/* ── NAVBAR ── */}
       <nav className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-md border-b border-slate-100 shadow-[0_1px_3px_rgba(0,0,0,0.02)] h-14">
         <div className="max-w-7xl mx-auto px-6 h-full flex items-center justify-between">
@@ -146,7 +146,7 @@ export default function LandingPage({ onGetStarted, onStaffLogin }: Props) {
             <button onClick={onStaffLogin} className="text-xs font-extrabold text-slate-500 hover:text-[#005EB8] px-3.5 py-2 transition-colors">
               Staff Portal
             </button>
-            <button 
+            <button
               onClick={onGetStarted}
               className="flex items-center gap-1.5 text-xs font-black px-4 py-2 bg-[#005EB8] hover:bg-[#004a96] text-white rounded-xl transition-all shadow-md shadow-[#005EB8]/10"
             >
@@ -171,10 +171,10 @@ export default function LandingPage({ onGetStarted, onStaffLogin }: Props) {
                 { id: '#pricing', label: 'SaaS Plans', icon: <Sparkles className="w-4 h-4 text-violet-500" /> },
                 { id: '#demo', label: 'Schedule Setup', icon: <Building2 className="w-4 h-4 text-amber-500" /> },
               ].map(item => (
-                <a 
-                  key={item.id} 
-                  href={item.id} 
-                  onClick={() => setMenuOpen(false)} 
+                <a
+                  key={item.id}
+                  href={item.id}
+                  onClick={() => setMenuOpen(false)}
                   className="flex items-center gap-3.5 p-3 hover:bg-slate-50 rounded-2xl text-xs font-black text-slate-700 transition-colors border border-transparent hover:border-slate-100/50"
                 >
                   {item.icon}
@@ -183,14 +183,14 @@ export default function LandingPage({ onGetStarted, onStaffLogin }: Props) {
               ))}
             </div>
             <div className="pt-3.5 border-t border-slate-100 flex flex-col gap-2">
-              <button 
-                onClick={() => { setMenuOpen(false); onStaffLogin(); }} 
+              <button
+                onClick={() => { setMenuOpen(false); onStaffLogin(); }}
                 className="w-full py-3 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-750 rounded-2xl text-xs font-black transition-colors"
               >
                 Staff Portal
               </button>
-              <button 
-                onClick={() => { setMenuOpen(false); onGetStarted(); }} 
+              <button
+                onClick={() => { setMenuOpen(false); onGetStarted(); }}
                 className="w-full py-3 bg-[#005EB8] hover:bg-[#004a96] text-white rounded-2xl text-xs font-black shadow-md shadow-blue-500/10 transition-colors"
               >
                 Patient Login
@@ -202,13 +202,13 @@ export default function LandingPage({ onGetStarted, onStaffLogin }: Props) {
 
       {/* ── 1. HERO SECTION (Full background image with content overlays) ── */}
       <section className="relative min-h-[auto] py-20 lg:py-0 lg:min-h-screen flex items-center justify-center overflow-hidden bg-[#F4F8FB]">
-        
+
         {/* Full screen Background Image */}
         <div className="absolute inset-0 z-0">
-          <img 
-            src="/healthcare_hero.png" 
-            alt="MedQueue personalized wellness solutions background" 
-            className="w-full h-full object-cover object-[center_35%] filter brightness-[0.98] contrast-[1.01] blur-[3px] lg:blur-0 transition-all duration-300" 
+          <img
+            src="/healthcare_hero.png"
+            alt="MedQueue personalized wellness solutions background"
+            className="w-full h-full object-cover object-[center_35%] filter brightness-[0.98] contrast-[1.01] blur-[3px] lg:blur-0 transition-all duration-300"
           />
           {/* Soft vertical gradient and premium glassmorphic backdrop blur on mobile to guarantee perfect legibility */}
           <div className="absolute inset-0 bg-white/85 backdrop-blur-[4px] lg:backdrop-blur-0 lg:bg-gradient-to-r lg:from-white/95 lg:via-white/85 lg:to-white/10" />
@@ -218,7 +218,7 @@ export default function LandingPage({ onGetStarted, onStaffLogin }: Props) {
         <div className="absolute top-[-10%] left-[-10%] w-[60%] h-[60%] bg-gradient-to-tr from-[#005EB8]/10 to-[#00A3AD]/10 rounded-full blur-[130px] pointer-events-none animate-pulse-glow" />
 
         <div className="relative max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center w-full z-10 pt-10 pb-6">
-          
+
           {/* Left Hero Pitch: Borderless direct text overlay on background image */}
           <div className="col-span-1 lg:col-span-7 space-y-6 text-left px-4 md:px-0">
             <div className="inline-flex items-center gap-1.5 bg-[#005EB8]/10 text-[#005EB8] text-[10px] font-black px-3.5 py-1.5 rounded-full uppercase tracking-widest border border-[#005EB8]/20">
@@ -236,14 +236,14 @@ export default function LandingPage({ onGetStarted, onStaffLogin }: Props) {
             </p>
 
             <div className="flex flex-wrap items-center gap-4 pt-2">
-              <a 
+              <a
                 href="#demo"
                 className="flex items-center gap-2 px-6 py-3.5 bg-[#005EB8] hover:bg-[#004a96] text-white font-black rounded-xl text-xs shadow-lg shadow-[#005EB8]/20 hover:shadow-[#005EB8]/30 transition-all duration-300 uppercase tracking-widest"
               >
                 Book a Live Demo
                 <ArrowRight className="w-4 h-4" />
               </a>
-              <a 
+              <a
                 href="#features"
                 className="px-6 py-3.5 bg-white border border-slate-250 text-slate-700 hover:bg-slate-50 font-black rounded-xl text-xs transition-all duration-300 shadow-sm hover:shadow-md uppercase tracking-widest"
               >
@@ -274,7 +274,7 @@ export default function LandingPage({ onGetStarted, onStaffLogin }: Props) {
                   { name: 'Manipal Hub', color: 'hover:text-indigo-600', icon: <Building2 className="w-4 h-4 text-slate-400 group-hover:text-indigo-600 transition-colors" /> },
                   { name: 'Narayana Core', color: 'hover:text-rose-500', icon: <Activity className="w-4 h-4 text-slate-400 group-hover:text-rose-500 transition-colors" /> }
                 ].map((item, idx) => (
-                  <div 
+                  <div
                     key={idx}
                     className="flex items-center gap-1.5 text-slate-400 hover:text-slate-650 transition-all duration-300 cursor-pointer group hover:scale-[1.01] font-sans"
                   >
@@ -293,6 +293,98 @@ export default function LandingPage({ onGetStarted, onStaffLogin }: Props) {
           <div className="lg:col-span-5 h-[350px] hidden lg:block" />
         </div>
 
+      </section>
+
+      {/* ── 1.5 WHY USE THIS? OUTCOME-BASED BENEFITS ── */}
+      <section id="benefits" className="py-20 bg-[#F4F8FB] border-t border-slate-150 relative overflow-hidden">
+        {/* Ambient glow backgrounds */}
+        <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-[#005EB8]/5 rounded-full blur-[130px] pointer-events-none" />
+        <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] bg-[#00A3AD]/5 rounded-full blur-[130px] pointer-events-none" />
+
+        <div className="max-w-7xl mx-auto px-6 text-center space-y-12 relative z-10">
+
+          <div className="space-y-3">
+            <span className="inline-flex bg-[#005EB8]/10 text-[#005EB8] text-[10px] font-black px-3.5 py-1.5 rounded-full uppercase tracking-widest border border-[#005EB8]/15">
+              THE MEDQUEUE VALUE PROPOSITION
+            </span>
+            <h2 className="text-3xl sm:text-4xl font-black text-slate-800 tracking-tight leading-tight">
+              Sell Outcomes. Secure Growth.
+            </h2>
+            <p className="text-slate-400 text-xs sm:text-sm font-semibold max-w-xl mx-auto leading-relaxed">
+              Most software shows features. MedQueue delivers tangible, high-impact clinical benefits that streamline patient waiting lanes and practitioners' consultation speeds.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {[
+              {
+                metric: "40% Crowd Reduction",
+                subtitle: "Reduce OPD Congestion",
+                desc: "Intelligent staggered digital token check-ins spread arrivals smoothly, completely eliminating overcrowded lobbies and waiting room bottlenecks.",
+                icon: <Users className="w-5 h-5 text-emerald-600" />,
+                badge: "OPD Efficiency",
+                badgeColor: "bg-emerald-50 border-emerald-100 text-emerald-600",
+                textColor: "text-emerald-600"
+              },
+              {
+                metric: "Live Radar Tracking",
+                subtitle: "Real-Time Patient Visibility",
+                desc: "Patients monitor active token ETAs and serving rooms directly from their handheld phones via live SMS OTP tracking pages, zeroing admin queries.",
+                icon: <Clock className="w-5 h-5 text-[#005EB8]" />,
+                badge: "Patient Autonomy",
+                badgeColor: "bg-blue-50 border-blue-100 text-[#005EB8]",
+                textColor: "text-[#005EB8]"
+              },
+              {
+                metric: "Zero Friction ETAs",
+                subtitle: "Happier Outpatients",
+                desc: "Transparent wait times and real-time announcement boards prevent surprise delays. Keeping patients informed dramatically builds patient trust.",
+                icon: <Heart className="w-5 h-5 text-rose-500 fill-rose-500/10" />,
+                badge: "Frictionless Care",
+                badgeColor: "bg-rose-50 border-rose-100 text-rose-600",
+                textColor: "text-rose-600"
+              },
+              {
+                metric: "15% More Consultations",
+                subtitle: "Faster Doctor Workflow",
+                desc: "Sleek, single-page accordion consoles bundle patient histories, e-prescriptions, and vital charts into one-tap operations, speeding doctor rounds.",
+                icon: <Stethoscope className="w-5 h-5 text-violet-500" />,
+                badge: "Physician Velocity",
+                badgeColor: "bg-violet-50 border-violet-100 text-violet-600",
+                textColor: "text-violet-600"
+              }
+            ].map((outcome, idx) => (
+              <div
+                key={idx}
+                className="bg-white border border-slate-100 rounded-[32px] p-6 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 text-left flex flex-col justify-between min-h-[300px] relative group"
+              >
+                {/* Visual hover border overlay */}
+                <div className="absolute inset-0 bg-gradient-to-b from-[#005EB8]/3 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-[32px] pointer-events-none" />
+
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="w-10 h-10 bg-slate-50 border border-slate-100 rounded-xl flex items-center justify-center">
+                      {outcome.icon}
+                    </div>
+                    <span className={`text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded border ${outcome.badgeColor}`}>
+                      {outcome.badge}
+                    </span>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <div className={`text-xl lg:text-2xl font-black ${outcome.textColor} tracking-tight`}>
+                      {outcome.metric}
+                    </div>
+                    <h4 className="font-extrabold text-xs text-slate-800">{outcome.subtitle}</h4>
+                  </div>
+
+                  <p className="text-xs text-slate-400 leading-relaxed font-semibold">{outcome.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+        </div>
       </section>
 
       {/* ── 2. HOW MEDQUEUE WORKS ── */}
@@ -319,21 +411,19 @@ export default function LandingPage({ onGetStarted, onStaffLogin }: Props) {
               { num: '06', title: 'Patients Register', desc: 'Book tokens via OTP/QR.' },
               { num: '07', title: 'Operations Active', desc: 'Full automated clinic sync.' }
             ].map((step, idx) => (
-              <div 
+              <div
                 key={idx}
                 onClick={() => setActiveWorkflowStep(idx)}
-                className={`cursor-pointer rounded-2xl border p-4 text-center transition-all duration-300 relative group flex flex-col justify-between ${
-                  activeWorkflowStep === idx 
-                    ? 'border-[#005EB8] bg-[#005EB8]/5 shadow-sm' 
-                    : 'border-slate-100 bg-white hover:border-slate-200'
-                }`}
+                className={`cursor-pointer rounded-2xl border p-4 text-center transition-all duration-300 relative group flex flex-col justify-between ${activeWorkflowStep === idx
+                  ? 'border-[#005EB8] bg-[#005EB8]/5 shadow-sm'
+                  : 'border-slate-100 bg-white hover:border-slate-200'
+                  }`}
               >
                 {idx < 6 && (
                   <div className="hidden lg:block absolute top-[50%] right-[-15px] w-6 h-0.5 bg-slate-200 z-10" />
                 )}
-                <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-black text-xs mx-auto mb-3 ${
-                  activeWorkflowStep === idx ? 'bg-[#005EB8] text-white' : 'bg-slate-100 text-slate-500'
-                }`}>
+                <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-black text-xs mx-auto mb-3 ${activeWorkflowStep === idx ? 'bg-[#005EB8] text-white' : 'bg-slate-100 text-slate-500'
+                  }`}>
                   {step.num}
                 </div>
                 <div>
@@ -355,7 +445,7 @@ export default function LandingPage({ onGetStarted, onStaffLogin }: Props) {
       {/* ── 3. MULTI-HOSPITAL SaaS ISOLATION ── */}
       <section id="isolation" className="py-20 relative">
         <div className="max-w-7xl mx-auto px-6 grid lg:grid-cols-12 gap-12 items-center">
-          
+
           {/* Left Copy */}
           <div className="lg:col-span-5 space-y-6 text-left">
             <span className="inline-block bg-[#00A3AD]/10 text-[#00A3AD] text-[10px] font-black px-3.5 py-1.5 rounded-full uppercase tracking-wider">
@@ -386,7 +476,7 @@ export default function LandingPage({ onGetStarted, onStaffLogin }: Props) {
           {/* Right Visual Sandbox Mockup */}
           <div className="lg:col-span-7 flex justify-center">
             <div className="w-full max-w-lg space-y-4">
-              
+
               {/* Apollo hospital tenant visual */}
               <div className="bg-white border border-slate-100 rounded-3xl p-5 shadow-sm relative overflow-hidden flex items-center justify-between">
                 <div className="absolute top-0 bottom-0 left-0 w-1.5 bg-[#005EB8]" />
@@ -527,6 +617,72 @@ export default function LandingPage({ onGetStarted, onStaffLogin }: Props) {
         </div>
       </section>
 
+      {/* ── 5.5 TRUST & ENTERPRISE SECURITY MODULES ── */}
+      <section id="trust" className="py-20 bg-[#E8F3FF]/40 border-t border-slate-150 relative">
+        {/* Decorative elements */}
+        <div className="absolute top-[-10%] right-[-10%] w-[40%] h-[40%] bg-[#005EB8]/5 rounded-full blur-[100px] pointer-events-none" />
+        <div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-[#00A3AD]/5 rounded-full blur-[100px] pointer-events-none" />
+
+        <div className="max-w-7xl mx-auto px-6 text-center space-y-12">
+          <div className="space-y-3">
+            <span className="inline-flex bg-[#005EB8]/10 text-[#005EB8] text-[10px] font-black px-3.5 py-1.5 rounded-full uppercase tracking-wider border border-[#005EB8]/15">
+              Enterprise Trust & Compliance
+            </span>
+            <h2 className="text-3xl font-black text-slate-800 tracking-tight">Engineered for Trust. Built for Clinical Safety.</h2>
+            <p className="text-slate-400 text-xs sm:text-sm font-semibold max-w-xl mx-auto">
+              Perception and data integrity are the pillars of healthcare. MedQueue unifies banking-grade security and 99.99% system availability.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[
+              {
+                icon: <Shield className="w-5 h-5 text-[#005EB8]" />,
+                title: "HIPAA-Compliant Isolation",
+                desc: "All clinical assets and outpatient data rows are protected under PostgreSQL Row-Level Security (RLS) policies, preventing tenant cross-leakage."
+              },
+              {
+                icon: <Database className="w-5 h-5 text-[#00A3AD]" />,
+                title: "Continuous Cloud Backups",
+                desc: "Your clinical sandbox is continuously replicated with automated, encrypted snapshots. 99.999% database durability guarantees no record loss."
+              },
+              {
+                icon: <Users className="w-5 h-5 text-indigo-500" />,
+                title: "Role-Based RBAC Permissions",
+                desc: "Strict operational boundaries limit interface options contextually. Pharmacists, Ward Boys, and Doctors can only see what they own."
+              },
+              {
+                icon: <Layers className="w-5 h-5 text-amber-500" />,
+                title: "E2E Encrypted Health Records",
+                desc: "Outpatient vital tickers, active e-prescriptions, and consultation notes are fully encrypted at rest (AES-256) and in transit (SSL/TLS)."
+              },
+              {
+                icon: <Activity className="w-5 h-5 text-rose-500 animate-pulse" />,
+                title: "99.99% High Availability SLA",
+                desc: "Powered by redundant server networks and API gateways, MedQueue guarantees 99.99% uptime so live display systems never freeze."
+              },
+              {
+                icon: <Lock className="w-5 h-5 text-emerald-500" />,
+                title: "Secure Verification Gateways",
+                desc: "Enforces password hashing using salt-strengthened bcrypt algorithms, token session authentication, and direct SMS OTP verified registration."
+              }
+            ].map((trustItem, idx) => (
+              <div key={idx} className="bg-white/80 backdrop-blur-md border border-slate-100 rounded-3xl p-6 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 text-left space-y-3 relative group">
+                <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#005EB8] to-[#00A3AD] opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-t-3xl" />
+                <div className="w-10 h-10 bg-slate-50 border border-slate-100 rounded-xl flex items-center justify-center">
+                  {trustItem.icon}
+                </div>
+                <h3 className="font-extrabold text-xs sm:text-sm text-slate-800 flex items-center gap-1.5">
+                  {trustItem.title}
+                  <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                </h3>
+                <p className="text-xs text-slate-400 leading-relaxed font-semibold">{trustItem.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* ── 6. PRICING PLAN SECTION ── */}
       <section id="pricing" className="py-20 bg-white border-y border-slate-150">
         <div className="max-w-7xl mx-auto px-6 text-center space-y-12">
@@ -613,7 +769,7 @@ export default function LandingPage({ onGetStarted, onStaffLogin }: Props) {
                   ))}
                 </ul>
 
-                <button 
+                <button
                   type="button"
                   onClick={() => {
                     setSelectedTier(plan.name);
@@ -623,11 +779,10 @@ export default function LandingPage({ onGetStarted, onStaffLogin }: Props) {
                     }));
                     document.getElementById('demo')?.scrollIntoView({ behavior: 'smooth' });
                   }}
-                  className={`w-full py-3 rounded-xl font-black text-xs transition-all uppercase tracking-wider text-center flex items-center justify-center gap-1 ${
-                    idx === 1 
-                      ? 'bg-[#005EB8] hover:bg-[#004a96] text-white shadow-md' 
-                      : 'bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-700'
-                  }`}
+                  className={`w-full py-3 rounded-xl font-black text-xs transition-all uppercase tracking-wider text-center flex items-center justify-center gap-1 ${idx === 1
+                    ? 'bg-[#005EB8] hover:bg-[#004a96] text-white shadow-md'
+                    : 'bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-700'
+                    }`}
                 >
                   Onboard This Plan ➜
                 </button>
@@ -640,7 +795,7 @@ export default function LandingPage({ onGetStarted, onStaffLogin }: Props) {
       {/* ── 7. DEMO SCHEDULER WIDGET / CONTACT SALES ── */}
       <section id="demo" className="py-20 relative">
         <div className="max-w-7xl mx-auto px-6 grid lg:grid-cols-12 gap-12 items-center">
-          
+
           {/* Left Form Pitch */}
           <div className="lg:col-span-5 space-y-6 text-left">
             <span className="inline-block bg-[#00A3AD]/10 text-[#00A3AD] text-[10px] font-black px-3.5 py-1.5 rounded-full uppercase tracking-wider">
@@ -670,7 +825,7 @@ export default function LandingPage({ onGetStarted, onStaffLogin }: Props) {
           {/* Right Scheduler Widget Form */}
           <div className="lg:col-span-7 flex justify-center w-full">
             <div className="bg-white border border-slate-100 rounded-3xl p-6 sm:p-8 shadow-xl w-full max-w-lg relative overflow-hidden">
-              
+
               {demoSubmitted ? (
                 <div className="py-12 text-center space-y-4 animate-fade-in">
                   <div className="w-16 h-16 bg-emerald-50 border border-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto shadow-sm">
@@ -678,10 +833,10 @@ export default function LandingPage({ onGetStarted, onStaffLogin }: Props) {
                   </div>
                   <h3 className="text-xl font-black text-slate-800 tracking-tight">Onboarding Request Logged!</h3>
                   <div className="text-xs text-slate-400 font-semibold max-w-sm mx-auto leading-relaxed">
-                    Thank you, <span className="font-extrabold text-[#005EB8]">{demoForm.contactPerson}</span>. We have logged your request for <span className="font-extrabold text-slate-800">{demoForm.hospitalName}</span>. 
+                    Thank you, <span className="font-extrabold text-[#005EB8]">{demoForm.contactPerson}</span>. We have logged your request for <span className="font-extrabold text-slate-800">{demoForm.hospitalName}</span>.
                     An isolated domain workspace with RLS database configurations is being provisioned. Your credentials will be dispatched to <span className="font-bold underline text-slate-600">{demoForm.email}</span>.
                   </div>
-                  <button 
+                  <button
                     onClick={() => { setDemoSubmitted(false); setDemoForm({ hospitalName: '', city: '', size: '10-50 beds', contactPerson: '', phone: '', email: '' }); }}
                     className="mt-6 px-4 py-2 border border-slate-200 text-slate-500 font-black text-[10px] rounded-xl hover:bg-slate-50 transition-colors uppercase tracking-wider"
                   >
@@ -698,9 +853,9 @@ export default function LandingPage({ onGetStarted, onStaffLogin }: Props) {
                           Selected SaaS Plan: <strong className="text-slate-800 font-extrabold">{selectedTier}</strong>
                         </span>
                       </div>
-                      <button 
-                        type="button" 
-                        onClick={() => setSelectedTier('')} 
+                      <button
+                        type="button"
+                        onClick={() => setSelectedTier('')}
                         className="text-[9px] font-extrabold text-slate-400 hover:text-slate-600 uppercase tracking-widest"
                       >
                         Reset
@@ -716,24 +871,24 @@ export default function LandingPage({ onGetStarted, onStaffLogin }: Props) {
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <label className="block text-[9px] font-black text-slate-400 uppercase tracking-wider mb-1">Hospital / Clinic Name *</label>
-                      <input 
-                        type="text" 
-                        value={demoForm.hospitalName} 
-                        onChange={e => setDemoForm({...demoForm, hospitalName: e.target.value})}
-                        placeholder="Apollo Clinic" 
+                      <input
+                        type="text"
+                        value={demoForm.hospitalName}
+                        onChange={e => setDemoForm({ ...demoForm, hospitalName: e.target.value })}
+                        placeholder="Apollo Clinic"
                         className="w-full text-xs p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:border-[#005EB8] outline-none font-semibold"
-                        required 
+                        required
                       />
                     </div>
                     <div>
                       <label className="block text-[9px] font-black text-slate-400 uppercase tracking-wider mb-1">Branch City *</label>
-                      <input 
-                        type="text" 
-                        value={demoForm.city} 
-                        onChange={e => setDemoForm({...demoForm, city: e.target.value})}
-                        placeholder="Delhi" 
+                      <input
+                        type="text"
+                        value={demoForm.city}
+                        onChange={e => setDemoForm({ ...demoForm, city: e.target.value })}
+                        placeholder="Delhi"
                         className="w-full text-xs p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:border-[#005EB8] outline-none font-semibold"
-                        required 
+                        required
                       />
                     </div>
                   </div>
@@ -741,20 +896,20 @@ export default function LandingPage({ onGetStarted, onStaffLogin }: Props) {
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <label className="block text-[9px] font-black text-slate-400 uppercase tracking-wider mb-1">Contact Person *</label>
-                      <input 
-                        type="text" 
-                        value={demoForm.contactPerson} 
-                        onChange={e => setDemoForm({...demoForm, contactPerson: e.target.value})}
-                        placeholder="Dr. Abhishek Kumar" 
+                      <input
+                        type="text"
+                        value={demoForm.contactPerson}
+                        onChange={e => setDemoForm({ ...demoForm, contactPerson: e.target.value })}
+                        placeholder="Dr. Abhishek Kumar"
                         className="w-full text-xs p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:border-[#005EB8] outline-none font-semibold"
-                        required 
+                        required
                       />
                     </div>
                     <div>
                       <label className="block text-[9px] font-black text-slate-400 uppercase tracking-wider mb-1">Clinic Scale *</label>
-                      <select 
-                        value={demoForm.size} 
-                        onChange={e => setDemoForm({...demoForm, size: e.target.value})}
+                      <select
+                        value={demoForm.size}
+                        onChange={e => setDemoForm({ ...demoForm, size: e.target.value })}
                         className="w-full text-xs p-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none font-semibold"
                       >
                         <option value="Under 10 beds">Under 10 beds (OPD Clinic)</option>
@@ -768,30 +923,30 @@ export default function LandingPage({ onGetStarted, onStaffLogin }: Props) {
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <label className="block text-[9px] font-black text-slate-400 uppercase tracking-wider mb-1">Phone Number *</label>
-                      <input 
-                        type="tel" 
-                        value={demoForm.phone} 
-                        onChange={e => setDemoForm({...demoForm, phone: e.target.value})}
-                        placeholder="+91 99999 99999" 
+                      <input
+                        type="tel"
+                        value={demoForm.phone}
+                        onChange={e => setDemoForm({ ...demoForm, phone: e.target.value })}
+                        placeholder="+91 99999 99999"
                         className="w-full text-xs p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:border-[#005EB8] outline-none font-semibold"
-                        required 
+                        required
                       />
                     </div>
                     <div>
                       <label className="block text-[9px] font-black text-slate-400 uppercase tracking-wider mb-1">Work Email Address *</label>
-                      <input 
-                        type="email" 
-                        value={demoForm.email} 
-                        onChange={e => setDemoForm({...demoForm, email: e.target.value})}
-                        placeholder="abhishek@apollo.com" 
+                      <input
+                        type="email"
+                        value={demoForm.email}
+                        onChange={e => setDemoForm({ ...demoForm, email: e.target.value })}
+                        placeholder="abhishek@apollo.com"
                         className="w-full text-xs p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:border-[#005EB8] outline-none font-semibold"
-                        required 
+                        required
                       />
                     </div>
                   </div>
 
-                  <button 
-                    type="submit" 
+                  <button
+                    type="submit"
                     className="w-full min-h-[44px] bg-[#005EB8] hover:bg-[#004a96] text-white font-black text-xs rounded-xl shadow-md transition-all uppercase tracking-wider flex items-center justify-center gap-1.5"
                   >
                     <Send className="w-3.5 h-3.5" />
@@ -816,14 +971,14 @@ export default function LandingPage({ onGetStarted, onStaffLogin }: Props) {
             Join hospitals reducing patient wait times by 45%, tracking batch pharmaceutical stocks transactionally, and establishing database isolation layers.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
-            <button 
+            <button
               onClick={onGetStarted}
               className="flex items-center justify-center gap-2 px-6 py-3.5 bg-[#005EB8] hover:bg-[#004a96] text-white font-black rounded-xl shadow-md shadow-[#005EB8]/10 text-xs uppercase tracking-wider"
             >
               Get Your Token Now
               <ArrowRight className="w-4 h-4" />
             </button>
-            <a 
+            <a
               href="#demo"
               className="flex items-center justify-center gap-2 px-6 py-3.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-black rounded-xl text-xs uppercase tracking-wider"
             >
@@ -881,12 +1036,12 @@ export default function LandingPage({ onGetStarted, onStaffLogin }: Props) {
                 badge: '7e90a5fe-4b01-90c6-ff22-a701748f0222'
               }
             ].map((workspace, idx) => (
-              <div 
+              <div
                 key={idx}
                 className="bg-white border border-slate-200/80 rounded-3xl p-6 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between text-left relative overflow-hidden"
               >
                 <div className="absolute top-0 left-0 right-0 h-1.5" style={{ backgroundColor: workspace.accentColor }} />
-                
+
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full border ${workspace.accentBg}`}>
@@ -913,7 +1068,7 @@ export default function LandingPage({ onGetStarted, onStaffLogin }: Props) {
                 </div>
 
                 <div className="pt-6">
-                  <a 
+                  <a
                     href={`?hosp=${workspace.slug}`}
                     className="w-full py-3 px-4 rounded-xl text-center font-black text-xs uppercase tracking-wider text-white shadow-sm flex items-center justify-center gap-1.5 transition-all duration-300 hover:brightness-95"
                     style={{ backgroundColor: workspace.accentColor }}
@@ -940,13 +1095,13 @@ export default function LandingPage({ onGetStarted, onStaffLogin }: Props) {
 
       {/* ── FOOTER ── */}
       <footer className="bg-gradient-to-br from-[#060B1C] via-[#09112B] to-[#040816] py-16 px-6 relative overflow-hidden border-t border-white/[0.08] backdrop-blur-md">
-        
+
         {/* Subtle decorative glow overlays for modern SaaS aesthetic */}
         <div className="absolute top-0 left-1/4 -translate-y-1/2 w-[500px] h-[500px] bg-[#005EB8]/10 rounded-full blur-[120px] pointer-events-none animate-pulse-glow" />
         <div className="absolute top-0 right-1/4 -translate-y-1/2 w-[500px] h-[500px] bg-[#00A3AD]/10 rounded-full blur-[120px] pointer-events-none animate-pulse-glow" />
 
         <div className="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-12 gap-10 md:gap-12 relative z-10">
-          
+
           {/* Brand and Tagline Column */}
           <div className="col-span-1 sm:col-span-2 md:col-span-4 space-y-6">
             <div className="flex items-center gap-3">

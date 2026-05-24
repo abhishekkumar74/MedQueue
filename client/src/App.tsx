@@ -249,7 +249,7 @@ export default function App() {
   if (tenantLoading) {
     return (
       <div className="min-h-screen bg-[#F4F8FB] flex items-center justify-center">
-        <div className="text-center text-slate-800">
+        <div className="text-center text-slate-800 animate-fade-in">
           <div className="w-12 h-12 border-4 border-[#005EB8] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
           <p className="font-semibold text-xs uppercase tracking-wider text-slate-400">Resolving Sandbox Context...</p>
         </div>
@@ -261,7 +261,7 @@ export default function App() {
   if (authLoading) {
     return (
       <div className="min-h-screen bg-[#005EB8] flex items-center justify-center">
-        <div className="text-center text-white">
+        <div className="text-center text-white animate-fade-in">
           <div className="w-12 h-12 border-4 border-white border-t-transparent rounded-full animate-spin mx-auto mb-3" />
           <p className="font-semibold">Loading MedQueue...</p>
         </div>
@@ -284,7 +284,7 @@ export default function App() {
         <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-[#005EB8]/10 rounded-full blur-[120px] pointer-events-none" />
         <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] bg-amber-500/10 rounded-full blur-[120px] pointer-events-none" />
         
-        <div className="w-full max-w-lg bg-white/[0.03] backdrop-blur-xl border border-white/[0.08] p-8 rounded-[32px] shadow-2xl relative z-10 text-center flex flex-col items-center">
+        <div className="w-full max-w-lg bg-white/[0.03] backdrop-blur-xl border border-white/[0.08] p-8 rounded-[32px] shadow-2xl relative z-10 text-center flex flex-col items-center animate-fade-in">
           <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-6 shadow-lg border bg-amber-500/10 border-amber-500/20 text-amber-400 animate-pulse">
             <ShieldAlert className="w-8 h-8" />
           </div>
@@ -399,13 +399,13 @@ export default function App() {
       <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4 relative overflow-hidden font-sans">
         {/* Backdrop gradients */}
         <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-[#005EB8]/10 rounded-full blur-[120px] pointer-events-none" />
-        <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] bg-emerald-500/10 rounded-full blur-[120px] pointer-events-none" />
+        <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] bg-emerald-50/10 rounded-full blur-[120px] pointer-events-none" />
         
-        <div className="w-full max-w-lg bg-white/[0.03] backdrop-blur-xl border border-white/[0.08] p-8 rounded-[32px] shadow-2xl relative z-10 text-center flex flex-col items-center">
+        <div className="w-full max-w-lg bg-white/[0.03] backdrop-blur-xl border border-white/[0.08] p-8 rounded-[32px] shadow-2xl relative z-10 text-center flex flex-col items-center animate-fade-in">
           <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-6 shadow-lg border ${
             subscriptionStatus === 'HOLD' 
-              ? 'bg-amber-500/10 border-amber-500/20 text-amber-400' 
-              : 'bg-rose-500/10 border-rose-500/20 text-rose-400'
+              ? 'bg-amber-50/10 border-amber-50/20 text-amber-400' 
+              : 'bg-rose-50/10 border-rose-50/20 text-rose-400'
           }`}>
             {subscriptionStatus === 'HOLD' ? (
               <AlertTriangle className="w-8 h-8" />
@@ -448,8 +448,8 @@ export default function App() {
               href="mailto:billing@medqueue.com"
               className={`px-6 py-3.5 font-extrabold text-xs rounded-2xl transition-all shadow-lg flex items-center justify-center gap-2 ${
                 subscriptionStatus === 'HOLD'
-                  ? 'bg-amber-500 hover:bg-amber-600 text-slate-950 shadow-amber-500/10'
-                  : 'bg-rose-500 hover:bg-rose-600 text-white shadow-rose-500/10'
+                  ? 'bg-amber-50 hover:bg-amber-600 text-slate-950 shadow-amber-500/10'
+                  : 'bg-rose-50 hover:bg-rose-600 text-white shadow-rose-500/10'
               }`}
             >
               Contact Support
@@ -482,7 +482,7 @@ export default function App() {
       return (
         <div className="min-h-screen bg-[#F4F8FB]">
           <UniversalHeader page={page} navigate={navigate} currentUser={user} handleLogout={handleLogout} />
-          <div className="max-w-md mx-auto px-4 py-24 text-center">
+          <div className="max-w-md mx-auto px-4 py-24 text-center animate-fade-in">
             <div className="w-16 h-16 bg-red-50 border border-red-100 text-red-600 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-sm">
               <ShieldAlert className="w-8 h-8" />
             </div>
@@ -504,7 +504,9 @@ export default function App() {
     return (
       <div className="min-h-screen bg-[#F4F8FB]">
         <UniversalHeader page={page} navigate={navigate} currentUser={user} handleLogout={handleLogout} />
-        <PharmacyDashboard />
+        <main key={page} className="animate-fade-in">
+          <PharmacyDashboard />
+        </main>
       </div>
     );
   }
@@ -540,7 +542,7 @@ export default function App() {
 
       {/* Super Admin context banner */}
       {user && user.role === 'SUPER_ADMIN' && page === 'staff' && (
-        <div className="bg-amber-500 text-white text-xs font-bold px-4 py-2 text-center flex items-center justify-center gap-2 shadow-inner">
+        <div className="bg-amber-50 text-white text-xs font-bold px-4 py-2 text-center flex items-center justify-center gap-2 shadow-inner">
           <span>🕵️‍♂️ Super Admin Mode: Currently managing </span>
           <span className="underline decoration-2 font-black">
             {localStorage.getItem('mq_selected_hospital_id') === 'd290f1ee-6c54-4b01-90e6-d701748f0851' ? 'Apollo Clinic' :
@@ -557,8 +559,8 @@ export default function App() {
         </div>
       )}
 
-      <main className={user.type === 'patient' ? 'pb-16 md:pb-0' : ''}>
-        {page === 'register' && <RegisterPage onNavigate={navigate} currentUser={user} />}
+      <main key={page} className={`animate-fade-in ${user.type === 'patient' ? 'pb-16 md:pb-0' : ''}`}>
+        {page === 'register' && <RegisterPage currentUser={user} />}
         {page === 'staff' && <StaffDashboard onNavigate={navigate} currentUser={user} />}
         {page === 'super-admin' && <SuperAdminDashboard currentUser={user} onNavigate={navigate} />}
         {page === 'tracker' && (

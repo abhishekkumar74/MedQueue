@@ -5,10 +5,10 @@ import DoctorPanel from './DoctorPanel';
 import AdminDashboard from './AdminDashboard';
 import { getQueue, getSelectedHospitalId } from '../lib/api';
 import { supabase } from '../lib/supabase';
-import { Token, PatientIntake, PRIORITY_LABEL, PRIORITY_COLOR, Department, DEPARTMENT_LABEL } from '../types';
+import { Token, PatientIntake, Department, DEPARTMENT_LABEL } from '../types';
 import { 
-  Shield, Loader2, RefreshCw, AlertCircle, Users, Heart, Search, Sparkles, Building2, MapPin, 
-  Activity, Clock, ShieldAlert, CheckCircle2, ChevronRight, ChevronDown, Check, UserPlus
+  Shield, RefreshCw, AlertCircle, Users, Search, Building2, MapPin, 
+  Activity, ShieldAlert, ChevronDown
 } from 'lucide-react';
 
 interface Props {
@@ -55,7 +55,7 @@ export default function StaffDashboard({ onNavigate, currentUser }: Props) {
 
   // ── WARD BOY: sees triage intake operations workspace ────
   if (role === 'WARD_BOY') {
-    return <WardBoyDashboard department={currentUser.department} currentUser={currentUser} />;
+    return <WardBoyDashboard department={currentUser.department} />;
   }
 
   // ── PHARMACY: redirect handled in useEffect ───────────────
@@ -87,7 +87,6 @@ export default function StaffDashboard({ onNavigate, currentUser }: Props) {
 
 interface WardBoyDashboardProps {
   department?: string; // if set, only show patients from this department
-  currentUser?: AuthUser | null;
 }
 
 interface DoctorListRow {
@@ -98,7 +97,7 @@ interface DoctorListRow {
   is_active: boolean;
 }
 
-function WardBoyDashboard({ department, currentUser }: WardBoyDashboardProps) {
+function WardBoyDashboard({ department }: WardBoyDashboardProps) {
   const [queue, setQueue] = useState<{
     waiting: Array<Token & { patient_intake?: PatientIntake[] }>;
     serving: (Token & { patient_intake?: PatientIntake[] }) | null;
@@ -225,9 +224,37 @@ function WardBoyDashboard({ department, currentUser }: WardBoyDashboardProps) {
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-3">
-        <Loader2 className="w-8 h-8 animate-spin text-[#005EB8]" />
-        <span className="text-xs font-black text-slate-400 uppercase tracking-widest animate-pulse">Initializing Operations Console...</span>
+      <div className="bg-slate-50/50 min-h-screen pb-16 font-sans animate-fade-in">
+        {/* Station Top Bar Skeleton */}
+        <div className="bg-white border-b border-slate-150 h-16 flex items-center justify-between px-6 shadow-sm">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-slate-200 animate-skeleton" />
+            <div className="space-y-2">
+              <div className="w-40 h-4 bg-slate-200 rounded-md animate-skeleton" />
+              <div className="w-24 h-3 bg-slate-100 rounded-md animate-skeleton" />
+            </div>
+          </div>
+          <div className="w-20 h-9 bg-slate-100 rounded-xl animate-skeleton" />
+        </div>
+
+        {/* Content Skeleton */}
+        <div className="max-w-6xl mx-auto px-4 py-6 grid lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 space-y-4">
+            {/* Filter Tabs Skeleton */}
+            <div className="bg-white border border-slate-150 h-14 rounded-2xl p-3 flex items-center justify-between shadow-sm animate-skeleton" />
+            {/* Patient list skeleton */}
+            <div className="space-y-3">
+              {[1, 2, 3].map(i => (
+                <div key={i} className="bg-white border border-slate-150 h-20 rounded-2xl p-4 flex items-center justify-between animate-skeleton" />
+              ))}
+            </div>
+          </div>
+          {/* Sidebar Stats Skeleton */}
+          <div className="space-y-6">
+            <div className="h-32 bg-slate-200 rounded-3xl animate-skeleton" />
+            <div className="h-64 bg-white border border-slate-150 rounded-3xl animate-skeleton" />
+          </div>
+        </div>
       </div>
     );
   }
@@ -324,7 +351,7 @@ function WardBoyDashboard({ department, currentUser }: WardBoyDashboardProps) {
             </div>
 
             {/* Arrived patient queue list */}
-            <div className="space-y-3">
+            <div className="space-y-3 animate-fade-in" key={activeTab}>
               {filteredTokens.length === 0 ? (
                 <div className="bg-white/80 border border-slate-150 rounded-2xl p-12 text-center shadow-sm">
                   <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-3">

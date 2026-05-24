@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase';
 import { Token, PatientIntake, Medication, PRIORITY_LABEL, INTAKE_STATUS_COLOR, INTAKE_STATUS_LABEL } from '../types';
 import { 
   Loader2, Phone, CheckCircle2, UserX, Stethoscope, RefreshCw, AlertCircle, Plus, Trash2, 
-  Printer, Clock, Activity, Heart, ShieldAlert, Sparkles, MapPin, User, Download, PlusCircle, X, FileText, Check 
+  Printer, Clock, Activity, Heart, ShieldAlert, Sparkles, PlusCircle, X, FileText, ChevronDown
 } from 'lucide-react';
 
 const EMPTY_MED: Medication = { name: '', dosage: '', frequency: '', duration: '', instructions: '', quantity: 1 };
@@ -264,14 +264,70 @@ export default function DoctorPanel({ doctorDepartment = 'general', doctorName =
     );
   };
 
+  // Collapsible Accordion sections for mobile optimization
+  const [openSection, setOpenSection] = useState<string | null>('vitals');
+
+  const toggleSection = (sec: string) => {
+    setOpenSection(openSection === sec ? null : sec);
+  };
+
   const servingIntake = queue.serving?.patient_intake?.[0];
   const readyCount = queue.waiting.filter(t => t.intake_status === 'READY_FOR_DOCTOR').length;
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-3">
-        <Loader2 className="w-8 h-8 animate-spin text-[#005EB8]" />
-        <span className="text-xs font-black text-slate-400 uppercase tracking-widest animate-pulse">Entering Consultant Workspace...</span>
+      <div className="bg-slate-50/50 min-h-screen pb-16 font-sans animate-fade-in">
+        {/* Header Skeleton */}
+        <div className="bg-white border-b border-slate-150 h-16 flex items-center justify-between px-6 shadow-sm">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-slate-200 animate-skeleton" />
+            <div className="space-y-2">
+              <div className="w-32 h-4 bg-slate-200 rounded-md animate-skeleton" />
+              <div className="w-48 h-3 bg-slate-100 rounded-md animate-skeleton" />
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-36 h-9 bg-slate-200 rounded-xl animate-skeleton" />
+            <div className="w-9 h-9 bg-slate-100 rounded-xl animate-skeleton" />
+          </div>
+        </div>
+
+        {/* Dashboard Content Skeleton */}
+        <div className="max-w-7xl mx-auto px-4 py-6 grid lg:grid-cols-4 gap-6">
+          <div className="lg:col-span-3 space-y-6">
+            {/* Vitals Skeleton */}
+            <div className="bg-white border border-slate-150 rounded-3xl p-5 shadow-sm space-y-4">
+              <div className="w-44 h-4 bg-slate-200 rounded animate-skeleton" />
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                {[1, 2, 3, 4, 5].map(i => (
+                  <div key={i} className="bg-slate-50 border border-slate-150 h-20 rounded-2xl p-3 flex flex-col justify-between animate-skeleton" />
+                ))}
+              </div>
+            </div>
+            {/* Diagnosis Card Skeleton */}
+            <div className="bg-white border border-slate-150 rounded-3xl p-6 shadow-sm space-y-3">
+              <div className="w-40 h-4 bg-slate-200 rounded animate-skeleton" />
+              <div className="w-full h-20 bg-slate-100 rounded-2xl animate-skeleton" />
+            </div>
+            {/* Medications Card Skeleton */}
+            <div className="bg-white border border-slate-150 rounded-3xl p-6 shadow-sm space-y-4">
+              <div className="flex justify-between items-center">
+                <div className="w-36 h-4 bg-slate-200 rounded animate-skeleton" />
+                <div className="w-24 h-8 bg-slate-100 rounded-xl animate-skeleton" />
+              </div>
+              <div className="h-32 bg-slate-50 rounded-2xl animate-skeleton" />
+            </div>
+          </div>
+          {/* Queue Sidebar Skeleton */}
+          <div className="bg-white border border-slate-150 rounded-3xl p-5 shadow-sm space-y-4">
+            <div className="w-32 h-4 bg-slate-200 rounded animate-skeleton" />
+            <div className="space-y-3">
+              {[1, 2, 3, 4].map(i => (
+                <div key={i} className="h-16 bg-slate-50 rounded-2xl animate-skeleton" />
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
@@ -399,316 +455,442 @@ export default function DoctorPanel({ doctorDepartment = 'general', doctorName =
                   </div>
                 </div>
 
+                {/* Collapsible Mobile Queue Widget (visible only on mobile/tablet) */}
+                <div className="bg-white border border-slate-150 rounded-3xl p-4 shadow-sm lg:hidden mb-4 animate-fade-in">
+                  <button
+                    type="button"
+                    onClick={() => toggleSection('queue-mobile')}
+                    className="w-full flex items-center justify-between text-left focus:outline-none min-h-[44px]"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Activity className="w-4 h-4 text-[#005EB8]" />
+                      <span className="text-xs font-black text-slate-700 uppercase tracking-wider">Active Queue ({queue.waiting.length} Waiting)</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {readyCount > 0 && (
+                        <span className="bg-[#005EB8] text-white text-[9px] font-black px-2 py-0.5 rounded-full">
+                          {readyCount} Ready
+                        </span>
+                      )}
+                      <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform duration-300 ${openSection === 'queue-mobile' ? 'rotate-180' : ''}`} />
+                    </div>
+                  </button>
+                  {openSection === 'queue-mobile' && (
+                    <div className="mt-4 pt-4 border-t border-slate-100 space-y-3 max-h-[300px] overflow-y-auto pr-1 animate-fade-in">
+                      {queue.waiting.length === 0 ? (
+                        <div className="py-6 text-center text-slate-400 text-xs italic">Queue is empty.</div>
+                      ) : (
+                        queue.waiting.map((t) => {
+                          const isReady = t.intake_status === 'READY_FOR_DOCTOR';
+                          const isEmergency = t.priority === 0;
+                          return (
+                            <div 
+                              key={t.id}
+                              className={`p-3 rounded-2xl border transition-all duration-300 relative ${
+                                isEmergency ? 'bg-rose-50/40 border-rose-200' : isReady ? 'bg-violet-50/30 border-violet-150' : 'bg-white border-slate-150'
+                              }`}
+                            >
+                              <div className="flex items-start justify-between gap-2">
+                                <div className="min-w-0">
+                                  <div className="flex items-center gap-2">
+                                    <span className={`text-[10px] font-black px-1.5 py-0.5 rounded ${isEmergency ? 'bg-rose-500 text-white' : 'bg-slate-100 text-slate-700 border'}`}>
+                                      #{t.token_number}
+                                    </span>
+                                    <span className="text-xs font-black text-slate-800 truncate">{t.patients?.name || 'Patient'}</span>
+                                  </div>
+                                  <div className="text-[10px] text-slate-400 font-semibold mt-1 flex items-center gap-1.5">
+                                    <span>{t.patients?.age ? `${t.patients.age}y` : 'Age TBD'}</span>
+                                    <span>•</span>
+                                    <span className="capitalize">{t.department || 'general'}</span>
+                                  </div>
+                                </div>
+                                <div className="text-right flex-shrink-0">
+                                  <span className={`text-[9px] font-black uppercase tracking-wide px-1.5 py-0.5 rounded ${t.priority === 0 ? 'bg-rose-100 text-rose-700' : t.priority === 1 ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'}`}>
+                                    {PRIORITY_LABEL[t.priority]}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })
+                      )}
+                    </div>
+                  )}
+                </div>
+
                 {/* 2. IMPROVED VITALS SECTION */}
                 <div className="bg-white border border-slate-150 rounded-3xl p-5 shadow-sm">
-                  <div className="flex items-center gap-2 mb-4">
-                    <Activity className="w-4.5 h-4.5 text-[#005EB8]" />
-                    <span className="text-xs font-black text-slate-700 uppercase tracking-wider">Patient Triage Vitals Check</span>
-                  </div>
+                  <button
+                    type="button"
+                    onClick={() => toggleSection('vitals')}
+                    className="w-full flex items-center justify-between text-left focus:outline-none min-h-[44px]"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Activity className="w-4.5 h-4.5 text-[#005EB8]" />
+                      <span className="text-xs font-black text-slate-700 uppercase tracking-wider">Patient Triage Vitals Check</span>
+                    </div>
+                    <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform duration-300 ${openSection === 'vitals' ? 'rotate-180' : ''}`} />
+                  </button>
 
-                  <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-                    {[
-                      { label: 'Blood Pressure', value: servingIntake?.bp || '120/80', unit: 'mmHg', icon: <Heart className="w-3.5 h-3.5 text-rose-500 fill-rose-500" /> },
-                      { label: 'Blood Sugar', value: servingIntake?.sugar || '96', unit: 'mg/dL', icon: <Sparkles className="w-3.5 h-3.5 text-amber-500" /> },
-                      { label: 'Temperature', value: servingIntake?.temperature || '98.4', unit: '°F', icon: <Clock className="w-3.5 h-3.5 text-[#00A3AD]" /> },
-                      { label: 'Pulse Rate', value: pulse, unit: 'BPM', setter: setPulse, icon: <Activity className="w-3.5 h-3.5 text-emerald-500" /> },
-                      { label: 'Oxygen Level', value: oxygen, unit: '% SpO2', setter: setOxygen, icon: <Activity className="w-3.5 h-3.5 text-blue-500" /> },
-                    ].map((vt, i) => (
-                      <div key={i} className="bg-slate-50 border border-slate-150 rounded-2xl p-3 flex flex-col justify-between">
-                        <div className="flex items-center justify-between gap-2 text-[10px] font-black text-slate-400 uppercase tracking-wider">
-                          <span>{vt.label}</span>
-                          {vt.icon}
+                  {openSection === 'vitals' && (
+                    <div className="mt-4 pt-4 border-t border-slate-100 grid grid-cols-2 md:grid-cols-5 gap-3 animate-fade-in">
+                      {[
+                        { label: 'Blood Pressure', value: servingIntake?.bp || '120/80', unit: 'mmHg', icon: <Heart className="w-3.5 h-3.5 text-rose-500 fill-rose-500" /> },
+                        { label: 'Blood Sugar', value: servingIntake?.sugar || '96', unit: 'mg/dL', icon: <Sparkles className="w-3.5 h-3.5 text-amber-500" /> },
+                        { label: 'Temperature', value: servingIntake?.temperature || '98.4', unit: '°F', icon: <Clock className="w-3.5 h-3.5 text-[#00A3AD]" /> },
+                        { label: 'Pulse Rate', value: pulse, unit: 'BPM', setter: setPulse, icon: <Activity className="w-3.5 h-3.5 text-emerald-500" /> },
+                        { label: 'Oxygen Level', value: oxygen, unit: '% SpO2', setter: setOxygen, icon: <Activity className="w-3.5 h-3.5 text-blue-500" /> },
+                      ].map((vt, i) => (
+                        <div key={i} className="bg-slate-50 border border-slate-150 rounded-2xl p-3 flex flex-col justify-between">
+                          <div className="flex items-center justify-between gap-2 text-[10px] font-black text-slate-400 uppercase tracking-wider">
+                            <span>{vt.label}</span>
+                            {vt.icon}
+                          </div>
+                          <div className="mt-2.5 flex items-baseline gap-1">
+                            {vt.setter ? (
+                              <input 
+                                type="text" 
+                                value={vt.value} 
+                                onChange={e => vt.setter!(e.target.value)} 
+                                className="w-16 bg-white border border-slate-200 text-slate-800 text-sm font-black rounded px-1.5 focus:outline-none focus:border-[#005EB8] h-10 text-center" 
+                              />
+                            ) : (
+                              <span className="text-sm font-black text-slate-800">{vt.value}</span>
+                            )}
+                            <span className="text-[10px] text-slate-400 font-semibold">{vt.unit}</span>
+                          </div>
                         </div>
-                        <div className="mt-2.5 flex items-baseline gap-1">
-                          {vt.setter ? (
-                            <input 
-                              type="text" 
-                              value={vt.value} 
-                              onChange={e => vt.setter(e.target.value)} 
-                              className="w-14 bg-white border border-slate-200 text-slate-800 text-sm font-black rounded px-1.5 focus:outline-none focus:border-[#005EB8]" 
-                            />
-                          ) : (
-                            <span className="text-sm font-black text-slate-800">{vt.value}</span>
-                          )}
-                          <span className="text-[10px] text-slate-400 font-semibold">{vt.unit}</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 {/* 3. SMART DIAGNOSIS SECTION */}
                 <div className="bg-white border border-slate-150 rounded-3xl p-5 shadow-sm">
-                  <div className="flex items-center gap-2 mb-3">
-                    <FileText className="w-4.5 h-4.5 text-[#005EB8]" />
-                    <span className="text-xs font-black text-slate-700 uppercase tracking-wider">Smart Diagnosis & Templates</span>
-                  </div>
+                  <button
+                    type="button"
+                    onClick={() => toggleSection('diagnosis')}
+                    className="w-full flex items-center justify-between text-left focus:outline-none min-h-[44px]"
+                  >
+                    <div className="flex items-center gap-2">
+                      <FileText className="w-4.5 h-4.5 text-[#005EB8]" />
+                      <span className="text-xs font-black text-slate-700 uppercase tracking-wider">Smart Diagnosis & Templates</span>
+                    </div>
+                    <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform duration-300 ${openSection === 'diagnosis' ? 'rotate-180' : ''}`} />
+                  </button>
 
-                  {/* Predefined Diagnosis tags */}
-                  <div className="flex flex-wrap gap-1.5 mb-3">
-                    {DIAGNOSIS_CHIPS.map(ch => (
-                      <button
-                        key={ch}
-                        type="button"
-                        onClick={() => setDiagnosis(ch)}
-                        className={`text-[10px] font-black px-2.5 py-1 rounded-xl border transition-all ${
-                          diagnosis === ch 
-                            ? 'bg-[#005EB8] text-white border-[#005EB8] shadow-sm'
-                            : 'bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-100'
+                  {openSection === 'diagnosis' && (
+                    <div className="mt-4 pt-4 border-t border-slate-100 space-y-4 animate-fade-in">
+                      {/* Predefined Diagnosis tags */}
+                      <div className="flex flex-wrap gap-1.5">
+                        {DIAGNOSIS_CHIPS.map(ch => (
+                          <button
+                            key={ch}
+                            type="button"
+                            onClick={() => setDiagnosis(ch)}
+                            className={`text-[10px] font-black px-3.5 py-2.5 rounded-xl border transition-all min-h-[38px] ${
+                              diagnosis === ch 
+                                ? 'bg-[#005EB8] text-white border-[#005EB8] shadow-sm'
+                                : 'bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-100'
+                            }`}
+                          >
+                            {ch}
+                          </button>
+                        ))}
+                      </div>
+
+                      <textarea
+                        rows={2}
+                        value={diagnosis}
+                        onChange={e => { setDiagnosis(e.target.value); setFieldErrors(f => ({ ...f, diagnosis: '' })); }}
+                        placeholder="Enter final diagnosis findings..."
+                        className={`w-full border rounded-2xl px-3.5 py-2.5 text-xs font-bold text-slate-750 focus:outline-none resize-none min-h-[80px] ${
+                          fieldErrors.diagnosis ? 'border-red-400' : 'border-slate-200 focus:border-[#005EB8]'
                         }`}
-                      >
-                        {ch}
-                      </button>
-                    ))}
-                  </div>
+                      />
+                      {fieldErrors.diagnosis && <p className="text-xs text-red-500 mt-1">{fieldErrors.diagnosis}</p>}
 
-                  <textarea
-                    rows={2}
-                    value={diagnosis}
-                    onChange={e => { setDiagnosis(e.target.value); setFieldErrors(f => ({ ...f, diagnosis: '' })); }}
-                    placeholder="Enter final diagnosis findings..."
-                    className={`w-full border rounded-2xl px-3.5 py-2.5 text-xs font-bold text-slate-750 focus:outline-none resize-none ${
-                      fieldErrors.diagnosis ? 'border-red-400' : 'border-slate-200 focus:border-[#005EB8]'
-                    }`}
-                  />
-                  {fieldErrors.diagnosis && <p className="text-xs text-red-500 mt-1">{fieldErrors.diagnosis}</p>}
-                </div>
-
-                {/* 5. QUICK PRESCRIPTION TEMPLATES */}
-                <div className="bg-white border border-slate-150 rounded-3xl p-5 shadow-sm">
-                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-3">Quick Prescription Templates</span>
-                  <div className="grid grid-cols-2 md:grid-cols-6 gap-2">
-                    {Object.keys(PRESCRIPTION_TEMPLATES).map(tpl => (
-                      <button
-                        key={tpl}
-                        type="button"
-                        onClick={() => applyTemplate(tpl)}
-                        className="py-2 px-2.5 border border-slate-200 hover:border-violet-300 hover:bg-violet-50/30 text-[#005EB8] text-[10px] font-black uppercase tracking-wider rounded-xl transition-all text-center flex items-center justify-center gap-1.5"
-                      >
-                        <PlusCircle className="w-3.5 h-3.5 text-violet-500" />
-                        <span>{tpl}</span>
-                      </button>
-                    ))}
-                  </div>
+                      {/* QUICK PRESCRIPTION TEMPLATES */}
+                      <div className="pt-2">
+                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-3">Quick Prescription Templates</span>
+                        <div className="grid grid-cols-2 md:grid-cols-6 gap-2">
+                          {Object.keys(PRESCRIPTION_TEMPLATES).map(tpl => (
+                            <button
+                              key={tpl}
+                              type="button"
+                              onClick={() => applyTemplate(tpl)}
+                              className="py-3 px-2.5 border border-slate-200 hover:border-violet-300 hover:bg-violet-50/30 text-[#005EB8] text-[10px] font-black uppercase tracking-wider rounded-xl transition-all text-center flex items-center justify-center gap-1.5 min-h-[44px]"
+                            >
+                              <PlusCircle className="w-3.5 h-3.5 text-violet-500" />
+                              <span>{tpl}</span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* 4. MODERN PRESCRIPTION UI CONSTRUCTOR */}
                 <div className="bg-white border border-slate-150 rounded-3xl p-5 shadow-sm">
-                  <div className="flex items-center justify-between mb-4">
+                  <button
+                    type="button"
+                    onClick={() => toggleSection('meds')}
+                    className="w-full flex items-center justify-between text-left focus:outline-none min-h-[44px]"
+                  >
                     <div className="flex items-center gap-2">
                       <Heart className="w-4.5 h-4.5 text-[#005EB8]" />
                       <span className="text-xs font-black text-slate-700 uppercase tracking-wider">Active Medication List</span>
                     </div>
+                    <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform duration-300 ${openSection === 'meds' ? 'rotate-180' : ''}`} />
+                  </button>
 
-                    <button
-                      type="button"
-                      onClick={addMedication}
-                      className="flex items-center gap-1.5 px-3 py-1 bg-blue-50 text-[#005EB8] text-xs font-black uppercase tracking-wider rounded-xl hover:bg-blue-100 transition-colors"
-                    >
-                      <Plus className="w-3.5 h-3.5" />
-                      <span>Add Med Row</span>
-                    </button>
-                  </div>
+                  {openSection === 'meds' && (
+                    <div className="mt-4 pt-4 border-t border-slate-100 space-y-4 animate-fade-in">
+                      <div className="flex justify-end">
+                        <button
+                          type="button"
+                          onClick={addMedication}
+                          className="flex items-center gap-1.5 px-4 py-2.5 bg-blue-50 text-[#005EB8] text-xs font-black uppercase tracking-wider rounded-xl hover:bg-blue-100 transition-colors min-h-[44px]"
+                        >
+                          <Plus className="w-3.5 h-3.5" />
+                          <span>Add Med Row</span>
+                        </button>
+                      </div>
 
-                  {/* Medicines dynamic table constructor */}
-                  <div className="space-y-4">
-                    {medications.map((med, idx) => {
-                      const freqCode = med.frequency ? med.frequency.split(' ')[0] : '0-0-0';
-                      const freqParts = freqCode.split('-');
-                      const isM = freqParts[0] === '1';
-                      const isA = freqParts[1] === '1';
-                      const isN = freqParts[2] === '1';
+                      {/* Medicines dynamic table constructor */}
+                      <div className="space-y-4">
+                        {medications.map((med, idx) => {
+                          const freqCode = med.frequency ? med.frequency.split(' ')[0] : '0-0-0';
+                          const freqParts = freqCode.split('-');
+                          const isM = freqParts[0] === '1';
+                          const isA = freqParts[1] === '1';
+                          const isN = freqParts[2] === '1';
 
-                      return (
-                        <div key={idx} className="bg-slate-50 border border-slate-150 rounded-2xl p-4 relative animate-fade-in">
-                          <div className="flex items-center justify-between mb-3 border-b border-slate-200 pb-2">
-                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Medication #{idx + 1}</span>
-                            {medications.length > 1 && (
-                              <button 
-                                onClick={() => removeMedication(idx)}
-                                className="text-rose-500 hover:text-rose-700 text-xs font-extrabold flex items-center gap-1 hover:underline"
-                              >
-                                <Trash2 className="w-3.5 h-3.5" /> Delete
-                              </button>
-                            )}
-                          </div>
+                          return (
+                            <div key={idx} className="bg-slate-50 border border-slate-150 rounded-2xl p-4 relative animate-fade-in">
+                              <div className="flex items-center justify-between mb-3 border-b border-slate-200 pb-2">
+                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Medication #{idx + 1}</span>
+                                {medications.length > 1 && (
+                                  <button 
+                                    onClick={() => removeMedication(idx)}
+                                    className="text-rose-500 hover:text-rose-700 text-xs font-extrabold flex items-center gap-1 hover:underline min-h-[44px]"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" /> Delete
+                                  </button>
+                                )}
+                              </div>
 
-                          <div className="grid grid-cols-1 md:grid-cols-12 gap-3.5">
-                            {/* Medicine Search dropdown */}
-                            <div className="md:col-span-4">
-                              <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Select Medicine *</label>
-                              <select
-                                value={med.name}
-                                onChange={e => { updateMedication(idx, 'name', e.target.value); setFieldErrors(f => ({ ...f, [`med_${idx}_name`]: '' })); }}
-                                className={`w-full border bg-white rounded-xl px-2.5 h-9 text-xs font-bold text-slate-800 focus:outline-none ${
-                                  fieldErrors[`med_${idx}_name`] ? 'border-red-400' : 'border-slate-200 focus:border-[#005EB8]'
-                                }`}
-                              >
-                                <option value="">-- Choose Medicine --</option>
-                                {MEDICINE_DIRECTORY.map(m => (
-                                  <option key={m} value={m}>{m}</option>
-                                ))}
-                              </select>
-                              {fieldErrors[`med_${idx}_name`] && <p className="text-[10px] text-red-500 mt-0.5">{fieldErrors[`med_${idx}_name`]}</p>}
-                            </div>
-
-                            {/* Dosage Preset */}
-                            <div className="md:col-span-2">
-                              <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Dosage *</label>
-                              <select
-                                value={med.dosage}
-                                onChange={e => { updateMedication(idx, 'dosage', e.target.value); setFieldErrors(f => ({ ...f, [`med_${idx}_dosage`]: '' })); }}
-                                className={`w-full border bg-white rounded-xl px-2.5 h-9 text-xs font-bold text-slate-800 focus:outline-none ${
-                                  fieldErrors[`med_${idx}_dosage`] ? 'border-red-400' : 'border-slate-200 focus:border-[#005EB8]'
-                                }`}
-                              >
-                                <option value="">-- Size --</option>
-                                <option value="1 tablet">1 Tablet</option>
-                                <option value="1 capsule">1 Capsule</option>
-                                <option value="5 ml (1 tsp)">5 ml (1 tsp)</option>
-                                <option value="10 ml (2 tsp)">10 ml (2 tsp)</option>
-                                <option value="500 mg">500 mg</option>
-                                <option value="650 mg">650 mg</option>
-                              </select>
-                              {fieldErrors[`med_${idx}_dosage`] && <p className="text-[10px] text-red-500 mt-0.5">{fieldErrors[`med_${idx}_dosage`]}</p>}
-                            </div>
-
-                            {/* Frequency toggles */}
-                            <div className="md:col-span-3">
-                              <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Frequency</label>
-                              <div className="flex gap-1 h-9 bg-slate-200/50 p-1 rounded-xl">
-                                {[
-                                  { shift: 'M', label: '🌅 M', val: isM },
-                                  { shift: 'A', label: '☀️ A', val: isA },
-                                  { shift: 'N', label: '🌙 N', val: isN }
-                                ].map(toggle => (
-                                  <button
-                                    key={toggle.shift}
-                                    type="button"
-                                    onClick={() => toggleFrequencyShift(idx, toggle.shift as any, !toggle.val)}
-                                    className={`flex-1 text-[10px] font-black rounded-lg transition-all ${
-                                      toggle.val 
-                                        ? 'bg-[#005EB8] text-white shadow-sm'
-                                        : 'text-slate-400 hover:bg-slate-100 hover:text-slate-600'
+                              <div className="grid grid-cols-1 md:grid-cols-12 gap-3.5">
+                                {/* Medicine Search dropdown */}
+                                <div className="md:col-span-4">
+                                  <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Select Medicine *</label>
+                                  <select
+                                    value={med.name}
+                                    onChange={e => { updateMedication(idx, 'name', e.target.value); setFieldErrors(f => ({ ...f, [`med_${idx}_name`]: '' })); }}
+                                    className={`w-full border bg-white rounded-xl px-2.5 h-11 text-xs font-bold text-slate-800 focus:outline-none ${
+                                      fieldErrors[`med_${idx}_name`] ? 'border-red-400' : 'border-slate-200 focus:border-[#005EB8]'
                                     }`}
                                   >
-                                    {toggle.label}
-                                  </button>
-                                ))}
+                                    <option value="">-- Choose Medicine --</option>
+                                    {MEDICINE_DIRECTORY.map(m => (
+                                      <option key={m} value={m}>{m}</option>
+                                    ))}
+                                  </select>
+                                  {fieldErrors[`med_${idx}_name`] && <p className="text-[10px] text-red-500 mt-0.5">{fieldErrors[`med_${idx}_name`]}</p>}
+                                </div>
+
+                                {/* Dosage Preset */}
+                                <div className="md:col-span-2">
+                                  <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Dosage *</label>
+                                  <select
+                                    value={med.dosage}
+                                    onChange={e => { updateMedication(idx, 'dosage', e.target.value); setFieldErrors(f => ({ ...f, [`med_${idx}_dosage`]: '' })); }}
+                                    className={`w-full border bg-white rounded-xl px-2.5 h-11 text-xs font-bold text-slate-800 focus:outline-none ${
+                                      fieldErrors[`med_${idx}_dosage`] ? 'border-red-400' : 'border-slate-200 focus:border-[#005EB8]'
+                                    }`}
+                                  >
+                                    <option value="">-- Size --</option>
+                                    <option value="1 tablet">1 Tablet</option>
+                                    <option value="1 capsule">1 Capsule</option>
+                                    <option value="5 ml (1 tsp)">5 ml (1 tsp)</option>
+                                    <option value="10 ml (2 tsp)">10 ml (2 tsp)</option>
+                                    <option value="500 mg">500 mg</option>
+                                    <option value="650 mg">650 mg</option>
+                                  </select>
+                                  {fieldErrors[`med_${idx}_dosage`] && <p className="text-[10px] text-red-500 mt-0.5">{fieldErrors[`med_${idx}_dosage`]}</p>}
+                                </div>
+
+                                {/* Frequency toggles */}
+                                <div className="md:col-span-3">
+                                  <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Frequency</label>
+                                  <div className="flex gap-1 h-11 bg-slate-200/50 p-1 rounded-xl">
+                                    {[
+                                      { shift: 'M', label: '🌅 M', val: isM },
+                                      { shift: 'A', label: '☀️ A', val: isA },
+                                      { shift: 'N', label: '🌙 N', val: isN }
+                                    ].map(toggle => (
+                                      <button
+                                        key={toggle.shift}
+                                        type="button"
+                                        onClick={() => toggleFrequencyShift(idx, toggle.shift as any, !toggle.val)}
+                                        className={`flex-1 text-[10px] font-black rounded-lg transition-all ${
+                                          toggle.val 
+                                            ? 'bg-[#005EB8] text-white shadow-sm'
+                                            : 'text-slate-400 hover:bg-slate-100 hover:text-slate-600'
+                                        }`}
+                                      >
+                                        {toggle.label}
+                                      </button>
+                                    ))}
+                                  </div>
+                                </div>
+
+                                {/* Duration selection */}
+                                <div className="md:col-span-3">
+                                  <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Duration</label>
+                                  <select
+                                    value={med.duration}
+                                    onChange={e => updateMedication(idx, 'duration', e.target.value)}
+                                    className="w-full border border-slate-200 bg-white rounded-xl px-2.5 h-11 text-xs font-bold text-slate-800 focus:outline-none focus:border-[#005EB8]"
+                                  >
+                                    <option value="3 days">3 Days</option>
+                                    <option value="5 days">5 Days</option>
+                                    <option value="7 days">1 Week</option>
+                                    <option value="14 days">2 Weeks</option>
+                                    <option value="30 days">1 Month</option>
+                                  </select>
+                                </div>
+                              </div>
+
+                              {/* Instruction fields */}
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 mt-3">
+                                <div>
+                                  <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Medication Instructions</label>
+                                  <select
+                                    value={med.instructions}
+                                    onChange={e => updateMedication(idx, 'instructions', e.target.value)}
+                                    className="w-full border border-slate-200 bg-white rounded-xl px-2.5 h-11 text-xs font-bold text-slate-800 focus:outline-none focus:border-[#005EB8]"
+                                  >
+                                    <option value="After meals">After meals</option>
+                                    <option value="Before meals">Before meals</option>
+                                    <option value="Empty stomach">Empty stomach (Early Morning)</option>
+                                    <option value="At bedtime">At bedtime (Before sleep)</option>
+                                  </select>
+                                </div>
+
+                                <div>
+                                  <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Total Quantity</label>
+                                  <input
+                                    type="number"
+                                    min={1}
+                                    value={med.quantity}
+                                    onChange={e => updateMedication(idx, 'quantity', parseInt(e.target.value) || 1)}
+                                    className="w-full border border-slate-200 bg-white rounded-xl px-2.5 h-11 text-xs font-bold text-slate-800 focus:outline-none focus:border-[#005EB8]"
+                                  />
+                                </div>
                               </div>
                             </div>
-
-                            {/* Duration selection */}
-                            <div className="md:col-span-3">
-                              <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Duration</label>
-                              <select
-                                value={med.duration}
-                                onChange={e => updateMedication(idx, 'duration', e.target.value)}
-                                className="w-full border border-slate-200 bg-white rounded-xl px-2.5 h-9 text-xs font-bold text-slate-800 focus:outline-none focus:border-[#005EB8]"
-                              >
-                                <option value="3 days">3 Days</option>
-                                <option value="5 days">5 Days</option>
-                                <option value="7 days">1 Week</option>
-                                <option value="14 days">2 Weeks</option>
-                                <option value="30 days">1 Month</option>
-                              </select>
-                            </div>
-                          </div>
-
-                          {/* Instruction fields */}
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 mt-3">
-                            <div>
-                              <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Medication Instructions</label>
-                              <select
-                                value={med.instructions}
-                                onChange={e => updateMedication(idx, 'instructions', e.target.value)}
-                                className="w-full border border-slate-200 bg-white rounded-xl px-2.5 h-9 text-xs font-bold text-slate-800 focus:outline-none focus:border-[#005EB8]"
-                              >
-                                <option value="After meals">After meals</option>
-                                <option value="Before meals">Before meals</option>
-                                <option value="Empty stomach">Empty stomach (Early Morning)</option>
-                                <option value="At bedtime">At bedtime (Before sleep)</option>
-                              </select>
-                            </div>
-
-                            <div>
-                              <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Total Quantity</label>
-                              <input
-                                type="number"
-                                min={1}
-                                value={med.quantity}
-                                onChange={e => updateMedication(idx, 'quantity', parseInt(e.target.value) || 1)}
-                                className="w-full border border-slate-200 bg-white rounded-xl px-2.5 h-9 text-xs font-bold text-slate-800 focus:outline-none focus:border-[#005EB8]"
-                              />
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* 6. QUICK LAB TESTS & 7. FOLLOW-UP SCHEDULER */}
-                <div className="grid md:grid-cols-2 gap-6">
-                  {/* Lab Test Actions */}
-                  <div className="bg-white border border-slate-150 rounded-3xl p-5 shadow-sm">
-                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider block mb-3">Quick Lab Test Actions</span>
-                    <div className="flex flex-wrap gap-2">
-                      {['CBC', 'Blood Test', 'Sugar Test', 'X-Ray', 'MRI'].map(test => {
-                        const isSelected = selectedLabTests.includes(test);
-                        return (
-                          <button
-                            key={test}
-                            type="button"
-                            onClick={() => toggleLabTest(test)}
-                            className={`py-2 px-3 border text-[10px] font-black uppercase tracking-wider rounded-xl transition-all ${
-                              isSelected 
-                                ? 'bg-violet-600 text-white border-violet-600 shadow-sm'
-                                : 'bg-slate-50 border-slate-200 text-slate-500 hover:bg-slate-100'
-                            }`}
-                          >
-                            {isSelected ? '✓ ' : '+ '} {test}
-                          </button>
-                        );
-                      })}
+                <div className="bg-white border border-slate-150 rounded-3xl p-5 shadow-sm">
+                  <button
+                    type="button"
+                    onClick={() => toggleSection('labs')}
+                    className="w-full flex items-center justify-between text-left focus:outline-none min-h-[44px]"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Sparkles className="w-4.5 h-4.5 text-[#005EB8]" />
+                      <span className="text-xs font-black text-slate-700 uppercase tracking-wider">Quick Lab Tests & Follow-Up</span>
                     </div>
-                  </div>
+                    <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform duration-300 ${openSection === 'labs' ? 'rotate-180' : ''}`} />
+                  </button>
 
-                  {/* Follow-up Scheduler */}
-                  <div className="bg-white border border-slate-150 rounded-3xl p-5 shadow-sm">
-                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider block mb-3">Follow-Up Scheduler</span>
-                    <div className="grid grid-cols-3 gap-2">
-                      {['after 3 days', 'after 1 week', 'after 1 month'].map(op => {
-                        const isSelected = followUpDays === op;
-                        return (
-                          <button
-                            key={op}
-                            type="button"
-                            onClick={() => setFollowUpDays(op)}
-                            className={`py-2 text-[10px] font-black uppercase tracking-wider rounded-xl text-center border transition-all ${
-                              isSelected 
-                                ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
-                                : 'bg-slate-50 border-slate-200 text-slate-500 hover:bg-slate-150'
-                            }`}
-                          >
-                            {op}
-                          </button>
-                        );
-                      })}
+                  {openSection === 'labs' && (
+                    <div className="mt-4 pt-4 border-t border-slate-100 grid md:grid-cols-2 gap-6 animate-fade-in">
+                      {/* Lab Test Actions */}
+                      <div className="space-y-3">
+                        <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider block">Quick Lab Test Actions</span>
+                        <div className="flex flex-wrap gap-2">
+                          {['CBC', 'Blood Test', 'Sugar Test', 'X-Ray', 'MRI'].map(test => {
+                            const isSelected = selectedLabTests.includes(test);
+                            return (
+                              <button
+                                key={test}
+                                type="button"
+                                onClick={() => toggleLabTest(test)}
+                                className={`py-3 px-3.5 border text-[10px] font-black uppercase tracking-wider rounded-xl transition-all min-h-[44px] ${
+                                  isSelected 
+                                    ? 'bg-violet-600 text-white border-violet-600 shadow-sm'
+                                    : 'bg-slate-50 border-slate-200 text-slate-500 hover:bg-slate-100'
+                                }`}
+                              >
+                                {isSelected ? '✓ ' : '+ '} {test}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* Follow-up Scheduler */}
+                      <div className="space-y-3">
+                        <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider block">Follow-Up Scheduler</span>
+                        <div className="grid grid-cols-3 gap-2">
+                          {['after 3 days', 'after 1 week', 'after 1 month'].map(op => {
+                            const isSelected = followUpDays === op;
+                            return (
+                              <button
+                                key={op}
+                                type="button"
+                                onClick={() => setFollowUpDays(op)}
+                                className={`py-3 text-[10px] font-black uppercase tracking-wider rounded-xl text-center border transition-all min-h-[44px] ${
+                                  isSelected 
+                                    ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
+                                    : 'bg-slate-50 border-slate-200 text-slate-500 hover:bg-slate-150'
+                                }`}
+                              >
+                                {op}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
 
                 {/* Additional notes text area */}
                 <div className="bg-white border border-slate-150 rounded-3xl p-5 shadow-sm">
-                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-wider block mb-2">Doctor Notes / Consultation Advice</label>
-                  <textarea
-                    rows={2}
-                    value={doctorNotes}
-                    onChange={e => setDoctorNotes(e.target.value)}
-                    placeholder="Enter exercise prescriptions, diet plans, or special clinic precautions..."
-                    className="w-full border border-slate-200 focus:border-[#005EB8] rounded-2xl px-4 py-2.5 text-xs font-bold text-slate-750 focus:outline-none resize-none"
-                  />
+                  <button
+                    type="button"
+                    onClick={() => toggleSection('advice')}
+                    className="w-full flex items-center justify-between text-left focus:outline-none min-h-[44px]"
+                  >
+                    <div className="flex items-center gap-2">
+                      <FileText className="w-4.5 h-4.5 text-[#005EB8]" />
+                      <span className="text-xs font-black text-slate-700 uppercase tracking-wider">Doctor Notes & Advice</span>
+                    </div>
+                    <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform duration-300 ${openSection === 'advice' ? 'rotate-180' : ''}`} />
+                  </button>
+
+                  {openSection === 'advice' && (
+                    <div className="mt-4 pt-4 border-t border-slate-100 animate-fade-in">
+                      <label className="text-[10px] font-black text-slate-500 uppercase tracking-wider block mb-2">Doctor Notes / Consultation Advice</label>
+                      <textarea
+                        rows={2}
+                        value={doctorNotes}
+                        onChange={e => setDoctorNotes(e.target.value)}
+                        placeholder="Enter exercise prescriptions, diet plans, or special clinic precautions..."
+                        className="w-full border border-slate-200 focus:border-[#005EB8] rounded-2xl px-4 py-2.5 text-xs font-bold text-slate-750 focus:outline-none resize-none min-h-[70px]"
+                      />
+                    </div>
+                  )}
                 </div>
 
                 {/* Sticky Action Buttons */}
@@ -716,7 +898,7 @@ export default function DoctorPanel({ doctorDepartment = 'general', doctorName =
                   <button
                     onClick={completeConsultation}
                     disabled={notesLoading}
-                    className="flex-1 py-3.5 bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-white font-black text-xs uppercase tracking-widest rounded-xl transition-all shadow-md shadow-emerald-500/10 flex items-center justify-center gap-2"
+                    className="flex-1 py-4 bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-white font-black text-xs uppercase tracking-widest rounded-xl transition-all shadow-md shadow-emerald-500/10 flex items-center justify-center gap-2 min-h-[48px]"
                   >
                     {notesLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <CheckCircle2 className="w-5 h-5" />}
                     <span>Complete & Send to Pharmacy</span>
@@ -725,7 +907,7 @@ export default function DoctorPanel({ doctorDepartment = 'general', doctorName =
                   <button
                     onClick={markNoShow}
                     disabled={!!actionLoading}
-                    className="px-6 py-3 border border-red-200 hover:border-red-300 text-red-600 font-black text-xs uppercase tracking-widest rounded-xl transition-all flex items-center justify-center gap-2"
+                    className="px-6 py-4 border border-red-200 hover:border-red-300 text-red-600 font-black text-xs uppercase tracking-widest rounded-xl transition-all flex items-center justify-center gap-2 min-h-[48px]"
                   >
                     {actionLoading === 'noshow' ? <Loader2 className="w-4 h-4 animate-spin" /> : <UserX className="w-4.5 h-4.5" />}
                     <span>Mark No-Show</span>
@@ -754,7 +936,7 @@ export default function DoctorPanel({ doctorDepartment = 'general', doctorName =
           </div>
 
           {/* 💻 RIGHT COLUMN: QUEUE MANAGEMENT PANEL */}
-          <div className="space-y-6">
+          <div className="space-y-6 hidden lg:block">
             
             {/* 8. IMPROVED QUEUE MANAGEMENT PANEL */}
             <div className="bg-white border border-slate-150 rounded-3xl p-5 shadow-sm">

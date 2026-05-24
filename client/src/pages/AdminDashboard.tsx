@@ -6,9 +6,9 @@ import {
   TrendingUp, Clock, CheckCircle2, Calendar,
   Package, Search, PlusCircle, Volume2, ShieldAlert, Heart,
   HardDrive, Network, Layers, X,
-  FileSpreadsheet, Eye, Sparkles, MapPin, Database, Server
+  FileSpreadsheet, Eye, Sparkles, MapPin, Database, Server, DollarSign
 } from 'lucide-react';
-import { TokenStatus, Priority, Department, PRIORITY_LABEL, PRIORITY_COLOR, STATUS_COLOR } from '../types';
+import { TokenStatus, Priority, Department, PRIORITY_LABEL, PRIORITY_COLOR, STATUS_COLOR, DEPARTMENT_LABEL } from '../types';
 
 interface Props {
   onNavigate?: (p: string) => void;
@@ -1322,60 +1322,350 @@ export default function AdminDashboard({ currentUser }: Props) {
           {/* ─────────────────────────────────────────────────────────────────
               8. TAB: Visual Analytics
           ───────────────────────────────────────────────────────────────── */}
-          {activeTab === 'analytics' && (
-            <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-6 space-y-6">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-                <div>
-                  <h3 className="text-sm font-black text-slate-700 flex items-center gap-1.5 uppercase tracking-wide">
-                    <TrendingUp className="w-4 h-4 text-[#005EB8]" />
-                    SaaS Operations Visual Analytics
-                  </h3>
-                  <p className="text-xs text-slate-400 mt-0.5">Live metrics graphs representing peak intake traffic.</p>
-                </div>
-                <button onClick={handleExportCSV} className="flex items-center gap-1 bg-[#005EB8]/10 text-[#005EB8] hover:bg-[#005EB8]/20 px-3 py-1.5 rounded-xl text-xs font-bold transition-all">
-                  <FileSpreadsheet className="w-4 h-4" />
-                  Download CSV
-                </button>
-              </div>
+          {/* ─────────────────────────────────────────────────────────────────
+              8. TAB: Visual Analytics
+          ───────────────────────────────────────────────────────────────── */}
+          {activeTab === 'analytics' && (() => {
+            // State-derived calculations
+            const totalTokens = tokens.length;
+            const waitingCount = tokens.filter(t => t.status === 'WAITING').length;
+            const servingCount = tokens.filter(t => t.status === 'SERVING').length;
+            const doneCount = tokens.filter(t => t.status === 'DONE').length;
+            const noShowCount = tokens.filter(t => t.status === 'NO_SHOW').length;
+            
+            // Waiting Telemetry
+            const avgWaitTime = waitingCount * 10;
+            const waitTimeStatus = avgWaitTime > 40 ? 'High Delay' : avgWaitTime > 15 ? 'Moderate' : 'Optimal';
+            const waitTimeColor = avgWaitTime > 40 ? 'text-rose-500 bg-rose-50 border-rose-100' : avgWaitTime > 15 ? 'text-amber-600 bg-amber-50 border-amber-100' : 'text-emerald-600 bg-emerald-50 border-emerald-100';
 
-              {/* Custom SVG Charts Layout */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100 text-xs">
-                  <h4 className="font-extrabold text-slate-700 mb-2">Hourly Intake Load Pattern</h4>
-                  {/* SVG Bar Chart */}
-                  <svg viewBox="0 0 200 100" className="w-full h-32 text-[#005EB8]">
-                    <rect x="10" y="30" width="15" height="70" fill="currentColor" rx="2" />
-                    <rect x="35" y="10" width="15" height="90" fill="currentColor" rx="2" />
-                    <rect x="60" y="20" width="15" height="80" fill="currentColor" rx="2" />
-                    <rect x="85" y="40" width="15" height="60" fill="currentColor" rx="2" />
-                    <rect x="110" y="15" width="15" height="85" fill="currentColor" rx="2" />
-                    <rect x="135" y="5" width="15" height="95" fill="currentColor" rx="2" />
-                    <rect x="160" y="50" width="15" height="50" fill="currentColor" rx="2" />
-                  </svg>
-                  <div className="flex justify-between text-[8px] text-slate-400 mt-2 font-bold uppercase tracking-wider">
-                    <span>9:00 AM</span>
-                    <span>12:00 PM</span>
-                    <span>3:00 PM</span>
-                    <span>6:00 PM</span>
+            // Revenue computations
+            const totalRevenue = appointments.reduce((sum, app) => sum + (Number(app.consultation_fee) || 0), 0);
+            const paidRevenue = appointments.filter(app => app.status === 'PAID' || app.status === 'COMPLETED').reduce((sum, app) => sum + (Number(app.consultation_fee) || 0), 0);
+            const pendingRevenue = appointments.filter(app => app.status === 'PENDING' || app.status === 'WAITING' || !app.status).reduce((sum, app) => sum + (Number(app.consultation_fee) || 0), 0);
+
+            // Token priorities
+            const p0Count = tokens.filter(t => t.priority === 0).length;
+            const p1Count = tokens.filter(t => t.priority === 1).length;
+            const p2Count = tokens.filter(t => t.priority === 2).length;
+
+            // Hourly Intake Load Graph Calculation
+            const hourlyLoad = Array(8).fill(0); // 9 AM to 5 PM
+            tokens.forEach(t => {
+              const hour = new Date(t.created_at).getHours();
+              if (hour >= 9 && hour < 17) {
+                hourlyLoad[hour - 9]++;
+              }
+            });
+            const maxIntake = Math.max(...hourlyLoad, 1);
+
+            return (
+              <div className="space-y-6 text-left">
+                
+                {/* Visual Header Controls */}
+                <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 animate-fade-in">
+                  <div>
+                    <h3 className="text-sm font-black text-slate-700 flex items-center gap-1.5 uppercase tracking-wide">
+                      <TrendingUp className="w-4 h-4 text-[#005EB8]" />
+                      Hospital Operations & Analytics Suite
+                    </h3>
+                    <p className="text-xs text-slate-400 mt-0.5">Real-time dynamic computations of clinical queues, doctor utilization, and revenue pipelines.</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <button 
+                      onClick={() => fetchData(false)}
+                      className="flex items-center gap-1.5 px-4 py-2 border border-slate-250 hover:bg-slate-50 text-slate-600 rounded-xl text-xs font-bold transition-all"
+                    >
+                      <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin' : ''}`} />
+                      Sync Telemetry
+                    </button>
+                    <button 
+                      onClick={handleExportCSV} 
+                      className="flex items-center gap-1.5 bg-[#005EB8] hover:bg-[#004a96] text-white px-4 py-2 rounded-xl text-xs font-black transition-all shadow-md shadow-[#005EB8]/10 uppercase tracking-wider"
+                    >
+                      <FileSpreadsheet className="w-3.5 h-3.5" />
+                      Export CSV Audit
+                    </button>
                   </div>
                 </div>
 
-                <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100 text-xs">
-                  <h4 className="font-extrabold text-slate-700 mb-2">Average Triage Waiting Curve</h4>
-                  {/* SVG Area Chart */}
-                  <svg viewBox="0 0 200 100" className="w-full h-32 text-[#00A3AD]">
-                    <path d="M 0 100 Q 40 30, 80 80 T 160 10 T 200 100 Z" fill="rgba(0, 163, 173, 0.15)" stroke="currentColor" strokeWidth="2" />
-                  </svg>
-                  <div className="flex justify-between text-[8px] text-slate-400 mt-2 font-bold uppercase tracking-wider">
-                    <span>Monday</span>
-                    <span>Wednesday</span>
-                    <span>Friday</span>
-                    <span>Sunday</span>
+                {/* 1. KEY PERFORMANCE INDICATORS GRID */}
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 animate-fade-in">
+                  
+                  {/* Daily Outpatients */}
+                  <div className="bg-white border border-slate-150 rounded-3xl p-5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between min-h-[120px]">
+                    <div className="flex items-center justify-between text-slate-400">
+                      <span className="text-[9px] font-black uppercase tracking-wider">Daily Outpatients</span>
+                      <Users className="w-4 h-4 text-[#005EB8]" />
+                    </div>
+                    <div className="text-3xl font-black text-slate-800 mt-2">{totalTokens}</div>
+                    <div className="text-[10px] text-slate-400 mt-1 font-semibold flex items-center gap-1.5">
+                      <span className="text-emerald-500 font-extrabold">{doneCount} Completed</span>
+                      <span>•</span>
+                      <span className="text-indigo-500 font-extrabold">{waitingCount} Waiting</span>
+                    </div>
                   </div>
+
+                  {/* Avg Waiting Telemetry */}
+                  <div className="bg-white border border-slate-150 rounded-3xl p-5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between min-h-[120px]">
+                    <div className="flex items-center justify-between text-slate-400">
+                      <span className="text-[9px] font-black uppercase tracking-wider">Avg Waiting Time</span>
+                      <Clock className="w-4 h-4 text-[#00A3AD]" />
+                    </div>
+                    <div className="text-3xl font-black text-slate-800 mt-2">~{avgWaitTime} <span className="text-xs font-bold text-slate-400">Mins</span></div>
+                    <div className="text-[10px] text-slate-400 mt-1 font-semibold flex items-center gap-1.5">
+                      <span className={`px-1.5 py-0.5 rounded border text-[9px] font-black uppercase ${waitTimeColor}`}>
+                        {waitTimeStatus}
+                      </span>
+                      <span>• {servingCount} Active Nodes</span>
+                    </div>
+                  </div>
+
+                  {/* Operational Throughput */}
+                  <div className="bg-white border border-slate-150 rounded-3xl p-5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between min-h-[120px]">
+                    <div className="flex items-center justify-between text-slate-400">
+                      <span className="text-[9px] font-black uppercase tracking-wider">Operational Throughput</span>
+                      <Activity className="w-4 h-4 text-violet-500" />
+                    </div>
+                    <div className="text-3xl font-black text-slate-800 mt-2">
+                      {totalTokens > 0 ? Math.round((doneCount / totalTokens) * 100) : 100}%
+                    </div>
+                    <div className="text-[10px] text-slate-400 mt-1 font-semibold flex items-center gap-1.5">
+                      <span className="text-rose-500 font-extrabold">{noShowCount} No-Shows</span>
+                      <span>• Sync Nominal</span>
+                    </div>
+                  </div>
+
+                  {/* Revenue Summary */}
+                  <div className="bg-white border border-slate-150 rounded-3xl p-5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between min-h-[120px]">
+                    <div className="flex items-center justify-between text-slate-400">
+                      <span className="text-[9px] font-black uppercase tracking-wider">Revenue Summary</span>
+                      <DollarSign className="w-4 h-4 text-emerald-500" />
+                    </div>
+                    <div className="text-2xl font-black text-slate-800 mt-2">₹{totalRevenue.toLocaleString('en-IN')}</div>
+                    <div className="text-[9px] text-slate-400 mt-1 font-bold flex justify-between gap-1 flex-wrap w-full">
+                      <span className="text-emerald-600 bg-emerald-50 border border-emerald-100 px-1.5 py-0.2 rounded">₹{paidRevenue} Paid</span>
+                      <span className="text-amber-600 bg-amber-50 border border-amber-100 px-1.5 py-0.2 rounded">₹{pendingRevenue} Pending</span>
+                    </div>
+                  </div>
+
                 </div>
+
+                {/* 2. DYNAMIC WORKSPACE REPORTING SPLIT */}
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 animate-fade-in">
+                  
+                  {/* Left Column: Doctor Performance utilization ledger */}
+                  <div className="lg:col-span-7 bg-white rounded-3xl border border-slate-150 p-6 shadow-sm space-y-4">
+                    <div>
+                      <h4 className="font-black text-slate-800 text-sm uppercase tracking-wide">Practitioner Utilization & Efficiency</h4>
+                      <p className="text-[11px] text-slate-400">Real-time performance indexes computed by comparing consultations completed vs department wait loops.</p>
+                    </div>
+
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-xs text-left border-collapse">
+                        <thead>
+                          <tr className="border-b border-slate-100 text-[10px] uppercase text-slate-400 font-black">
+                            <th className="pb-2.5">Doctor Name</th>
+                            <th className="pb-2.5">Speciality</th>
+                            <th className="pb-2.5">Status</th>
+                            <th className="pb-2.5 text-center">Served</th>
+                            <th className="pb-2.5 text-center">Wait Load</th>
+                            <th className="pb-2.5 text-right">Efficiency</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-50">
+                          {doctors.length === 0 ? (
+                            <tr>
+                              <td colSpan={6} className="py-6 text-center text-slate-400 italic">No onboarded practitioners.</td>
+                            </tr>
+                          ) : (
+                            doctors.map(doc => {
+                              const served = tokens.filter(t => t.doctor_name === doc.name && t.status === 'DONE').length;
+                              const waiting = tokens.filter(t => t.room_number === doc.room_number && t.status === 'WAITING').length;
+                              const total = served + waiting;
+                              const score = total === 0 ? 100 : Math.round((served / total) * 100);
+                              
+                              const progressColor = score > 80 ? 'bg-emerald-500' : score > 40 ? 'bg-[#005EB8]' : 'bg-rose-500';
+
+                              return (
+                                <tr key={doc.id} className="hover:bg-slate-50/50 transition-colors">
+                                  <td className="py-2.5 font-bold text-slate-700">{doc.name}</td>
+                                  <td className="py-2.5 font-semibold text-slate-400 capitalize">{DEPARTMENT_LABEL[doc.department] || doc.department}</td>
+                                  <td className="py-2.5">
+                                    <span className={`inline-block w-1.5 h-1.5 rounded-full mr-1.5 ${doc.is_available ? 'bg-emerald-500 animate-pulse' : 'bg-slate-300'}`} />
+                                    <span className="font-semibold text-slate-500 text-[10px] uppercase">{doc.is_available ? 'Online' : 'Offline'}</span>
+                                  </td>
+                                  <td className="py-2.5 text-center font-bold text-slate-600">{served}</td>
+                                  <td className="py-2.5 text-center font-bold text-slate-400">{waiting}</td>
+                                  <td className="py-2.5 text-right">
+                                    <div className="flex items-center justify-end gap-2">
+                                      <span className="font-extrabold text-[#005EB8]">{score}%</span>
+                                      <div className="w-12 h-1.5 bg-slate-100 rounded-full overflow-hidden hidden sm:block">
+                                        <div className={`h-full rounded-full ${progressColor}`} style={{ width: `${score}%` }} />
+                                      </div>
+                                    </div>
+                                  </td>
+                                </tr>
+                              );
+                            })
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  {/* Right Column: Token Analytics & Priority Wait Times */}
+                  <div className="lg:col-span-5 flex flex-col gap-6">
+                    
+                    {/* Token Priority Breakdown */}
+                    <div className="bg-white rounded-3xl border border-slate-150 p-6 shadow-sm space-y-4">
+                      <div>
+                        <h4 className="font-black text-slate-800 text-sm uppercase tracking-wide">Queue Node Priority Analysis</h4>
+                        <p className="text-[11px] text-slate-400">Granular priority load splitting across standard classifications.</p>
+                      </div>
+
+                      <div className="space-y-3.5">
+                        
+                        {/* Emergency (Priority 0) */}
+                        <div className="bg-rose-50/30 border border-rose-100 rounded-2xl p-3 flex justify-between items-center text-xs relative overflow-hidden">
+                          <div className="absolute top-0 bottom-0 left-0 w-1 bg-rose-500" />
+                          <div className="flex items-center gap-2.5 text-left pl-1">
+                            <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping" />
+                            <span className="w-2 h-2 rounded-full bg-rose-500 absolute" />
+                            <div>
+                              <div className="font-black text-rose-700">Emergency / Triage</div>
+                              <div className="text-[10px] text-slate-400 font-semibold">{p0Count} Active Tickets Today</div>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <div className="font-black text-rose-600">Immediate</div>
+                            <div className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Avg Wait: ~2m</div>
+                          </div>
+                        </div>
+
+                        {/* Special (Priority 1) */}
+                        <div className="bg-amber-50/30 border border-amber-100 rounded-2xl p-3 flex justify-between items-center text-xs relative overflow-hidden">
+                          <div className="absolute top-0 bottom-0 left-0 w-1 bg-amber-500" />
+                          <div className="flex items-center gap-2.5 text-left pl-1">
+                            <span className="w-2 h-2 rounded-full bg-amber-500" />
+                            <div>
+                              <div className="font-black text-amber-700">Senior / Special Assist</div>
+                              <div className="text-[10px] text-slate-400 font-semibold">{p1Count} Active Tickets Today</div>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <div className="font-black text-amber-600">Priority Lane</div>
+                            <div className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Avg Wait: ~8m</div>
+                          </div>
+                        </div>
+
+                        {/* Normal (Priority 2) */}
+                        <div className="bg-emerald-50/20 border border-emerald-100 rounded-2xl p-3 flex justify-between items-center text-xs relative overflow-hidden">
+                          <div className="absolute top-0 bottom-0 left-0 w-1 bg-emerald-500" />
+                          <div className="flex items-center gap-2.5 text-left pl-1">
+                            <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                            <div>
+                              <div className="font-black text-emerald-700">Normal Consultation</div>
+                              <div className="text-[10px] text-slate-400 font-semibold">{p2Count} Active Tickets Today</div>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <div className="font-black text-emerald-600">FIFO Queue</div>
+                            <div className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Avg Wait: ~{waitingCount * 12}m</div>
+                          </div>
+                        </div>
+
+                      </div>
+                    </div>
+
+                  </div>
+
+                </div>
+
+                {/* 3. DYNAMIC INTAKE TRAFFIC CHARTS */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-fade-in">
+                  
+                  {/* Hourly Patient Intake load */}
+                  <div className="bg-white rounded-3xl border border-slate-150 p-6 shadow-sm text-xs">
+                    <h4 className="font-extrabold text-slate-700 text-sm mb-2 uppercase tracking-wider">Hourly Patient Intake Traffic Load</h4>
+                    
+                    {/* SVG Bar Chart with dynamically computed bars */}
+                    <div className="relative pt-4">
+                      <svg viewBox="0 0 240 100" className="w-full h-32 text-[#005EB8]">
+                        {hourlyLoad.map((count, index) => {
+                          const height = (count / maxIntake) * 80 + 2; // scaled to height 80
+                          const xPos = 18 + index * 27;
+                          return (
+                            <g key={index} className="group">
+                              <rect 
+                                x={xPos} 
+                                y={100 - height} 
+                                width={14} 
+                                height={height} 
+                                fill="currentColor" 
+                                className="hover:opacity-85 transition-opacity cursor-pointer duration-300"
+                                rx="3" 
+                              />
+                              <text 
+                                x={xPos + 7} 
+                                y={95 - height} 
+                                textAnchor="middle" 
+                                className="text-[7px] font-black fill-slate-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                              >
+                                {count}
+                              </text>
+                            </g>
+                          );
+                        })}
+                      </svg>
+                      <div className="flex justify-between text-[8px] text-slate-400 mt-2 font-bold uppercase tracking-wider px-2">
+                        <span>9 AM</span>
+                        <span>10 AM</span>
+                        <span>11 AM</span>
+                        <span>12 PM</span>
+                        <span>1 PM</span>
+                        <span>2 PM</span>
+                        <span>3 PM</span>
+                        <span>4 PM</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Live Revenue Distribution Flow */}
+                  <div className="bg-white rounded-3xl border border-slate-150 p-6 shadow-sm text-xs">
+                    <h4 className="font-extrabold text-slate-700 text-sm mb-2 uppercase tracking-wider">Consultation Billing Flow Distribution</h4>
+                    
+                    <div className="relative pt-6 flex flex-col justify-between h-32">
+                      <div className="flex justify-around items-end h-20 gap-4">
+                        
+                        {/* Paid column */}
+                        <div className="flex-1 flex flex-col items-center gap-1.5">
+                          <div className="text-[9px] font-black text-emerald-600">₹{paidRevenue}</div>
+                          <div 
+                            className="bg-emerald-500 rounded-t-xl w-14 hover:opacity-80 transition-all duration-300 shadow-lg shadow-emerald-500/10" 
+                            style={{ height: `${totalRevenue > 0 ? (paidRevenue / totalRevenue) * 60 + 5 : 5}px` }}
+                          />
+                          <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest mt-1">Paid Invoices</span>
+                        </div>
+
+                        {/* Pending column */}
+                        <div className="flex-1 flex flex-col items-center gap-1.5">
+                          <div className="text-[9px] font-black text-amber-600">₹{pendingRevenue}</div>
+                          <div 
+                            className="bg-amber-500 rounded-t-xl w-14 hover:opacity-80 transition-all duration-300 shadow-lg shadow-amber-500/10" 
+                            style={{ height: `${totalRevenue > 0 ? (pendingRevenue / totalRevenue) * 60 + 5 : 5}px` }}
+                          />
+                          <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest mt-1">Pending Invoices</span>
+                        </div>
+
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
+
               </div>
-            </div>
-          )}
+            );
+          })()}
 
           {/* ─────────────────────────────────────────────────────────────────
               9. TAB: System Diagnostics

@@ -30,6 +30,7 @@ export default function PharmacyDashboard() {
 
   // ── Dashboard States ──────────────────────────────────────
   const [pending, setPending] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [dispensedToday, setDispensedToday] = useState<any[]>([]);
   const [selected, setSelected] = useState<any | null>(null);
   const [medicines, setMedicines] = useState<MedicineRow[]>([]);
@@ -84,7 +85,7 @@ export default function PharmacyDashboard() {
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Database sync failed. Reconnecting...');
     } finally {
-      // loading state removed — no spinner in PharmacyDashboard
+      setLoading(false);
     }
   }, [hospitalId]);
 
@@ -126,6 +127,21 @@ export default function PharmacyDashboard() {
     setDispensing(rx.id);
     setError('');
     setSuccess('');
+
+    // Capture state snapshots for graceful rollback
+    const originalPending = [...pending];
+    const originalDispensed = [...dispensedToday];
+    const originalSelected = selected;
+
+    // OPTIMISTICALLY update list arrays immediately (0ms UI latency)
+    setPending(prev => prev.filter(p => p.id !== rx.id));
+    setDispensedToday(prev => [
+      { ...rx, status: 'DISPENSED', dispensed_at: new Date().toISOString() },
+      ...prev
+    ]);
+    setSelected(null);
+    setSuccess('Prescription dispatched successfully (optimistic update)...');
+
     try {
       const medicationsList = (Array.isArray(rx.medications) 
         ? rx.medications 
@@ -193,12 +209,17 @@ export default function PharmacyDashboard() {
           .eq('id', targetTokenId);
       }
 
-      setSuccess('Prescription dispatched successfully, medicines stock decremented, and token queue closed!');
+      setSuccess('Prescription dispatched successfully, stock decremented, and token queue closed!');
       logLocalActivity(`Token #${rx.tokens?.token_number} prescription successfully dispensed and closed.`, 'pharmacy', 'bg-[#00A3AD]');
-      setSelected(null);
-      fetchData();
+      // Silent sync to confirm all DB records match UI
+      fetchData(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Prescription dispensing transaction failed.');
+      // Graceful state rollback on database transaction errors
+      setPending(originalPending);
+      setDispensedToday(originalDispensed);
+      setSelected(originalSelected);
+      setSuccess('');
+      setError(err instanceof Error ? err.message : 'Prescription dispensing failed. UI states reverted.');
     } finally {
       setDispensing(null);
     }
@@ -387,6 +408,41 @@ export default function PharmacyDashboard() {
 
   // Dynamic dynamic list of categories
   const medicineCategories = ['ALL', ...Array.from(new Set(medicines.map(m => m.category).filter(Boolean)))];
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#F4F8FB] pb-12 font-sans animate-fade-in">
+        {/* Sub Header Skeleton */}
+        <div className="bg-white border-b border-slate-200 py-4 px-6 shadow-sm h-16 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-slate-200 rounded-xl animate-skeleton" />
+            <div className="space-y-2">
+              <div className="w-32 h-4 bg-slate-200 rounded animate-skeleton" />
+              <div className="w-48 h-3 bg-slate-100 rounded animate-skeleton" />
+            </div>
+          </div>
+          <div className="w-40 h-8 bg-slate-100 rounded-xl animate-skeleton" />
+        </div>
+
+        {/* Main Body Skeleton */}
+        <div className="max-w-7xl mx-auto px-4 md:px-6 mt-6 grid grid-cols-1 lg:grid-cols-5 gap-6">
+          {/* Left Panel: Queue list skeleton */}
+          <div className="lg:col-span-2 space-y-4">
+            <div className="grid grid-cols-3 gap-2">
+              {[1, 2, 3].map(i => (
+                <div key={i} className="bg-white h-16 rounded-2xl border border-slate-100 animate-skeleton" />
+              ))}
+            </div>
+            <div className="bg-white rounded-3xl border border-slate-100 p-4 h-64 animate-skeleton" />
+          </div>
+          {/* Right Panel: Selection card skeleton */}
+          <div className="lg:col-span-3">
+            <div className="bg-white rounded-3xl border border-slate-100 p-6 h-96 animate-skeleton" />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#F4F8FB] pb-12 font-sans">

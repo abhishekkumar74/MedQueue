@@ -1,9 +1,9 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { getIntakeByToken, startIntake, updateIntake, getSelectedHospitalId } from '../lib/api';
 import { supabase } from '../lib/supabase';
-import { Token, PatientIntake, PRIORITY_LABEL, PRIORITY_COLOR, DEPARTMENT_LABEL, Department, Priority } from '../types';
+import { Token, PatientIntake, PRIORITY_LABEL, DEPARTMENT_LABEL, Department, Priority } from '../types';
 import { 
-  Loader2, AlertCircle, CheckCircle2, User, Heart, MapPin, Sparkles, Activity, Clock, ShieldAlert, Check
+  Loader2, AlertCircle, CheckCircle2, Heart, MapPin, Sparkles, Activity, Clock, ShieldAlert, Check
 } from 'lucide-react';
 
 interface IntakeForm {
@@ -38,7 +38,6 @@ export default function WardBoyIntake({ token, onDone }: { token: Token; onDone?
   const [error, setError] = useState('');
   const [completed, setCompleted] = useState(false);
 
-  const patientPhone = token.phone;
   const currentHospitalId = getSelectedHospitalId();
 
   // Symptom Tags
