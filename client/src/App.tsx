@@ -1,27 +1,22 @@
 import { useState, useEffect } from 'react';
-import LandingPage from './pages/LandingPage';
-import PatientLoginPage from './pages/PatientLoginPage';
-import StaffLoginPage from './pages/StaffLoginPage';
-import SuperAdminLoginPage from './pages/SuperAdminLoginPage';
-import RegisterPage from './pages/RegisterPage';
-import StaffDashboard from './pages/StaffDashboard';
-import SuperAdminDashboard from './pages/SuperAdminDashboard';
-import DisplayBoard from './pages/DisplayBoard';
-import LiveTokenTracker from './pages/LiveTokenTracker';
-import AppointmentBooking from './pages/AppointmentBooking';
-import PharmacyDashboard from './pages/PharmacyDashboard';
-import PatientHistory from './pages/PatientHistory';
-import OfflineIndicator from './components/OfflineIndicator';
-import SetupBanner from './components/SetupBanner';
-import UniversalHeader from './components/UniversalHeader';
+import { LandingPage } from './features/landing';
+import { HospitalLandingPage } from './features/hospitals';
+import { PatientLoginPage, StaffLoginPage, SuperAdminLoginPage, RegisterPage } from './features/auth';
+import { StaffDashboard, SuperAdminDashboard } from './features/admin';
+import { DisplayBoard, LiveTokenTracker } from './features/queue';
+import { AppointmentBooking } from './features/appointments';
+import { PharmacyDashboard } from './features/pharmacy';
+import { PatientHistory } from './features/patient';
+import { OfflineIndicator } from './components';
+import { SetupBanner, UniversalHeader } from './layouts';
 import { supabase, isMissingConfig } from './lib/supabase';
 import { AuthUser, getCachedUser, fetchMe, logout, getAccessToken } from './lib/auth';
 import { getTokenStatus } from './lib/api';
-import { LogOut, Clock, Calendar, FileText, Home, AlertTriangle, ShieldAlert } from 'lucide-react';
-import { getTenantSlug, resolveTenantConfig, TenantConfig } from './lib/tenant';
+import { LogOut, Clock, Calendar, FileText, Home, AlertTriangle, ShieldAlert, Mail, Phone } from 'lucide-react';
+import { getTenantSlug, resolveTenantConfig, TenantConfig, getHomeRoute } from './lib/tenant';
 
 type Page = 'landing' | 'patient-login' | 'staff-login' | 'register' | 'staff'
-  | 'display' | 'tracker' | 'appointment' | 'pharmacy' | 'history' | 'super-admin' | 'super-admin-login';
+  | 'display' | 'tracker' | 'appointment' | 'pharmacy' | 'history' | 'super-admin' | 'super-admin-login' | 'hospital-landing';
 
 interface PageState {
   tokenNumber?: number;
@@ -37,6 +32,7 @@ export default function App() {
   const [subscriptionStatus, setSubscriptionStatus] = useState<string>('ACTIVE');
   const [tenant, setTenant] = useState<TenantConfig | null>(null);
   const [tenantLoading, setTenantLoading] = useState(true);
+  const [tenantInvalid, setTenantInvalid] = useState(false);
 
   // ── Tenant Resolution & Theme Sync ───────────────────────
   useEffect(() => {
@@ -46,6 +42,7 @@ export default function App() {
       if (slug) {
         const config = await resolveTenantConfig(slug);
         if (config) {
+          setTenantInvalid(false);
           setTenant(config);
           localStorage.setItem('mq_selected_hospital_id', config.id);
           document.title = `${config.name} | MedQueue Operations`;
@@ -81,17 +78,26 @@ export default function App() {
             `;
           }
         } else {
+          setTenantInvalid(true);
           setTenant(null);
-          document.title = 'MedQueue | Enterprise Healthcare Operations Cloud';
+          document.title = 'Hospital Not Found | MedQueue';
         }
       } else {
+        setTenantInvalid(false);
         setTenant(null);
         document.title = 'MedQueue | Enterprise Healthcare Operations Cloud';
+        
+        // Reset primary colors to standard/default MedQueue blue
+        document.documentElement.style.setProperty('--primary-color', '#005EB8');
+        let styleEl = document.getElementById('mq-tenant-theme-styles');
+        if (styleEl) {
+          styleEl.innerHTML = ''; // Clear custom styles
+        }
       }
       setTenantLoading(false);
     }
     initTenant();
-  }, []);
+  }, [window.location.pathname, page]);
 
   // Real-time listener for current hospital status
   useEffect(() => {
@@ -198,22 +204,132 @@ export default function App() {
         } else if (cached.type === 'staff') {
           if (cached.role === 'SUPER_ADMIN') {
             setPage('super-admin');
+          } else if (cached.role === 'PHARMACY') {
+            setPage('pharmacy');
           } else {
             setPage('staff');
           }
         }
       } else {
-        setPage('landing');
+        const slug = getTenantSlug();
+        const initialPage = getPageFromPath(window.location.pathname, slug);
+        setPage(initialPage);
       }
       setAuthLoading(false);
     }
     restoreSession();
   }, []);
 
+  // ── Browser Routing Sync & History Integration ─────────
+  function getPathFromPage(p: Page, slug: string | null): string {
+    if (!slug) {
+      if (p === 'super-admin') return '/super-admin';
+      if (p === 'super-admin-login') return '/super-admin-login';
+      return '/';
+    }
+    
+    switch (p) {
+      case 'hospital-landing':
+        return `/h/${slug}`;
+      case 'patient-login':
+        return `/h/${slug}/patient`;
+      case 'staff-login':
+        return `/h/${slug}/staff`;
+      case 'register':
+        return `/h/${slug}/patient`;
+      case 'tracker':
+        return `/h/${slug}/track`;
+      case 'appointment':
+        return `/h/${slug}/book`;
+      case 'history':
+        return `/h/${slug}/patient`;
+      case 'staff':
+        return `/h/${slug}/staff`;
+      case 'pharmacy':
+        return `/h/${slug}/staff`;
+      case 'display':
+        return `/h/${slug}/track`;
+      case 'super-admin':
+        return '/super-admin';
+      case 'super-admin-login':
+        return '/super-admin-login';
+      default:
+        return `/h/${slug}`;
+    }
+  }
+
+  function getPageFromPath(path: string, slug: string | null): Page {
+    if (!slug) {
+      if (path.startsWith('/super-admin-login')) return 'super-admin-login';
+      if (path.startsWith('/super-admin')) return 'super-admin';
+      return 'landing';
+    }
+    
+    const cleanPath = path.toLowerCase().trim();
+    
+    if (cleanPath.endsWith('/patient')) {
+      const cachedUser = getCachedUser();
+      if (cachedUser && cachedUser.type === 'patient') {
+        return 'register';
+      }
+      return 'patient-login';
+    }
+    if (cleanPath.endsWith('/staff')) {
+      const cachedUser = getCachedUser();
+      if (cachedUser && cachedUser.type === 'staff') {
+        if (cachedUser.role === 'PHARMACY') return 'pharmacy';
+        return 'staff';
+      }
+      return 'staff-login';
+    }
+    if (cleanPath.endsWith('/admin')) {
+      return 'staff';
+    }
+    if (cleanPath.endsWith('/track')) {
+      return 'tracker';
+    }
+    if (cleanPath.endsWith('/book')) {
+      return 'appointment';
+    }
+    
+    // Exact match for `/h/:slug` (no trailing sub-routes)
+    const slugPattern = new RegExp(`^/h/${slug}/?$`, 'i');
+    if (slugPattern.test(cleanPath)) {
+      return 'hospital-landing';
+    }
+    
+    const cachedUser = getCachedUser();
+    if (cachedUser) {
+      if (cachedUser.type === 'staff') return 'staff';
+      return 'register';
+    }
+    return 'hospital-landing';
+  }
+
+  // Listen to popstate event (browser back/forward button clicks)
+  useEffect(() => {
+    const handlePopState = () => {
+      const slug = getTenantSlug();
+      const resolvedPage = getPageFromPath(window.location.pathname, slug);
+      setPage(resolvedPage);
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
   function navigate(p: string, state?: Record<string, unknown>) {
-    setPage(p as Page);
+    const pageTarget = p as Page;
+    setPage(pageTarget);
     if (state) setPageState(state as PageState);
     setShowUserMenu(false);
+
+    // Update browser history URL
+    const slug = getTenantSlug();
+    const targetPath = getPathFromPage(pageTarget, slug);
+    if (window.location.pathname !== targetPath) {
+      window.history.pushState(null, '', targetPath);
+    }
   }
 
   async function handleLogout() {
@@ -271,8 +387,71 @@ export default function App() {
 
   if (isMissingConfig) return <SetupBanner />;
 
+  // ── Hospital Not Found Fallback Screen ─────────────────
+  if (tenantInvalid) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4 relative overflow-hidden font-sans">
+        {/* Backdrop premium gradients */}
+        <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] bg-[#005EB8]/10 rounded-full blur-[140px] pointer-events-none" />
+        <div className="absolute bottom-[-20%] right-[-10%] w-[60%] h-[60%] bg-rose-500/5 rounded-full blur-[140px] pointer-events-none" />
+
+        <div className="w-full max-w-xl bg-white/[0.02] backdrop-blur-2xl border border-white/[0.08] p-8 sm:p-12 rounded-[36px] shadow-2xl relative z-10 text-center flex flex-col items-center animate-fade-in animate-duration-500">
+          <div className="w-18 h-18 rounded-3xl flex items-center justify-center mb-6 shadow-xl border bg-rose-500/10 border-rose-500/20 text-rose-400">
+            <AlertTriangle className="w-9 h-9" />
+          </div>
+
+          <h2 className="text-3xl font-black text-white tracking-tight mb-3">
+            Hospital Not Found
+          </h2>
+
+          <p className="text-slate-400 text-sm leading-relaxed mb-8 px-4 font-semibold">
+            We were unable to locate a registered clinic workspace matching this URL slug. 
+            Please check the spelling or select a valid clinical node.
+          </p>
+
+          {/* Supportive info card */}
+          <div className="w-full bg-white/[0.02] border border-white/[0.06] rounded-2xl p-5 mb-8 text-left space-y-3">
+            <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-1">Need Assistance?</h4>
+            <div className="flex items-center gap-3 text-xs text-slate-300 font-semibold">
+              <Mail className="w-4 h-4 text-[#005EB8]" />
+              <span>support@medqueue.com</span>
+            </div>
+            <div className="flex items-center gap-3 text-xs text-slate-300 font-semibold">
+              <Phone className="w-4 h-4 text-[#00A3AD]" />
+              <span>+1 (800) 555-QUEUE</span>
+            </div>
+          </div>
+
+          <div className="w-full flex flex-col sm:flex-row gap-3.5 justify-center">
+            <a 
+              href="mailto:support@medqueue.com"
+              className="px-6 py-3.5 bg-white/10 hover:bg-white/15 text-white font-extrabold text-xs rounded-2xl border border-white/10 transition-all flex items-center justify-center gap-2"
+            >
+              Contact Support
+            </a>
+            
+            <a 
+              href="/"
+              onClick={(e) => {
+                e.preventDefault();
+                setTenantInvalid(false);
+                setTenant(null);
+                setPage('landing');
+                window.history.pushState(null, '', '/');
+              }}
+              className="px-6 py-3.5 bg-[#005EB8] hover:bg-[#004a96] text-white font-extrabold text-xs rounded-2xl transition-all shadow-lg shadow-[#005EB8]/20 flex items-center justify-center gap-2"
+            >
+              <Home className="w-4 h-4" />
+              Return to MedQueue
+            </a>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // ── Tenant Mismatch Interceptor ──────────────────────
-  const isTenantMismatch = tenant && user && user.role !== 'SUPER_ADMIN' && user.hospital_id !== tenant.id;
+  const isTenantMismatch = tenant && user && user.role !== 'SUPER_ADMIN' && user.hospital_id !== tenant?.id;
 
   if (isTenantMismatch) {
     const userHospName = user.hospital_id === 'd290f1ee-6c54-4b01-90e6-d701748f0851' ? 'Apollo Clinic' :
@@ -296,7 +475,7 @@ export default function App() {
           <div className="text-slate-400 text-sm leading-relaxed mb-8 px-2 font-medium">
             Your active {user.type === 'patient' ? 'patient session' : `staff account (${user.role})`} belongs strictly to <span className="text-white font-extrabold">{userHospName}</span>.
             <br /><br />
-            You are attempting to access the isolated workspace for <span className="text-amber-400 font-extrabold">{tenant.name}</span>.
+            You are attempting to access the isolated workspace for <span className="text-amber-400 font-extrabold">{tenant?.name}</span>.
             MedQueue true multi-tenant architecture locks cross-clinic operations to protect patient safety and records.
           </div>
           
@@ -333,11 +512,16 @@ export default function App() {
   if (page === 'patient-login' && !user) {
     return <PatientLoginPage
       onLogin={handlePatientLogin}
+      onLogoClick={() => {
+        const slug = getTenantSlug();
+        navigate(slug ? 'hospital-landing' : 'landing');
+      }}
       onBack={() => {
-        if (tenant) {
-          setPage('staff-login');
+        const slug = getTenantSlug();
+        if (window.history.length > 1) {
+          window.history.back();
         } else {
-          setPage('landing');
+          navigate(slug ? 'hospital-landing' : 'landing');
         }
       }}
     />;
@@ -348,17 +532,20 @@ export default function App() {
     return <StaffLoginPage
       onLogin={(u) => { 
         setUser(u); 
-        if (u.role === 'SUPER_ADMIN') {
-          setPage('super-admin');
-        } else {
-          setPage('staff');
-        }
+        const slug = getTenantSlug();
+        const homePage = getHomeRoute(u, slug);
+        setPage(homePage as Page);
+      }}
+      onLogoClick={() => {
+        const slug = getTenantSlug();
+        navigate(slug ? 'hospital-landing' : 'landing');
       }}
       onBack={() => {
-        if (tenant) {
-          setPage('patient-login');
+        const slug = getTenantSlug();
+        if (window.history.length > 1) {
+          window.history.back();
         } else {
-          setPage('landing');
+          navigate(slug ? 'hospital-landing' : 'landing');
         }
       }}
     />;
@@ -379,12 +566,55 @@ export default function App() {
     />;
   }
 
+  // ── Hospital Workspace Landing ─────────────────────────
+  if (page === 'hospital-landing' && tenant) {
+    return (
+      <div className="min-h-screen bg-[#F4F8FB]">
+        <UniversalHeader page={page} navigate={navigate} currentUser={user} handleLogout={handleLogout} />
+        <HospitalLandingPage tenant={tenant} navigate={navigate} />
+      </div>
+    );
+  }
+
   // ── Not logged in → landing ───────────────────────────
   if (!user) {
     if (tenant) {
+      if (page === 'staff-login') {
+        return <StaffLoginPage
+          onLogin={(u) => { 
+            setUser(u); 
+            const slug = getTenantSlug();
+            const homePage = getHomeRoute(u, slug);
+            setPage(homePage as Page);
+          }}
+          onLogoClick={() => {
+            const slug = getTenantSlug();
+            navigate(slug ? 'hospital-landing' : 'landing');
+          }}
+          onBack={() => {
+            const slug = getTenantSlug();
+            if (window.history.length > 1) {
+              window.history.back();
+            } else {
+              navigate(slug ? 'hospital-landing' : 'landing');
+            }
+          }}
+        />;
+      }
       return <PatientLoginPage
         onLogin={handlePatientLogin}
-        onBack={() => setPage('staff-login')}
+        onLogoClick={() => {
+          const slug = getTenantSlug();
+          navigate(slug ? 'hospital-landing' : 'landing');
+        }}
+        onBack={() => {
+          const slug = getTenantSlug();
+          if (window.history.length > 1) {
+            window.history.back();
+          } else {
+            navigate(slug ? 'hospital-landing' : 'landing');
+          }
+        }}
       />;
     }
     return <LandingPage
@@ -560,7 +790,7 @@ export default function App() {
       )}
 
       <main key={page} className={`animate-fade-in ${user.type === 'patient' ? 'pb-16 md:pb-0' : ''}`}>
-        {page === 'register' && <RegisterPage currentUser={user} />}
+        {page === 'register' && <RegisterPage currentUser={user} navigate={navigate} tenant={tenant} />}
         {page === 'staff' && <StaffDashboard onNavigate={navigate} currentUser={user} />}
         {page === 'super-admin' && <SuperAdminDashboard currentUser={user} onNavigate={navigate} />}
         {page === 'tracker' && (

@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
-import { getQueue, callNextPatient, markTokenNoShow, createPrescription, getSelectedHospitalId } from '../lib/api';
-import { supabase } from '../lib/supabase';
-import { Token, PatientIntake, Medication, PRIORITY_LABEL, INTAKE_STATUS_COLOR, INTAKE_STATUS_LABEL } from '../types';
+import { getQueue, callNextPatient, markTokenNoShow, createPrescription, getSelectedHospitalId } from '../../../lib/api';
+import { supabase } from '../../../lib/supabase';
+import { Token, PatientIntake, Medication, PRIORITY_LABEL, INTAKE_STATUS_COLOR, INTAKE_STATUS_LABEL } from '../../../types';
 import { 
   Loader2, Phone, CheckCircle2, UserX, Stethoscope, RefreshCw, AlertCircle, Plus, Trash2, 
   Printer, Clock, Activity, Heart, ShieldAlert, Sparkles, PlusCircle, X, FileText, ChevronDown

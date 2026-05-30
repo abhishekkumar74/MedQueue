@@ -1,11 +1,11 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { registerToken, getSelectedHospitalId } from '../lib/api';
-import { Token, Priority, Department, DEPARTMENT_LABEL } from '../types';
-import { AuthUser } from '../lib/auth';
-import { supabase } from '../lib/supabase';
+import { registerToken, getSelectedHospitalId } from '../../../lib/api';
+import { Token, Priority, Department, DEPARTMENT_LABEL } from '../../../types';
+import { AuthUser } from '../../../lib/auth';
+import { supabase } from '../../../lib/supabase';
 import { 
   User, Building2, Ticket, ChevronDown, CheckCircle, Loader2, AlertCircle, MapPin,
-  Heart, Clock, FileText, Shield, Award, Plus, Upload, Search, Download, Trash2, Stethoscope, Activity, BarChart2, X
+  Heart, Clock, FileText, Shield, Award, Plus, Upload, Search, Download, Trash2, Stethoscope, Activity, BarChart2, X, Calendar
 } from 'lucide-react';
 
 const DEPARTMENTS: Department[] = [
@@ -39,8 +39,12 @@ interface VaultDoc {
   doctorName?: string;
 }
 
-export default function RegisterPage({ currentUser }: {
+import { TenantConfig } from '../../../lib/tenant';
+
+export default function RegisterPage({ currentUser, navigate, tenant }: {
   currentUser?: AuthUser | null;
+  navigate?: (p: any, state?: any) => void;
+  tenant?: TenantConfig | null;
 }) {
   const patientPhone = currentUser?.phone || '';
   const currentHospitalId = getSelectedHospitalId();
@@ -86,6 +90,9 @@ export default function RegisterPage({ currentUser }: {
   const [bookingLoading, setBookingLoading] = useState(false);
   const [bookingSuccessToken, setBookingSuccessToken] = useState<Token | null>(null);
 
+  // ── Smart Health Scores Filter State ───────────────────────
+  const [healthFilter, setHealthFilter] = useState<'today' | 'week' | 'month'>('today');
+
   // ── Initial load for family profiles ────────────────────────
   useEffect(() => {
     if (!patientPhone) return;
@@ -125,13 +132,13 @@ export default function RegisterPage({ currentUser }: {
       // Seed initial dummy documents to look rich
       const initialDocs: VaultDoc[] = [
         { id: 'doc-1', name: 'Cardiology Blood Test Panel.pdf', category: 'Lab Report', uploadedAt: new Date(Date.now() - 3 * 24 * 3600 * 1000).toLocaleDateString(), fileSize: '1.4 MB', doctorName: 'Dr. Diana Rodriguez' },
-        { id: 'doc-2', name: 'Apollo Prescription Form.pdf', category: 'Prescription', uploadedAt: new Date(Date.now() - 10 * 24 * 3600 * 1000).toLocaleDateString(), fileSize: '520 KB', doctorName: 'Dr. Diana Rodriguez' },
+        { id: 'doc-2', name: `${tenant?.name || 'MedQueue Clinic'} Prescription Form.pdf`, category: 'Prescription', uploadedAt: new Date(Date.now() - 10 * 24 * 3600 * 1000).toLocaleDateString(), fileSize: '520 KB', doctorName: 'Dr. Diana Rodriguez' },
         { id: 'doc-3', name: 'National Health Card ID.jpg', category: 'ID Document', uploadedAt: new Date(Date.now() - 40 * 24 * 3600 * 1000).toLocaleDateString(), fileSize: '2.1 MB' }
       ];
       localStorage.setItem(cacheKey, JSON.stringify(initialDocs));
       setVaultDocs(initialDocs);
     }
-  }, [activeProfile, patientPhone]);
+  }, [activeProfile, patientPhone, tenant]);
 
   // ── Load live hospital database records for active profile ────
   const loadProfileData = useCallback(async () => {
@@ -324,9 +331,7 @@ export default function RegisterPage({ currentUser }: {
 
   // ── Dashboard Metrics calculations ─────────────────────────
   const latestVitals = dbVisits[0] || { bp: '120/80', sugar: '98', temperature: '98.4 F' };
-  const systolic = parseInt(latestVitals.bp?.split('/')?.[0] || '120');
-  const bpStatus = systolic > 130 ? 'Prehypertension' : 'Normal';
-  const bpColor = systolic > 130 ? 'text-amber-500 bg-amber-50' : 'text-emerald-500 bg-emerald-50';
+
 
   const filterDocs = vaultDocs.filter(d => {
     const matchesSearch = d.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
@@ -344,7 +349,7 @@ export default function RegisterPage({ currentUser }: {
 
       <div className="max-w-7xl mx-auto px-4 md:px-6 pt-6">
         
-        {/* ── WORKSPACE LEVER HEADER & PROFILE SWITCHER ── */}
+        {/* ── WORKSPACE LEVER HEADER ── */}
         <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 pb-6 border-b border-slate-200/50">
           
           <div className="flex items-center gap-4">
@@ -361,38 +366,8 @@ export default function RegisterPage({ currentUser }: {
               </h1>
               <p className="text-xs text-slate-400 font-semibold mt-0.5 flex items-center gap-1">
                 <MapPin className="w-3.5 h-3.5 text-slate-400" />
-                Selected: <span className="font-extrabold text-slate-500">Apollo Clinical Node</span>
+                Selected: <span className="font-extrabold text-slate-500">{tenant?.name || 'MedQueue Clinic'}</span>
               </p>
-            </div>
-          </div>
-
-          {/* Dynamic Profile Context Switcher */}
-          <div className="flex items-center gap-3 bg-white p-2 rounded-2xl border border-slate-200/60 shadow-sm flex-wrap w-full lg:w-auto">
-            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest pl-2">Member Context:</span>
-            <div className="flex gap-1.5 flex-wrap">
-              {familyProfiles.map(profile => {
-                const isActive = activeProfile?.id === profile.id;
-                return (
-                  <button
-                    key={profile.id}
-                    onClick={() => { setActiveProfile(profile); setActiveTab('workspace'); }}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all ${
-                      isActive 
-                        ? 'bg-[#005EB8] text-white shadow-md shadow-[#005EB8]/20' 
-                        : 'bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-100'
-                    }`}
-                  >
-                    {profile.relationship === 'Self' ? 'Me' : profile.name}
-                  </button>
-                );
-              })}
-              <button
-                onClick={() => setShowAddFamily(true)}
-                className="w-8 h-8 rounded-xl bg-slate-50 hover:bg-slate-100 text-[#00A3AD] border border-slate-150 flex items-center justify-center transition-colors"
-                title="Add Family Member"
-              >
-                <Plus className="w-4 h-4" />
-              </button>
             </div>
           </div>
 
@@ -406,11 +381,12 @@ export default function RegisterPage({ currentUser }: {
             <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-4 space-y-1">
               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-3.5 mb-2.5">Workspace Directories</p>
               {[
-                { id: 'workspace', label: 'Operations Center', icon: Activity },
-                { id: 'doctors', label: 'Practitioner Roster', icon: Stethoscope },
-                { id: 'timeline', label: 'Medical History', icon: Clock },
-                { id: 'vault', label: 'Lab Reports & Vault', icon: FileText, badge: vaultDocs.length },
-                { id: 'family', label: 'Family Settings', icon: User },
+                { id: 'workspace', label: 'Queue Booking', icon: Ticket },
+                { id: 'timeline', label: 'Medical Records', icon: Clock },
+                { id: 'vault', label: 'Lab Reports', icon: FileText, badge: vaultDocs.length },
+                { id: 'appointment', label: 'Appointments', icon: Calendar },
+                { id: 'doctors', label: 'Doctors', icon: Stethoscope },
+                { id: 'family', label: 'Member Section', icon: User },
                 { id: 'wallet', label: 'Digital Health Card', icon: Award },
                 { id: 'guide', label: 'Hospital Directions', icon: Building2 },
               ].map(tab => {
@@ -419,7 +395,13 @@ export default function RegisterPage({ currentUser }: {
                 return (
                   <button
                     key={tab.id}
-                    onClick={() => setActiveTab(tab.id as any)}
+                    onClick={() => {
+                      if (tab.id === 'appointment') {
+                        navigate?.('appointment');
+                      } else {
+                        setActiveTab(tab.id as any);
+                      }
+                    }}
                     className={`w-full flex items-center justify-between px-3.5 py-3 rounded-xl text-xs font-black transition-all ${
                       isActive 
                         ? 'bg-[#F0F6FC] text-[#005EB8] border-l-4 border-[#005EB8] shadow-sm' 
@@ -480,7 +462,74 @@ export default function RegisterPage({ currentUser }: {
             {activeTab === 'workspace' && (
               <div className="space-y-6">
                 
-                {/* 1.1 SMART LIVE TOKEN TRACKER */}
+                {/* 1.1 FAST TOKEN BOOKING WIDGET (PRIMARY ACTION AT ABSOLUTE TOP) */}
+                <div className="bg-white rounded-3xl border border-slate-100 shadow-lg shadow-[#005EB8]/5 p-6 relative overflow-hidden">
+                  <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#005EB8] to-[#00A3AD]" />
+                  <div className="flex items-center justify-between mb-4 border-b border-slate-50 pb-3">
+                    <div>
+                      <h3 className="text-sm font-black text-slate-700 flex items-center gap-1.5 uppercase tracking-wide">
+                        <Ticket className="w-4 h-4 text-[#005EB8]" />
+                        Secure Digital Queue Ticket
+                      </h3>
+                      <p className="text-xs text-slate-400 mt-0.5">Select a department and priority. Your token registers contextually.</p>
+                    </div>
+                  </div>
+
+                  <form onSubmit={handleQuickBookSubmit} className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Required Specialty Department *</label>
+                        <div className="relative">
+                          <Building2 className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-gray-400 pointer-events-none" />
+                          <select
+                            value={quickDept}
+                            onChange={e => setQuickDept(e.target.value as Department)}
+                            className="w-full min-h-[48px] border-2 border-slate-150 rounded-xl pl-11 pr-4 py-3 text-base md:text-xs focus:border-[#005EB8] focus:outline-none transition-colors appearance-none bg-white font-semibold text-slate-800"
+                            required
+                          >
+                            <option value="">Choose Department</option>
+                            {DEPARTMENTS.map(d => (
+                              <option key={d} value={d}>{DEPARTMENT_LABEL[d]}</option>
+                            ))}
+                          </select>
+                          <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-gray-400 pointer-events-none" />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Priority Classification</label>
+                        <div className="flex gap-2.5">
+                          {PRIORITY_OPTIONS.map(p => (
+                            <button
+                              key={p.value}
+                              type="button"
+                              onClick={() => setQuickPriority(p.value)}
+                              className={`flex-1 min-h-[48px] px-3 py-3 rounded-xl border-2 text-[10px] font-black uppercase transition-all flex items-center justify-center gap-1.5 ${
+                                quickPriority === p.value 
+                                  ? p.color + ' border-transparent shadow-md' 
+                                  : 'border-slate-150 bg-white text-slate-600 hover:border-slate-300'
+                              }`}
+                            >
+                              <span className={`w-2 h-2 rounded-full ${p.dot}`} />
+                              <span>{p.label.split(' ')[0]}</span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={bookingLoading || !quickDept}
+                      className="w-full min-h-[48px] bg-[#005EB8] hover:bg-[#004a96] disabled:opacity-60 text-white font-black text-xs rounded-xl transition-all shadow-md flex items-center justify-center gap-1.5 uppercase tracking-widest active:scale-[0.99] focus:outline-none"
+                    >
+                      {bookingLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Ticket className="w-4 h-4" />}
+                      {bookingLoading ? 'Registering Queue Node...' : 'Register Queue Ticket →'}
+                    </button>
+                  </form>
+                </div>
+
+                {/* 1.2 SMART LIVE TOKEN TRACKER */}
                 {loadingToken && !activeToken ? (
                   <div className="bg-white border border-slate-100 rounded-3xl p-6 shadow-sm min-h-[140px] animate-skeleton flex flex-col md:flex-row justify-between gap-6">
                     <div className="space-y-4 text-left flex-1">
@@ -539,141 +588,144 @@ export default function RegisterPage({ currentUser }: {
                     <div>
                       <h3 className="text-sm font-black text-slate-800 uppercase tracking-tight">No active queue tokens today</h3>
                       <p className="text-xs text-slate-400 font-semibold max-w-sm mx-auto mt-1 leading-relaxed">
-                        Secure your outpatient ticket contextually. Book a consultation token below to start live operations wait tracking.
+                        Secure your outpatient ticket contextually. Book a consultation token above to start live operations wait tracking.
                       </p>
                     </div>
                   </div>
                 )}
 
-                {/* 1.2 PATIENT HEALTH SCORE DASHBOARD */}
-                <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-6 space-y-6">
-                  <div>
-                    <h3 className="text-sm font-black text-slate-700 flex items-center gap-1.5 uppercase tracking-wide">
-                      <BarChart2 className="w-4 h-4 text-[#00A3AD]" />
-                      Smart Health Scores & Vitals Tickers
-                    </h3>
-                    <p className="text-xs text-slate-400 mt-0.5">Vitals synchronized dynamically from your recent clinical intake checks.</p>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    
-                    {/* BP widget */}
-                    <div className="bg-slate-50/50 border border-slate-100 rounded-2xl p-4 flex flex-col justify-between min-h-[110px]">
-                      <div className="flex items-center justify-between text-slate-400">
-                        <span className="text-[9px] font-bold uppercase tracking-wider">Blood Pressure</span>
-                        <Heart className="w-3.5 h-3.5 text-rose-500 fill-rose-500" />
-                      </div>
-                      <div className="text-2xl font-black text-slate-800 mt-2">{latestVitals.bp || '120/80'}</div>
-                      <div className="mt-1 flex items-center justify-between text-[9px] font-bold">
-                        <span className="text-slate-400">mmHg</span>
-                        <span className={`px-1.5 py-0.5 rounded-md ${bpColor}`}>{bpStatus}</span>
-                      </div>
-                    </div>
-
-                    {/* Sugar widget */}
-                    <div className="bg-slate-50/50 border border-slate-100 rounded-2xl p-4 flex flex-col justify-between min-h-[110px]">
-                      <div className="flex items-center justify-between text-slate-400">
-                        <span className="text-[9px] font-bold uppercase tracking-wider">Blood Sugar</span>
-                        <Activity className="w-3.5 h-3.5 text-[#00A3AD]" />
-                      </div>
-                      <div className="text-2xl font-black text-slate-800 mt-2">{latestVitals.sugar || '98'}</div>
-                      <div className="mt-1 flex items-center justify-between text-[9px] font-bold">
-                        <span className="text-slate-400">mg/dL</span>
-                        <span className="px-1.5 py-0.5 bg-emerald-50 text-emerald-500 rounded-md">Normal</span>
-                      </div>
-                    </div>
-
-                    {/* Heart Rate Widget */}
-                    <div className="bg-slate-50/50 border border-slate-100 rounded-2xl p-4 flex flex-col justify-between min-h-[110px]">
-                      <div className="flex items-center justify-between text-slate-400">
-                        <span className="text-[9px] font-bold uppercase tracking-wider">Heart Rate</span>
-                        <Activity className="w-3.5 h-3.5 text-red-500 animate-pulse" />
-                      </div>
-                      <div className="text-2xl font-black text-slate-800 mt-2">72</div>
-                      <div className="mt-1 flex items-center justify-between text-[9px] font-bold">
-                        <span className="text-slate-400">BPM</span>
-                        <span className="px-1.5 py-0.5 bg-emerald-50 text-emerald-500 rounded-md">Resting Normal</span>
-                      </div>
-                    </div>
-
-                    {/* BMI Widget */}
-                    <div className="bg-slate-50/50 border border-slate-100 rounded-2xl p-4 flex flex-col justify-between min-h-[110px]">
-                      <div className="flex items-center justify-between text-slate-400">
-                        <span className="text-[9px] font-bold uppercase tracking-wider">Calculated BMI</span>
-                        <Award className="w-3.5 h-3.5 text-indigo-500" />
-                      </div>
-                      <div className="text-2xl font-black text-slate-800 mt-2">22.4</div>
-                      <div className="mt-1 flex items-center justify-between text-[9px] font-bold">
-                        <span className="text-slate-400">Index score</span>
-                        <span className="px-1.5 py-0.5 bg-emerald-50 text-emerald-500 rounded-md">Optimal</span>
-                      </div>
-                    </div>
-
-                  </div>
-                </div>
-
-                {/* 1.3 FAST TOKEN BOOKING WIDGET (REPLACES OLD PAGE FORM) */}
-                <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-6">
-                  <div className="flex items-center justify-between mb-4 border-b border-slate-50 pb-3">
+                {/* 1.3 PATIENT HEALTH SCORE DASHBOARD */}
+                <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-6 space-y-5">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-50 pb-4">
                     <div>
                       <h3 className="text-sm font-black text-slate-700 flex items-center gap-1.5 uppercase tracking-wide">
-                        <Ticket className="w-4 h-4 text-[#005EB8]" />
-                        Secure Digital Queue Ticket
+                        <BarChart2 className="w-4 h-4 text-[#00A3AD]" />
+                        Smart Health Scores & Vitals
                       </h3>
-                      <p className="text-xs text-slate-400 mt-0.5">Select a department and priority. Your token registers contextually.</p>
+                      <p className="text-xs text-slate-400 mt-0.5">Clinical data synchronized securely for active family context.</p>
+                    </div>
+
+                    {/* Today / Week / Month Filters */}
+                    <div className="flex bg-slate-100 p-1 rounded-xl gap-1 w-full sm:w-auto">
+                      {(['today', 'week', 'month'] as const).map(filter => (
+                        <button
+                          key={filter}
+                          type="button"
+                          onClick={() => setHealthFilter(filter)}
+                          className={`flex-1 sm:flex-initial px-4 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all text-center focus:outline-none ${
+                            healthFilter === filter
+                              ? 'bg-white text-slate-800 shadow-sm font-black'
+                              : 'text-slate-400 hover:text-slate-700'
+                          }`}
+                        >
+                          {filter}
+                        </button>
+                      ))}
                     </div>
                   </div>
 
-                  <form onSubmit={handleQuickBookSubmit} className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Required Specialty Department *</label>
-                        <div className="relative">
-                          <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-                          <select
-                            value={quickDept}
-                            onChange={e => setQuickDept(e.target.value as Department)}
-                            className="w-full min-h-[44px] border-2 border-slate-150 rounded-xl pl-10 pr-4 py-2.5 text-xs focus:border-[#005EB8] focus:outline-none transition-colors appearance-none bg-white font-semibold"
-                            required
-                          >
-                            <option value="">Choose Department</option>
-                            {DEPARTMENTS.map(d => (
-                              <option key={d} value={d}>{DEPARTMENT_LABEL[d]}</option>
-                            ))}
-                          </select>
-                          <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-                        </div>
-                      </div>
+                  {/* Compact Vitals Grid */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-5">
+                    
+                    {/* BP widget */}
+                    {(() => {
+                      const bpValue = healthFilter === 'today' ? (latestVitals.bp || '120/80') : healthFilter === 'week' ? '118/75' : '122/79';
+                      const sys = parseInt(bpValue.split('/')?.[0] || '120');
+                      const status = sys > 130 
+                        ? { label: 'Warning', color: 'text-amber-700 bg-amber-50 border-amber-100' }
+                        : { label: 'Optimal', color: 'text-emerald-700 bg-emerald-50 border-emerald-100' };
 
-                      <div>
-                        <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Priority Classification</label>
-                        <div className="flex gap-2">
-                          {PRIORITY_OPTIONS.map(p => (
-                            <button
-                              key={p.value}
-                              type="button"
-                              onClick={() => setQuickPriority(p.value)}
-                              className={`flex-1 min-h-[44px] px-3 py-2.5 rounded-xl border-2 text-[10px] font-extrabold uppercase transition-all flex items-center justify-center gap-1.5 ${
-                                quickPriority === p.value ? p.color : 'border-slate-150 bg-white text-slate-650 hover:border-slate-350'
-                              }`}
-                            >
-                              <span className={`w-2 h-2 rounded-full ${p.dot}`} />
-                              <span>{p.label.split(' ')[0]}</span>
-                            </button>
-                          ))}
+                      return (
+                        <div className="bg-slate-50/50 border border-slate-100 rounded-2xl p-4 flex flex-col justify-between min-h-[120px] transition-all hover:bg-slate-50">
+                          <div className="flex items-center justify-between text-slate-400">
+                            <span className="text-[9px] font-black uppercase tracking-widest">Blood Pressure</span>
+                            <Heart className="w-3.5 h-3.5 text-rose-500 fill-rose-500" />
+                          </div>
+                          <div className="text-2xl font-black text-slate-800 mt-2.5">{bpValue}</div>
+                          <div className="mt-2.5 flex items-center justify-between text-[9px] font-black border-t border-slate-100 pt-2">
+                            <span className="text-slate-400">mmHg</span>
+                            <span className={`px-2 py-0.5 rounded border font-black uppercase tracking-wide text-[8px] ${status.color}`}>
+                              {status.label}
+                            </span>
+                          </div>
                         </div>
-                      </div>
-                    </div>
+                      );
+                    })()}
 
-                    <button
-                      type="submit"
-                      disabled={bookingLoading || !quickDept}
-                      className="w-full min-h-[44px] bg-[#005EB8] hover:bg-[#004a96] disabled:opacity-60 text-white font-black text-xs rounded-xl transition-all shadow-md flex items-center justify-center gap-1.5 uppercase tracking-widest"
-                    >
-                      {bookingLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Ticket className="w-4 h-4" />}
-                      {bookingLoading ? 'Registering Queue Node...' : 'Register Queue Ticket →'}
-                    </button>
-                  </form>
+                    {/* Sugar widget */}
+                    {(() => {
+                      const sugarVal = healthFilter === 'today' ? (latestVitals.sugar || '98') : healthFilter === 'week' ? '96' : '102';
+                      const val = parseInt(sugarVal);
+                      const status = val > 140
+                        ? { label: 'Warning', color: 'text-amber-700 bg-amber-50 border-amber-100' }
+                        : val <= 100
+                          ? { label: 'Optimal', color: 'text-emerald-700 bg-emerald-50 border-emerald-100' }
+                          : { label: 'Normal', color: 'text-teal-700 bg-teal-50 border-teal-100' };
+
+                      return (
+                        <div className="bg-slate-50/50 border border-slate-100 rounded-2xl p-4 flex flex-col justify-between min-h-[120px] transition-all hover:bg-slate-50">
+                          <div className="flex items-center justify-between text-slate-400">
+                            <span className="text-[9px] font-black uppercase tracking-widest">Blood Sugar</span>
+                            <Activity className="w-3.5 h-3.5 text-[#00A3AD]" />
+                          </div>
+                          <div className="text-2xl font-black text-slate-800 mt-2.5">{sugarVal}</div>
+                          <div className="mt-2.5 flex items-center justify-between text-[9px] font-black border-t border-slate-100 pt-2">
+                            <span className="text-slate-400">mg/dL</span>
+                            <span className={`px-2 py-0.5 rounded border font-black uppercase tracking-wide text-[8px] ${status.color}`}>
+                              {status.label}
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })()}
+
+                    {/* Heart Rate Widget */}
+                    {(() => {
+                      const hrVal = healthFilter === 'today' ? 72 : healthFilter === 'week' ? 74 : 70;
+                      const status = hrVal >= 65 && hrVal <= 75
+                        ? { label: 'Optimal', color: 'text-emerald-700 bg-emerald-50 border-emerald-100' }
+                        : { label: 'Normal', color: 'text-teal-700 bg-teal-50 border-teal-100' };
+
+                      return (
+                        <div className="bg-slate-50/50 border border-slate-100 rounded-2xl p-4 flex flex-col justify-between min-h-[120px] transition-all hover:bg-slate-50">
+                          <div className="flex items-center justify-between text-slate-400">
+                            <span className="text-[9px] font-black uppercase tracking-widest">Heart Rate</span>
+                            <Activity className="w-3.5 h-3.5 text-red-500 animate-pulse" />
+                          </div>
+                          <div className="text-2xl font-black text-slate-800 mt-2.5">{hrVal}</div>
+                          <div className="mt-2.5 flex items-center justify-between text-[9px] font-black border-t border-slate-100 pt-2">
+                            <span className="text-slate-400">BPM</span>
+                            <span className={`px-2 py-0.5 rounded border font-black uppercase tracking-wide text-[8px] ${status.color}`}>
+                              {status.label}
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })()}
+
+                    {/* BMI Widget */}
+                    {(() => {
+                      const bmiVal = healthFilter === 'today' ? 22.4 : healthFilter === 'week' ? 22.3 : 22.5;
+                      const status = { label: 'Optimal', color: 'text-emerald-700 bg-emerald-50 border-emerald-100' };
+
+                      return (
+                        <div className="bg-slate-50/50 border border-slate-100 rounded-2xl p-4 flex flex-col justify-between min-h-[120px] transition-all hover:bg-slate-50">
+                          <div className="flex items-center justify-between text-slate-400">
+                            <span className="text-[9px] font-black uppercase tracking-widest">Calculated BMI</span>
+                            <Award className="w-3.5 h-3.5 text-indigo-500" />
+                          </div>
+                          <div className="text-2xl font-black text-slate-800 mt-2.5">{bmiVal}</div>
+                          <div className="mt-2.5 flex items-center justify-between text-[9px] font-black border-t border-slate-100 pt-2">
+                            <span className="text-slate-400">Index score</span>
+                            <span className={`px-2 py-0.5 rounded border font-black uppercase tracking-wide text-[8px] ${status.color}`}>
+                              {status.label}
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })()}
+
+                  </div>
                 </div>
 
               </div>
@@ -904,7 +956,7 @@ export default function RegisterPage({ currentUser }: {
                       value={searchQuery}
                       onChange={e => setSearchQuery(e.target.value)}
                       placeholder="Search reports or doctor consults..."
-                      className="w-full pl-9.5 pr-4 py-2 bg-white border border-slate-200 rounded-2xl text-xs font-semibold focus:outline-none focus:border-[#005EB8]"
+                      className="w-full pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-2xl text-xs font-semibold focus:outline-none focus:border-[#005EB8]"
                     />
                   </div>
                   
@@ -1305,11 +1357,11 @@ export default function RegisterPage({ currentUser }: {
       {/* ── MOBILE PWA BOTTOM NAVIGATION ── */}
       <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-xl border-t border-slate-150 p-2 shadow-[0_-8px_30px_rgba(0,0,0,0.06)] flex items-center justify-around select-none">
         {[
-          { id: 'workspace', label: 'Home', icon: Activity },
-          { id: 'doctors', label: 'Doctors', icon: Stethoscope },
+          { id: 'workspace', label: 'Booking', icon: Ticket },
+          { id: 'timeline', label: 'Records', icon: Clock },
           { id: 'vault', label: 'Vault', icon: FileText, badge: vaultDocs.length },
-          { id: 'timeline', label: 'History', icon: Clock },
-          { id: 'family', label: 'Family', icon: User },
+          { id: 'doctors', label: 'Doctors', icon: Stethoscope },
+          { id: 'family', label: 'Members', icon: User },
         ].map(tab => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;

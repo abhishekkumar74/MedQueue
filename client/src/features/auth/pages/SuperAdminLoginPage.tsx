@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { AuthUser, requestSuperAdminOtp, verifySuperAdminOtp } from '../lib/auth';
+import { AuthUser, requestSuperAdminOtp, verifySuperAdminOtp } from '../../../lib/auth';
 import { Shield, Eye, EyeOff, Loader2, AlertCircle, ArrowLeft, KeyRound, Mail, CheckCircle2, Lock } from 'lucide-react';
 
 interface Props {

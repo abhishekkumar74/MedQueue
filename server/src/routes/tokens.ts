@@ -151,7 +151,10 @@ router.post('/next', async (req: Request, res: Response) => {
     const { data: current } = await currentQuery.maybeSingle();
 
     if (current) {
-      await db.from('tokens').update({ status: 'DONE', intake_status: 'COMPLETED' }).eq('id', current.id);
+      await db.from('tokens')
+        .update({ status: 'DONE', intake_status: 'COMPLETED' })
+        .eq('id', current.id)
+        .eq('hospital_id', hospitalId);
     }
 
     let nextQuery = db
@@ -176,6 +179,7 @@ router.post('/next', async (req: Request, res: Response) => {
       .from('tokens')
       .update({ status: 'SERVING', intake_status: 'WITH_DOCTOR' })
       .eq('id', next.id)
+      .eq('hospital_id', hospitalId)
       .select('*, patients(*), patient_intake(*)')
       .single();
 
@@ -189,11 +193,18 @@ router.post('/next', async (req: Request, res: Response) => {
 // POST /api/tokens/done/:id
 router.post('/done/:id', async (req: Request, res: Response) => {
   const { id } = req.params;
+  const hospitalId = getTenantHospitalId(req.user);
   try {
-    const { data, error } = await db
+    let query = db
       .from('tokens')
       .update({ status: 'DONE', intake_status: 'COMPLETED' })
-      .eq('id', id)
+      .eq('id', id);
+
+    if (req.user?.role !== 'SUPER_ADMIN') {
+      query = query.eq('hospital_id', hospitalId);
+    }
+
+    const { data, error } = await query
       .select()
       .single();
     if (error) return res.status(400).json({ error: error.message });
@@ -206,11 +217,18 @@ router.post('/done/:id', async (req: Request, res: Response) => {
 // POST /api/tokens/noshow/:id
 router.post('/noshow/:id', async (req: Request, res: Response) => {
   const { id } = req.params;
+  const hospitalId = getTenantHospitalId(req.user);
   try {
-    const { data, error } = await db
+    let query = db
       .from('tokens')
       .update({ status: 'NO_SHOW', intake_status: 'COMPLETED' })
-      .eq('id', id)
+      .eq('id', id);
+
+    if (req.user?.role !== 'SUPER_ADMIN') {
+      query = query.eq('hospital_id', hospitalId);
+    }
+
+    const { data, error } = await query
       .select()
       .single();
     if (error) return res.status(400).json({ error: error.message });

@@ -25,6 +25,10 @@ const BRANDING_FALLBACKS: Record<string, { theme_color: string; logo_url?: strin
   city: {
     theme_color: '#6366F1', // City Indigo/Violet
     logo_url: 'https://images.unsplash.com/photo-1516549655169-df83a0774514?auto=format&fit=crop&q=80&w=100'
+  },
+  citycare: {
+    theme_color: '#6366F1', // City Indigo/Violet
+    logo_url: 'https://images.unsplash.com/photo-1516549655169-df83a0774514?auto=format&fit=crop&q=80&w=100'
   }
 };
 
@@ -69,22 +73,6 @@ export function getTenantSlug(): string | null {
     return pathParts[hospIndex + 1].toLowerCase().trim();
   }
 
-  // Fallback to localStorage matched context if user is logged in
-  try {
-    const cachedUserJson = localStorage.getItem('mq_auth_user');
-    if (cachedUserJson) {
-      const user = JSON.parse(cachedUserJson);
-      if (user && user.hospital_id) {
-        // Return active fallback slug to resolve tenant locally
-        if (user.hospital_id === 'd290f1ee-6c54-4b01-90e6-d701748f0851') return 'apollo';
-        if (user.hospital_id === 'a4220b22-83b3-4f9e-a89e-cb01748ff002') return 'max';
-        if (user.hospital_id === '7e90a5fe-4b01-90c6-ff22-a701748f0222') return 'city';
-      }
-    }
-  } catch (e) {
-    console.warn('Failed to parse cached user for tenant slug fallback', e);
-  }
-
   return null;
 }
 
@@ -94,10 +82,11 @@ export function getTenantSlug(): string | null {
 export async function resolveTenantConfig(slug: string): Promise<TenantConfig | null> {
   try {
     const cleanSlug = slug.toLowerCase().trim();
+    const dbSlug = cleanSlug === 'citycare' ? 'city' : cleanSlug;
     const { data, error } = await supabase
       .from('hospitals')
       .select('*')
-      .eq('slug', cleanSlug)
+      .or(`slug.eq.${cleanSlug},slug.eq.${dbSlug}`)
       .maybeSingle();
 
     if (error || !data) {
@@ -121,6 +110,7 @@ export async function resolveTenantConfig(slug: string): Promise<TenantConfig | 
     const branding = BRANDING_FALLBACKS[cleanSlug] || { theme_color: '#005EB8' };
     return {
       ...data,
+      slug: cleanSlug, // Ensure the returned slug matches the requested slug
       theme_color: data.theme_color || branding.theme_color,
       logo_url: data.logo_url || branding.logo_url
     };
@@ -128,4 +118,30 @@ export async function resolveTenantConfig(slug: string): Promise<TenantConfig | 
     console.error('Failed to resolve tenant config:', err);
     return null;
   }
+}
+
+/**
+ * Resolves the role-aware and context-aware home route/page for the user.
+ */
+export function getHomeRoute(currentUser: any | null, tenantSlug: string | null): string {
+  if (!currentUser) {
+    return tenantSlug ? 'hospital-landing' : 'landing';
+  }
+
+  if (currentUser.role === 'SUPER_ADMIN') {
+    return 'super-admin';
+  }
+
+  if (currentUser.type === 'patient') {
+    return 'register';
+  }
+
+  if (currentUser.type === 'staff') {
+    if (currentUser.role === 'PHARMACY') {
+      return 'pharmacy';
+    }
+    return 'staff';
+  }
+
+  return tenantSlug ? 'hospital-landing' : 'landing';
 }

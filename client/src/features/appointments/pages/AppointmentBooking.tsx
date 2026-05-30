@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
-import { bookAppointment, getAppointmentSlots, registerToken } from '../lib/api';
-import { Department, DEPARTMENT_LABEL, TimeSlot } from '../types';
-import { AuthUser } from '../lib/auth';
-import PhoneInput, { isValidPhone } from '../components/PhoneInput';
+import { bookAppointment, getAppointmentSlots, registerToken } from '../../../lib/api';
+import { Department, DEPARTMENT_LABEL, TimeSlot } from '../../../types';
+import { AuthUser } from '../../../lib/auth';
+import PhoneInput, { isValidPhone } from '../../../components/PhoneInput';
 import { ChevronLeft, ChevronRight, Clock, MapPin, User, Hash, CheckCircle, Loader2, AlertCircle } from 'lucide-react';
 
 const DEPARTMENTS: Department[] = [

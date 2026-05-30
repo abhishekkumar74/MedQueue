@@ -4,6 +4,7 @@
  * Patients use phone + OTP flow.
  */
 import { supabase } from './supabase';
+import { getTenantSlug, resolveTenantConfig } from './tenant';
 
 export type UserRole = 'ADMIN' | 'DOCTOR' | 'WARD_BOY' | 'PHARMACY' | 'SUPER_ADMIN';
 export type UserType = 'staff' | 'patient';
@@ -106,6 +107,17 @@ export async function loginStaff(email: string, password: string): Promise<AuthU
   if (!isValid) {
     recordFailedAttempt(normalizedEmail);
     throw new Error('Incorrect password');
+  }
+
+  // Cross-tenant validation
+  const slug = getTenantSlug();
+  if (slug) {
+    const tenant = await resolveTenantConfig(slug);
+    if (tenant && staff.hospital_id !== tenant.id) {
+      const { data: userHosp } = await supabase.from('hospitals').select('name').eq('id', staff.hospital_id).maybeSingle();
+      const userHospName = userHosp?.name || 'another clinic';
+      throw new Error(`Access denied. Your account is registered under "${userHospName}". You cannot log in inside this clinic workspace.`);
+    }
   }
 
   // Success — clear failed attempts
@@ -319,7 +331,14 @@ export async function verifyOtp(phone: string, code: string): Promise<AuthUser> 
 
   await supabase.from('otps').update({ used: true }).eq('id', otp.id);
 
-  const hospitalId = localStorage.getItem('mq_selected_hospital_id') || 'd290f1ee-6c54-4b01-90e6-d701748f0851';
+  const slug = getTenantSlug();
+  let hospitalId = localStorage.getItem('mq_selected_hospital_id') || 'd290f1ee-6c54-4b01-90e6-d701748f0851';
+  if (slug) {
+    const tenant = await resolveTenantConfig(slug);
+    if (tenant) {
+      hospitalId = tenant.id;
+    }
+  }
 
   // Get or create patient
   let { data: patient } = await supabase

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import { getQueue } from '../lib/api';
-import { Token, PRIORITY_LABEL, DEPARTMENT_LABEL, Department } from '../types';
+import { getQueue } from '../../../lib/api';
+import { Token, PRIORITY_LABEL, DEPARTMENT_LABEL, Department } from '../../../types';
 import { Activity, Clock } from 'lucide-react';
 
 interface QueueData {

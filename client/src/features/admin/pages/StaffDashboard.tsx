@@ -1,11 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
-import { AuthUser } from '../lib/auth';
-import WardBoyIntake from './WardBoyIntake';
-import DoctorPanel from './DoctorPanel';
+import { AuthUser } from '../../../lib/auth';
+import { WardBoyIntake } from '../../queue';
+import { DoctorPanel } from '../../doctor';
 import AdminDashboard from './AdminDashboard';
-import { getQueue, getSelectedHospitalId } from '../lib/api';
-import { supabase } from '../lib/supabase';
-import { Token, PatientIntake, Department, DEPARTMENT_LABEL } from '../types';
+import { getQueue, getSelectedHospitalId } from '../../../lib/api';
+import { supabase } from '../../../lib/supabase';
+import { Token, PatientIntake, Department, DEPARTMENT_LABEL } from '../../../types';
 import { 
   Shield, RefreshCw, AlertCircle, Users, Search, Building2, MapPin, 
   Activity, ShieldAlert, ChevronDown

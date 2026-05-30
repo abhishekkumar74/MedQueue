@@ -6,7 +6,7 @@ import {
   Building2, Monitor, AlertTriangle, Layers, Send, Sparkles,
   Linkedin, Github, Twitter, MessageCircle, Lock
 } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { supabase } from '../../../lib/supabase';
 
 interface Props {
   onGetStarted: () => void;   // patient login
@@ -121,9 +121,9 @@ export default function LandingPage({ onGetStarted, onStaffLogin }: Props) {
     <div className="min-h-screen bg-[#F4F8FB] font-sans text-slate-700 selection:bg-[#005EB8]/10 selection:text-[#005EB8] overflow-x-hidden">
 
       {/* ── NAVBAR ── */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-md border-b border-slate-100 shadow-[0_1px_3px_rgba(0,0,0,0.02)] h-14">
-        <div className="max-w-7xl mx-auto px-6 h-full flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-white/95 border-b border-slate-100 shadow-sm h-16 lg:h-[72px] transition-all duration-200">
+        <div className="max-w-7xl mx-auto px-4 md:px-6 h-full flex items-center justify-between">
+          <div className="flex items-center gap-2.5 whitespace-nowrap">
             <div className="w-8 h-8 rounded-xl bg-[#005EB8] flex items-center justify-center shadow-md shadow-[#005EB8]/20">
               <Activity className="w-4.5 h-4.5 text-white animate-pulse" />
             </div>
@@ -134,35 +134,69 @@ export default function LandingPage({ onGetStarted, onStaffLogin }: Props) {
           </div>
 
           {/* Desktop Nav links */}
-          <div className="hidden md:flex items-center gap-6">
-            <a href="#how-it-works" className="text-xs font-bold text-slate-500 hover:text-[#005EB8] transition-colors">Platform Workflow</a>
-            <a href="#features" className="text-xs font-bold text-slate-500 hover:text-[#005EB8] transition-colors">Core Modules</a>
+          <div className="hidden md:flex items-center gap-6 whitespace-nowrap">
+            <a href="#how-it-works" className="text-xs font-bold text-slate-500 hover:text-[#005EB8] transition-colors flex items-center gap-1">Platform Workflow</a>
+            <a href="#features" className="text-xs font-bold text-slate-500 hover:text-[#005EB8] transition-colors flex items-center gap-1">Core Modules</a>
             <a href="#isolation" className="text-xs font-bold text-slate-500 hover:text-[#005EB8] transition-colors">Data Security</a>
             <a href="#pricing" className="text-xs font-bold text-slate-500 hover:text-[#005EB8] transition-colors">SaaS Plans</a>
             <a href="#demo" className="text-xs font-bold text-slate-500 hover:text-[#005EB8] transition-colors">Schedule Setup</a>
           </div>
 
-          <div className="hidden md:flex items-center gap-3">
-            <button onClick={onStaffLogin} className="text-xs font-extrabold text-slate-500 hover:text-[#005EB8] px-3.5 py-2 transition-colors">
-              Staff Portal
-            </button>
-            <button
-              onClick={onGetStarted}
-              className="flex items-center gap-1.5 text-xs font-black px-4 py-2 bg-[#005EB8] hover:bg-[#004a96] text-white rounded-xl transition-all shadow-md shadow-[#005EB8]/10"
+          <div className="hidden md:flex items-center gap-3 whitespace-nowrap">
+            <a
+              href="#demo"
+              className="flex items-center gap-1.5 text-xs font-black px-5 py-2.5 bg-[#005EB8] hover:bg-[#004a96] text-white rounded-xl transition-all shadow-md shadow-[#005EB8]/10 min-h-[40px]"
             >
-              Patient Login
+              Get Started
               <ArrowRight className="w-3.5 h-3.5" />
-            </button>
+            </a>
           </div>
 
-          <button onClick={() => setMenuOpen(!menuOpen)} className="md:hidden text-slate-600 focus:outline-none">
-            {menuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          <button onClick={() => setMenuOpen(true)} className="md:hidden w-11 h-11 flex items-center justify-center rounded-full hover:bg-slate-50 text-slate-600 focus:outline-none transition-colors" aria-label="Open menu">
+            <Menu className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Mobile menu - Vertical Way for premium mobile design */}
+        {/* Dim Backdrop behind the drawer menu */}
         {menuOpen && (
-          <div className="md:hidden absolute top-14 left-4 right-4 bg-white/95 backdrop-blur-xl border border-slate-150 rounded-3xl p-5 shadow-2xl space-y-3.5 z-50 animate-fade-in font-sans">
+          <div
+            className="fixed inset-0 z-40 bg-black/45 md:hidden transition-opacity duration-300"
+            onClick={() => setMenuOpen(false)}
+          />
+        )}
+
+        {/* Mobile menu drawer / sheet (Slides in from the right with PWA safe area support) */}
+        <div
+          className={`fixed inset-y-0 right-0 z-50 w-[80vw] max-w-[320px] h-full bg-white shadow-xl border-l border-slate-200 transform transition-transform duration-300 ease-in-out flex flex-col justify-between md:hidden ${menuOpen ? 'translate-x-0' : 'translate-x-full'
+            }`}
+          style={{
+            paddingTop: 'calc(env(safe-area-inset-top) + 1.5rem)',
+            paddingBottom: 'calc(env(safe-area-inset-bottom) + 1.5rem)',
+            paddingLeft: 'calc(env(safe-area-inset-left) + 1.5rem)',
+            paddingRight: 'calc(env(safe-area-inset-right) + 1.5rem)'
+          }}
+        >
+          <div className="space-y-6">
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-[#005EB8] flex items-center justify-center shadow-md shadow-[#005EB8]/20">
+                  <Activity className="w-4.5 h-4.5 text-white animate-pulse" />
+                </div>
+                <span className="font-black text-slate-800 tracking-tight text-base">
+                  MedQueue<span className="text-[#00A3AD] font-extrabold ml-0.5">.</span>
+                </span>
+              </div>
+              <button
+                onClick={() => setMenuOpen(false)}
+                className="w-11 h-11 flex items-center justify-center rounded-full hover:bg-slate-100 text-slate-600 focus:outline-none transition-colors"
+                aria-label="Close menu"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            {/* Links */}
             <div className="flex flex-col gap-2">
               {[
                 { id: '#how-it-works', label: 'Platform Workflow', icon: <Layers className="w-4 h-4 text-[#005EB8]" /> },
@@ -175,125 +209,250 @@ export default function LandingPage({ onGetStarted, onStaffLogin }: Props) {
                   key={item.id}
                   href={item.id}
                   onClick={() => setMenuOpen(false)}
-                  className="flex items-center gap-3.5 p-3 hover:bg-slate-50 rounded-2xl text-xs font-black text-slate-700 transition-colors border border-transparent hover:border-slate-100/50"
+                  className="flex items-center gap-3.5 p-3.5 hover:bg-slate-50 rounded-2xl text-xs font-black text-slate-700 transition-colors border border-transparent hover:border-slate-100/50 min-h-[44px]"
                 >
                   {item.icon}
                   <span>{item.label}</span>
                 </a>
               ))}
             </div>
-            <div className="pt-3.5 border-t border-slate-100 flex flex-col gap-2">
-              <button
-                onClick={() => { setMenuOpen(false); onStaffLogin(); }}
-                className="w-full py-3 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-750 rounded-2xl text-xs font-black transition-colors"
-              >
-                Staff Portal
-              </button>
-              <button
-                onClick={() => { setMenuOpen(false); onGetStarted(); }}
-                className="w-full py-3 bg-[#005EB8] hover:bg-[#004a96] text-white rounded-2xl text-xs font-black shadow-md shadow-blue-500/10 transition-colors"
-              >
-                Patient Login
-              </button>
-            </div>
           </div>
-        )}
+
+          {/* Buttons at bottom */}
+          <div className="space-y-3 pt-6 border-t border-slate-100">
+            <a
+              href="#demo"
+              onClick={() => setMenuOpen(false)}
+              className="w-full min-h-[48px] py-3 bg-[#005EB8] hover:bg-[#004a96] text-white rounded-2xl text-xs font-black shadow-md shadow-blue-500/10 transition-colors flex items-center justify-center gap-1.5"
+            >
+              Get Started
+              <ArrowRight className="w-3.5 h-3.5" />
+            </a>
+          </div>
+        </div>
       </nav>
 
-      {/* ── 1. HERO SECTION (Full background image with content overlays) ── */}
-      <section className="relative min-h-[auto] py-20 lg:py-0 lg:min-h-screen flex items-center justify-center overflow-hidden bg-[#F4F8FB]">
-
-        {/* Full screen Background Image */}
-        <div className="absolute inset-0 z-0">
+      {/* ── 1. HERO SECTION (Full-Screen Healthcare Overlay Banner with Integrated Stats & Marquee) ── */}
+      <section className="relative min-h-screen flex flex-col justify-between overflow-hidden bg-[#F4F8FC] pt-16 lg:pt-[72px] pb-6 z-20">
+        
+        {/* Background image full hero - restricted to right 55% on desktop to prevent excessive zooming */}
+        <div className="absolute top-16 lg:top-[72px] left-0 lg:left-[45%] right-0 bottom-0 z-0 overflow-hidden">
           <img
             src="/healthcare_hero.png"
-            alt="MedQueue personalized wellness solutions background"
-            className="w-full h-full object-cover object-[center_35%] filter brightness-[0.98] contrast-[1.01] blur-[3px] lg:blur-0 transition-all duration-300"
+            alt="Healthcare workspace"
+            className="
+              w-full
+              h-full
+              object-cover
+              object-center
+              filter brightness-[1.05] contrast-[1.02]
+            "
           />
-          {/* Soft vertical gradient and premium glassmorphic backdrop blur on mobile to guarantee perfect legibility */}
-          <div className="absolute inset-0 bg-white/85 backdrop-blur-[4px] lg:backdrop-blur-0 lg:bg-gradient-to-r lg:from-white/95 lg:via-white/85 lg:to-white/10" />
+
+          {/* LEFT readable overlay - sharp transition so right side remains completely clear and colorful */}
+          <div
+            className="
+              absolute
+              inset-0
+              bg-gradient-to-r
+              from-[#F4F8FC]
+              via-[#F4F8FC]/40
+              via-15%
+              to-transparent
+            "
+          />
         </div>
 
-        {/* Ambient background glows for tech feel */}
-        <div className="absolute top-[-10%] left-[-10%] w-[60%] h-[60%] bg-gradient-to-tr from-[#005EB8]/10 to-[#00A3AD]/10 rounded-full blur-[130px] pointer-events-none animate-pulse-glow" />
+        {/* Ambient glow */}
+        <div className="
+          absolute
+          left-[-10%]
+          top-[10%]
+          w-[500px]
+          h-[500px]
+          rounded-full
+          bg-[#005EB8]/10
+          blur-[120px]
+          pointer-events-none
+        " />
 
-        <div className="relative max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center w-full z-10 pt-10 pb-6">
+        {/* Main Content Area (Structured grid: Left Pitch, Right Stable Cards) */}
+        <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-10 w-full flex-grow flex items-center pt-8 pb-4 lg:pt-12 lg:pb-8">
+          <div className="w-full grid grid-cols-1 lg:grid-cols-12 gap-8 items-center mt-2 lg:mt-4">
+            
+            {/* Left Pitch Column */}
+            <div className="lg:col-span-6 flex flex-col justify-center text-left space-y-5 lg:space-y-6">
+              {/* badge */}
+              <div className="inline-flex items-center gap-1.5 bg-[#005EB8]/10 text-[#005EB8] text-xs font-black px-4 py-1.5 rounded-full border border-[#005EB8]/20 w-fit">
+                <Shield className="w-3.5 h-3.5" />
+                Enterprise Healthcare Platform
+              </div>
 
-          {/* Left Hero Pitch: Borderless direct text overlay on background image */}
-          <div className="col-span-1 lg:col-span-7 space-y-6 text-left px-4 md:px-0">
-            <div className="inline-flex items-center gap-1.5 bg-[#005EB8]/10 text-[#005EB8] text-[10px] font-black px-3.5 py-1.5 rounded-full uppercase tracking-widest border border-[#005EB8]/20">
-              <Sparkles className="w-3.5 h-3.5 text-[#00A3AD] animate-spin" style={{ animationDuration: '6s' }} />
-              Enterprise Healthcare Platform
-            </div>
+              {/* heading */}
+              <h1 className="text-4xl sm:text-5xl lg:text-[56px] lg:leading-[1.08] font-black text-slate-800 tracking-tight leading-[1.1]">
+                Healthcare Operations,<br />
+                <span className="bg-gradient-to-r from-[#005EB8] to-[#00A3AD] bg-clip-text text-transparent">Built Around Patients.</span>
+              </h1>
 
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-slate-800 tracking-tight leading-[1.08] drop-shadow-[0_1px_2px_rgba(255,255,255,0.8)]">
-              Healthcare for<br />
-              <span className="text-[#005EB8]">Personalized Wellness.</span>
-            </h1>
-
-            <p className="text-slate-655 text-sm sm:text-base leading-relaxed max-w-lg font-bold drop-shadow-[0_1px_1px_rgba(255,255,255,0.9)]">
-              MedQueue unifies patient flow, staff coordination, real-time queues, and clinical operations in one intelligent platform. Built for hospitals. Designed for better care.
-            </p>
-
-            <div className="flex flex-wrap items-center gap-4 pt-2">
-              <a
-                href="#demo"
-                className="flex items-center gap-2 px-6 py-3.5 bg-[#005EB8] hover:bg-[#004a96] text-white font-black rounded-xl text-xs shadow-lg shadow-[#005EB8]/20 hover:shadow-[#005EB8]/30 transition-all duration-300 uppercase tracking-widest"
-              >
-                Book a Live Demo
-                <ArrowRight className="w-4 h-4" />
-              </a>
-              <a
-                href="#features"
-                className="px-6 py-3.5 bg-white border border-slate-250 text-slate-700 hover:bg-slate-50 font-black rounded-xl text-xs transition-all duration-300 shadow-sm hover:shadow-md uppercase tracking-widest"
-              >
-                Explore Features
-              </a>
-            </div>
-
-            {/* Micro badges */}
-            <div className="flex items-center gap-5 text-xs text-slate-500 font-bold pt-1">
-              <span className="flex items-center gap-1.5 drop-shadow-[0_1px_1px_rgba(255,255,255,0.9)]">
-                <CheckCircle2 className="w-4 h-4 text-[#005EB8]" /> No Credit Card Required
-              </span>
-              <span className="flex items-center gap-1.5 drop-shadow-[0_1px_1px_rgba(255,255,255,0.9)]">
-                <CheckCircle2 className="w-4 h-4 text-[#005EB8]" /> 14-Day Free Trial
-              </span>
-            </div>
-
-            {/* ── TRUSTED BY CLINICAL BRANDS (Integrated seamlessly inside Left Hero Content) ── */}
-            <div className="pt-6 border-t border-slate-200/60 mt-3 space-y-3">
-              <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">
-                Trusted by Modern Healthcare Teams
+              {/* subtext */}
+              <p className="text-slate-600 text-sm sm:text-base leading-relaxed font-bold max-w-[560px]">
+                Manage queues, appointments, staff workflows, and clinical operations from one secure and intelligent healthcare workspace.
               </p>
-              <div className="flex flex-wrap items-center gap-x-5 gap-y-3 pt-1">
-                {[
-                  { name: 'Apollo Clinics', color: 'hover:text-[#005EB8]', icon: <Activity className="w-4 h-4 text-slate-400 group-hover:text-[#005EB8] transition-colors" /> },
-                  { name: 'MAX Health', color: 'hover:text-[#00A3AD]', icon: <Heart className="w-4 h-4 text-slate-400 group-hover:text-[#00A3AD] transition-colors" /> },
-                  { name: 'Fortis Clinic', color: 'hover:text-emerald-600', icon: <Stethoscope className="w-4 h-4 text-slate-400 group-hover:text-emerald-600 transition-colors" /> },
-                  { name: 'Manipal Hub', color: 'hover:text-indigo-600', icon: <Building2 className="w-4 h-4 text-slate-400 group-hover:text-indigo-600 transition-colors" /> },
-                  { name: 'Narayana Core', color: 'hover:text-rose-500', icon: <Activity className="w-4 h-4 text-slate-400 group-hover:text-rose-500 transition-colors" /> }
-                ].map((item, idx) => (
-                  <div
-                    key={idx}
-                    className="flex items-center gap-1.5 text-slate-400 hover:text-slate-650 transition-all duration-300 cursor-pointer group hover:scale-[1.01] font-sans"
-                  >
-                    {item.icon}
-                    <span className={`text-[10px] font-black tracking-wider uppercase transition-colors ${item.color}`}>
-                      {item.name}
-                    </span>
+
+              {/* CTA */}
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 pt-1 w-full sm:w-auto">
+                <a
+                  href="#demo"
+                  className="flex items-center justify-center gap-2 px-6 min-h-[48px] h-12 bg-[#005EB8] hover:bg-[#004a96] text-white font-extrabold rounded-xl text-xs shadow-lg shadow-[#005EB8]/20 hover:shadow-[#005EB8]/30 transition-all duration-300 uppercase tracking-widest"
+                >
+                  Book Live Demo
+                  <ArrowRight className="w-4 h-4" />
+                </a>
+                <a
+                  href="#features"
+                  className="px-6 min-h-[48px] h-12 bg-transparent border border-slate-300 hover:border-slate-400 text-slate-700 hover:bg-slate-50 font-extrabold rounded-xl text-xs transition-all duration-300 shadow-sm hover:shadow-md uppercase tracking-widest flex items-center justify-center"
+                >
+                  Explore Platform
+                </a>
+              </div>
+
+              {/* Badges / Trust indicators under the text container */}
+              <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-slate-500 font-bold pt-1">
+                <span className="flex items-center gap-1.5">
+                  <CheckCircle2 className="w-4 h-4 text-[#005EB8]" /> No Credit Card Required
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <CheckCircle2 className="w-4 h-4 text-[#005EB8]" /> 14-Day Trial Full Access
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <CheckCircle2 className="w-4 h-4 text-[#005EB8]" /> Multi-Hospital Support
+                </span>
+              </div>
+            </div>
+
+            {/* Right Stable Column (Premium Info Cards nested strictly in this right grid cell) */}
+            <div className="hidden lg:block lg:col-span-6 relative h-[380px] w-full">
+              {/* Card 1: Live Queue Tracking (Anchored top-right) */}
+              <div className="absolute top-[5%] right-[10%] bg-white/95 backdrop-blur-md border border-slate-200/50 p-4 rounded-2xl shadow-xl w-[220px] hover:-translate-y-1 transition-transform duration-300">
+                <div className="flex gap-3 items-start">
+                  <div className="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center flex-shrink-0">
+                    <Users className="w-5 h-5 text-blue-600" />
                   </div>
-                ))}
+                  <div>
+                    <h4 className="font-extrabold text-[12px] text-slate-800 leading-tight">Live Queue Tracking</h4>
+                    <p className="text-[10px] text-slate-400 mt-1 leading-normal font-semibold">Real-time updates for better flow</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Card 2: Multi Hospital Nodes (Anchored center-left, overlapping transition) */}
+              <div className="absolute top-[38%] left-[5%] bg-white/95 backdrop-blur-md border border-slate-200/50 p-4 rounded-2xl shadow-xl w-[220px] hover:-translate-y-1 transition-transform duration-300">
+                <div className="flex gap-3 items-start">
+                  <div className="w-9 h-9 rounded-xl bg-indigo-50 flex items-center justify-center flex-shrink-0">
+                    <Building2 className="w-5 h-5 text-indigo-600" />
+                  </div>
+                  <div>
+                    <h4 className="font-extrabold text-[12px] text-slate-800 leading-tight">Multi Hospital Nodes</h4>
+                    <p className="text-[10px] text-slate-400 mt-1 leading-normal font-semibold">Centralized control across locations</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Card 3: 24/7 Operations (Anchored bottom-right) */}
+              <div className="absolute bottom-[5%] right-[2%] bg-white/95 backdrop-blur-md border border-slate-200/50 p-4 rounded-2xl shadow-xl w-[220px] hover:-translate-y-1 transition-transform duration-300">
+                <div className="flex gap-3 items-start">
+                  <div className="w-9 h-9 rounded-xl bg-violet-50 flex items-center justify-center flex-shrink-0">
+                    <Shield className="w-5 h-5 text-violet-600" />
+                  </div>
+                  <div>
+                    <h4 className="font-extrabold text-[12px] text-slate-800 leading-tight">24/7 Operations</h4>
+                    <p className="text-[10px] text-slate-400 mt-1 leading-normal font-semibold">Reliable, secure & always available</p>
+                  </div>
+                </div>
               </div>
             </div>
 
           </div>
-
-          {/* Right Hero Preview: Kept completely empty and clean, allowing the beautiful doctor & family background image to shine through cleanly without clutter */}
-          <div className="lg:col-span-5 h-[350px] hidden lg:block" />
         </div>
 
+        {/* BOTTOM INTEGRATED SECTIONS (Stats card & Partners marquee row) */}
+        <div className="relative z-20 w-full mt-auto space-y-4 px-6 lg:px-10 max-w-7xl mx-auto">
+
+          {/* Integrated Clean White Stats Row */}
+          <div className="bg-white/85 backdrop-blur-md border border-slate-100/50 rounded-[24px] p-5 lg:p-6 shadow-lg shadow-slate-150/30 flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-2">
+            {[
+              { num: '500+', label: 'Active Hospitals', desc: 'Enterprise clinic chains', icon: <Building2 className="w-5 h-5 text-blue-600" /> },
+              { num: '2M+', label: 'Patients Served', desc: 'Secure token registrations', icon: <Users className="w-5 h-5 text-indigo-600" /> },
+              { num: '35%', label: 'Avg. Wait Time Reduced', desc: 'Smooth OPD Triaging flow', icon: <Clock className="w-5 h-5 text-emerald-600" /> },
+              { num: '99.9%', label: 'System Uptime', desc: 'High Availability SLA', icon: <Shield className="w-5 h-5 text-violet-600" /> }
+            ].map((stat, idx) => (
+              <div key={idx} className="flex items-center gap-3.5 flex-1 justify-start md:justify-center px-2">
+                <div className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center flex-shrink-0">
+                  {stat.icon}
+                </div>
+                <div>
+                  <div className="text-lg font-black text-slate-800 tracking-tight">{stat.num}</div>
+                  <div className="text-[11px] font-black text-slate-700 mt-0.5">{stat.label}</div>
+                  <div className="text-[9px] text-slate-400 font-semibold mt-0.5">{stat.desc}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Trusted Hospital Partners Continuous Auto-Scroll Marquee (Subtle overlay banner inside hero bottom) */}
+          <div className="bg-white/55 backdrop-blur-sm border border-slate-200/20 rounded-[20px] py-2 lg:py-2.5 overflow-hidden relative flex items-center">
+            {/* Fade overlays */}
+            <div className="absolute left-0 top-0 bottom-0 w-16 bg-gradient-to-r from-[#F4F8FC] to-transparent z-10 pointer-events-none" />
+            <div className="absolute right-0 top-0 bottom-0 w-16 bg-gradient-to-l from-[#F4F8FC] to-transparent z-10 pointer-events-none" />
+
+            <div className="flex w-max gap-4 animate-marquee py-0.5">
+              {[
+                { name: 'Apollo Clinics', icon: <Activity className="w-3.5 h-3.5 text-[#005EB8]" /> },
+                { name: 'MAX Health', icon: <Heart className="w-3.5 h-3.5 text-rose-500 fill-rose-500/10" /> },
+                { name: 'Fortis Clinic', icon: <Stethoscope className="w-3.5 h-3.5 text-[#00A3AD]" /> },
+                { name: 'Manipal Hub', icon: <Building2 className="w-3.5 h-3.5 text-indigo-500" /> },
+                { name: 'Narayana Core', icon: <Activity className="w-3.5 h-3.5 text-emerald-500" /> },
+                { name: 'City Hospital', icon: <Users className="w-3.5 h-3.5 text-violet-500" /> },
+                { name: 'Care Plus', icon: <Shield className="w-3.5 h-3.5 text-[#00A3AD]" /> },
+                { name: 'Wellness First', icon: <Heart className="w-3.5 h-3.5 text-amber-500" /> }
+              ].map((item, idx) => (
+                <div
+                  key={`marquee-1-${idx}`}
+                  className="flex-shrink-0 inline-flex items-center gap-2 bg-white/90 border border-slate-200/40 px-4 py-2 rounded-full shadow-sm"
+                >
+                  {item.icon}
+                  <span className="text-[10px] font-black text-slate-700 tracking-wider uppercase whitespace-nowrap">
+                    {item.name}
+                  </span>
+                </div>
+              ))}
+              {/* Duplicate set for seamless loop */}
+              {[
+                { name: 'Apollo Clinics', icon: <Activity className="w-3.5 h-3.5 text-[#005EB8]" /> },
+                { name: 'MAX Health', icon: <Heart className="w-3.5 h-3.5 text-rose-500 fill-rose-500/10" /> },
+                { name: 'Fortis Clinic', icon: <Stethoscope className="w-3.5 h-3.5 text-[#00A3AD]" /> },
+                { name: 'Manipal Hub', icon: <Building2 className="w-3.5 h-3.5 text-indigo-500" /> },
+                { name: 'Narayana Core', icon: <Activity className="w-3.5 h-3.5 text-emerald-500" /> },
+                { name: 'City Hospital', icon: <Users className="w-3.5 h-3.5 text-violet-500" /> },
+                { name: 'Care Plus', icon: <Shield className="w-3.5 h-3.5 text-[#00A3AD]" /> },
+                { name: 'Wellness First', icon: <Heart className="w-3.5 h-3.5 text-amber-500" /> }
+              ].map((item, idx) => (
+                <div
+                  key={`marquee-2-${idx}`}
+                  className="flex-shrink-0 inline-flex items-center gap-2 bg-white/90 border border-slate-200/40 px-4 py-2 rounded-full shadow-sm"
+                >
+                  {item.icon}
+                  <span className="text-[10px] font-black text-slate-700 tracking-wider uppercase whitespace-nowrap">
+                    {item.name}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
       </section>
+
+
 
       {/* ── 1.5 WHY USE THIS? OUTCOME-BASED BENEFITS ── */}
       <section id="benefits" className="py-20 bg-[#F4F8FB] border-t border-slate-150 relative overflow-hidden">
@@ -1094,16 +1253,16 @@ export default function LandingPage({ onGetStarted, onStaffLogin }: Props) {
       </section>
 
       {/* ── FOOTER ── */}
-      <footer className="bg-gradient-to-br from-[#060B1C] via-[#09112B] to-[#040816] py-16 px-6 relative overflow-hidden border-t border-white/[0.08] backdrop-blur-md">
+      <footer className="bg-gradient-to-br from-[#060B1C] via-[#09112B] to-[#040816] px-5 py-10 md:px-8 md:py-16 relative overflow-hidden border-t border-white/[0.08] backdrop-blur-md">
 
         {/* Subtle decorative glow overlays for modern SaaS aesthetic */}
         <div className="absolute top-0 left-1/4 -translate-y-1/2 w-[500px] h-[500px] bg-[#005EB8]/10 rounded-full blur-[120px] pointer-events-none animate-pulse-glow" />
         <div className="absolute top-0 right-1/4 -translate-y-1/2 w-[500px] h-[500px] bg-[#00A3AD]/10 rounded-full blur-[120px] pointer-events-none animate-pulse-glow" />
 
-        <div className="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-12 gap-10 md:gap-12 relative z-10">
+        <div className="max-w-7xl mx-auto flex flex-col md:grid md:grid-cols-12 gap-8 md:gap-12 relative z-10">
 
           {/* Brand and Tagline Column */}
-          <div className="col-span-1 sm:col-span-2 md:col-span-4 space-y-6">
+          <div className="md:col-span-4 space-y-4 md:space-y-6">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-[#005EB8] to-[#00A3AD] flex items-center justify-center shadow-lg shadow-[#005EB8]/20 relative group overflow-hidden">
                 <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -1125,57 +1284,65 @@ export default function LandingPage({ onGetStarted, onStaffLogin }: Props) {
             </p>
 
             {/* Social Icons */}
-            <div className="flex gap-3 pt-2">
-              <a href="https://linkedin.com" target="_blank" rel="noreferrer" className="w-9 h-9 rounded-xl border border-white/10 hover:border-white/20 bg-white/[0.02] hover:bg-white/[0.08] text-slate-400 hover:text-white flex items-center justify-center transition-all duration-300 shadow-sm hover:-translate-y-0.5">
+            <div className="flex gap-3 pt-1">
+              <a href="https://linkedin.com" target="_blank" rel="noreferrer" className="w-9 h-9 rounded-xl border border-white/10 hover:border-white/20 bg-white/[0.02] hover:bg-white/[0.08] text-slate-400 hover:text-white flex items-center justify-center transition-all duration-300 shadow-sm">
                 <Linkedin className="w-4 h-4" />
               </a>
-              <a href="https://github.com" target="_blank" rel="noreferrer" className="w-9 h-9 rounded-xl border border-white/10 hover:border-white/20 bg-white/[0.02] hover:bg-white/[0.08] text-slate-400 hover:text-white flex items-center justify-center transition-all duration-300 shadow-sm hover:-translate-y-0.5">
+              <a href="https://github.com" target="_blank" rel="noreferrer" className="w-9 h-9 rounded-xl border border-white/10 hover:border-white/20 bg-white/[0.02] hover:bg-white/[0.08] text-slate-400 hover:text-white flex items-center justify-center transition-all duration-300 shadow-sm">
                 <Github className="w-4 h-4" />
               </a>
-              <a href="https://twitter.com" target="_blank" rel="noreferrer" className="w-9 h-9 rounded-xl border border-white/10 hover:border-white/20 bg-white/[0.02] hover:bg-white/[0.08] text-slate-400 hover:text-white flex items-center justify-center transition-all duration-300 shadow-sm hover:-translate-y-0.5">
+              <a href="https://twitter.com" target="_blank" rel="noreferrer" className="w-9 h-9 rounded-xl border border-white/10 hover:border-white/20 bg-white/[0.02] hover:bg-white/[0.08] text-slate-400 hover:text-white flex items-center justify-center transition-all duration-300 shadow-sm">
                 <Twitter className="w-4 h-4" />
               </a>
-              <a href="https://wa.me" target="_blank" rel="noreferrer" className="w-9 h-9 rounded-xl border border-white/10 hover:border-white/20 bg-white/[0.02] hover:bg-white/[0.08] text-slate-400 hover:text-[#25D366] flex items-center justify-center transition-all duration-300 shadow-sm hover:-translate-y-0.5">
+              <a href="https://wa.me" target="_blank" rel="noreferrer" className="w-9 h-9 rounded-xl border border-white/10 hover:border-white/20 bg-white/[0.02] hover:bg-white/[0.08] text-slate-400 hover:text-[#25D366] flex items-center justify-center transition-all duration-300 shadow-sm">
                 <MessageCircle className="w-4 h-4" />
               </a>
             </div>
           </div>
 
-          {/* Links Column 1: Platform */}
-          <div className="col-span-1 md:col-span-2 space-y-4">
-            <h4 className="text-[10px] font-black text-white uppercase tracking-[0.2em]">Platform</h4>
-            <div className="flex flex-col gap-3 text-xs font-bold text-slate-400">
-              <a href="#how-it-works" className="hover:text-white hover:translate-x-0.5 transition-all duration-200">Queue System</a>
-              <a href="#features" className="hover:text-white hover:translate-x-0.5 transition-all duration-200">Pharmacy</a>
-              <a href="#features" className="hover:text-white hover:translate-x-0.5 transition-all duration-200">Analytics</a>
+          {/* Links Section (Responsive layout: side-by-side on mobile grid, columns on desktop) */}
+          <div className="grid grid-cols-3 md:contents gap-4">
+            {/* Links Column 1: Platform */}
+            <div className="space-y-3 md:col-span-2">
+              <h4 className="text-[10px] font-black text-white uppercase tracking-[0.2em]">Platform</h4>
+              <div className="flex flex-col gap-2 md:gap-3 text-xs font-bold text-slate-400">
+                <a href="#how-it-works" className="hover:text-white transition-all duration-200">Queue System</a>
+                <a href="#features" className="hover:text-white transition-all duration-200">Pharmacy</a>
+                <a href="#features" className="hover:text-white transition-all duration-200">Analytics</a>
+              </div>
             </div>
-          </div>
 
-          {/* Links Column 2: Resources */}
-          <div className="col-span-1 md:col-span-2 space-y-4">
-            <h4 className="text-[10px] font-black text-white uppercase tracking-[0.2em]">Resources</h4>
-            <div className="flex flex-col gap-3 text-xs font-bold text-slate-400">
-              <a href="#pricing" className="hover:text-white hover:translate-x-0.5 transition-all duration-200">Pricing</a>
-              <a href="#demo" className="hover:text-white hover:translate-x-0.5 transition-all duration-200">Contact</a>
-              <a href="#demo" className="hover:text-white hover:translate-x-0.5 transition-all duration-200">Privacy</a>
+            {/* Links Column 2: Resources */}
+            <div className="space-y-3 md:col-span-2">
+              <h4 className="text-[10px] font-black text-white uppercase tracking-[0.2em]">Resources</h4>
+              <div className="flex flex-col gap-2 md:gap-3 text-xs font-bold text-slate-400">
+                <a href="#pricing" className="hover:text-white transition-all duration-200">Pricing</a>
+                <a href="#demo" className="hover:text-white transition-all duration-200">Contact</a>
+                <a href="#demo" className="hover:text-white transition-all duration-200">Privacy</a>
+              </div>
             </div>
-          </div>
 
-          {/* Links Column 3: Corporate */}
-          <div className="col-span-1 md:col-span-2 space-y-4">
-            <h4 className="text-[10px] font-black text-white uppercase tracking-[0.2em]">Corporate</h4>
-            <div className="flex flex-col gap-3 text-xs font-bold text-slate-400">
-              <a href="#isolation" className="hover:text-white hover:translate-x-0.5 transition-all duration-200">Data Isolation</a>
-              <a href="#how-it-works" className="hover:text-white hover:translate-x-0.5 transition-all duration-200">Workflow</a>
-              <a href="#features" className="hover:text-white hover:translate-x-0.5 transition-all duration-200">Display Boards</a>
+            {/* Links Column 3: Corporate */}
+            <div className="space-y-3 md:col-span-2">
+              <h4 className="text-[10px] font-black text-white uppercase tracking-[0.2em]">Corporate</h4>
+              <div className="flex flex-col gap-2 md:gap-3 text-xs font-bold text-slate-400">
+                <a href="#isolation" className="hover:text-white transition-all duration-200">Data Isolation</a>
+                <a href="#how-it-works" className="hover:text-white transition-all duration-200">Workflow</a>
+                <button
+                  onClick={onStaffLogin}
+                  className="hover:text-white transition-all duration-250 text-left font-bold"
+                >
+                  Staff Login Portal
+                </button>
+              </div>
             </div>
           </div>
 
           {/* Status Column */}
-          <div className="col-span-1 sm:col-span-2 md:col-span-2 flex flex-col justify-start md:items-end gap-3">
-            <h4 className="text-[10px] font-black text-white uppercase tracking-[0.2em] md:text-right w-full">Status</h4>
+          <div className="md:col-span-2 flex flex-col justify-start md:items-end gap-2 md:gap-3">
+            <h4 className="text-[10px] font-black text-white uppercase tracking-[0.2em] md:text-right w-full hidden md:block">Status</h4>
             {/* Blinking Live Operational Status Indicator */}
-            <div className="flex items-center gap-2 bg-[#10B981]/10 border border-[#10B981]/25 px-3 py-1.5 rounded-full text-xs font-black text-[#10B981] shadow-[0_2px_10px_rgba(16,185,129,0.1)] relative">
+            <div className="flex items-center gap-2 bg-[#10B981]/10 border border-[#10B981]/25 px-3 py-1.5 rounded-full text-xs font-black text-[#10B981] shadow-[0_2px_10px_rgba(16,185,129,0.1)] relative w-fit">
               <span className="w-2 h-2 bg-[#10B981] rounded-full animate-ping" />
               <span className="w-2 h-2 bg-[#10B981] rounded-full absolute" />
               <span className="uppercase tracking-widest text-[9px] ml-3">Systems Operational</span>
@@ -1185,7 +1352,7 @@ export default function LandingPage({ onGetStarted, onStaffLogin }: Props) {
         </div>
 
         {/* Divider line */}
-        <div className="max-w-7xl mx-auto border-t border-white/[0.06] mt-12 pt-8 flex flex-col sm:flex-row justify-between items-center gap-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest relative z-10">
+        <div className="max-w-7xl mx-auto border-t border-white/[0.06] mt-8 pt-6 flex flex-col sm:flex-row justify-between items-center gap-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest relative z-10">
           <div className="flex items-center gap-2 hover:text-white transition-colors duration-300">
             <Heart className="w-3.5 h-3.5 text-rose-500 fill-rose-500 animate-pulse" />
             <span>Built for scalable healthcare SaaS networks</span>

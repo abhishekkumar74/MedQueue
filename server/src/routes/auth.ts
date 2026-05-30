@@ -31,6 +31,13 @@ router.post('/staff/login', async (req: Request, res: Response) => {
     const valid = await bcrypt.compare(password, user.password_hash);
     if (!valid) return res.status(401).json({ error: 'Invalid credentials' });
 
+    if (user.role !== 'SUPER_ADMIN') {
+      const requestedHospital = (req.headers['x-hospital-id'] as string) || req.body.hospital_id;
+      if (requestedHospital && user.hospital_id !== requestedHospital) {
+        return res.status(403).json({ error: 'Access denied. Your account is registered under a different clinic.' });
+      }
+    }
+
     const accessToken = signAccessToken({
       sub: user.id,
       type: 'staff',
@@ -109,17 +116,20 @@ router.post('/patient/verify-otp', async (req: Request, res: Response) => {
     // Mark OTP as used
     await db.from('otps').update({ used: true }).eq('id', otp.id);
 
+    const hospitalId = (req.headers['x-hospital-id'] as string) || req.body.hospital_id || 'd290f1ee-6c54-4b01-90e6-d701748f0851';
+
     // Get or create patient
     let { data: patient } = await db
       .from('patients')
       .select('*')
       .eq('phone', phone)
+      .eq('hospital_id', hospitalId)
       .maybeSingle();
 
     if (!patient) {
       const { data: created, error } = await db
         .from('patients')
-        .insert({ phone, name: '', age: 0, address: '' })
+        .insert({ phone, name: '', age: 0, address: '', hospital_id: hospitalId })
         .select()
         .single();
       if (error) return res.status(500).json({ error: error.message });

@@ -76,7 +76,10 @@ router.put('/:id', async (req: Request, res: Response) => {
     if (error) return res.status(400).json({ error: error.message });
 
     // Mark token ready for doctor
-    await db.from('tokens').update({ intake_status: 'READY_FOR_DOCTOR' }).eq('id', data.token_id);
+    await db.from('tokens')
+      .update({ intake_status: 'READY_FOR_DOCTOR' })
+      .eq('id', data.token_id)
+      .eq('hospital_id', check.hospital_id);
 
     return res.json({ success: true, intake: data });
   } catch (e) {

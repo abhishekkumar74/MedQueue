@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '../lib/supabase';
-import { AuthUser } from '../lib/auth';
+import { supabase } from '../../../lib/supabase';
+import { AuthUser } from '../../../lib/auth';
 import {
   Users, Stethoscope, Activity, RefreshCw, AlertCircle,
   TrendingUp, Clock, CheckCircle2, Calendar,
@@ -8,7 +8,7 @@ import {
   HardDrive, Network, Layers, X,
   FileSpreadsheet, Eye, Sparkles, MapPin, Database, Server, DollarSign
 } from 'lucide-react';
-import { TokenStatus, Priority, Department, PRIORITY_LABEL, PRIORITY_COLOR, STATUS_COLOR, DEPARTMENT_LABEL } from '../types';
+import { TokenStatus, Priority, Department, PRIORITY_LABEL, PRIORITY_COLOR, STATUS_COLOR, DEPARTMENT_LABEL } from '../../../types';
 
 interface Props {
   onNavigate?: (p: string) => void;

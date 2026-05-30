@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '../lib/supabase';
-import { AuthUser } from '../lib/auth';
-import { setSelectedHospitalId } from '../lib/api';
+import { supabase } from '../../../lib/supabase';
+import { AuthUser } from '../../../lib/auth';
+import { setSelectedHospitalId } from '../../../lib/api';
 import { 
   Building2, Users, Shield, Plus, ArrowRight, Activity, 
   MapPin, Phone, Check, RefreshCw, UserPlus, Trash2, Loader2, Info,

@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { AuthUser, loginStaff, requestOtp, verifyOtp } from '../lib/auth';
-import { supabase } from '../lib/supabase';
-import PhoneInput, { isValidPhone } from '../components/PhoneInput';
+import { AuthUser, loginStaff, requestOtp, verifyOtp } from '../../../lib/auth';
+import { supabase } from '../../../lib/supabase';
+import PhoneInput, { isValidPhone } from '../../../components/PhoneInput';
 import { Activity, Eye, EyeOff, Loader2, AlertCircle, Shield, ArrowLeft, User, MapPin, Hash } from 'lucide-react';
 
 type LoginMode = 'choose' | 'staff' | 'patient-phone' | 'patient-otp' | 'patient-register';

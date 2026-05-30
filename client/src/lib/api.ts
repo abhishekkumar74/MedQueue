@@ -230,19 +230,25 @@ export async function callNextPatient(department?: string) {
 // ─── MARK DONE / NO-SHOW ─────────────────────────────────────────────────────
 
 export async function markTokenDone(id: string) {
+  const hospitalId = getSelectedHospitalId();
   const { data, error } = await supabase
     .from('tokens')
     .update({ status: 'DONE', intake_status: 'COMPLETED' })
-    .eq('id', id).select().single();
+    .eq('id', id)
+    .eq('hospital_id', hospitalId)
+    .select().single();
   if (error) throw new Error(error.message);
   return { success: true, token: data };
 }
 
 export async function markTokenNoShow(id: string) {
+  const hospitalId = getSelectedHospitalId();
   const { data, error } = await supabase
     .from('tokens')
     .update({ status: 'NO_SHOW', intake_status: 'COMPLETED' })
-    .eq('id', id).select().single();
+    .eq('id', id)
+    .eq('hospital_id', hospitalId)
+    .select().single();
   if (error) throw new Error(error.message);
   return { success: true, token: data };
 }
@@ -278,16 +284,20 @@ export async function startIntake(tokenId: string) {
 export async function updateIntake(id: string, form: {
   bp: string; sugar: string; temperature: string; symptoms: string; notes: string;
 }) {
+  const hospitalId = getSelectedHospitalId();
   const { data, error } = await supabase
     .from('patient_intake')
     .update({ ...form, updated_at: new Date().toISOString() })
-    .eq('id', id).select().single();
+    .eq('id', id)
+    .eq('hospital_id', hospitalId)
+    .select().single();
   if (error) throw new Error(error.message);
 
   // Mark token as READY_FOR_DOCTOR
   await supabase.from('tokens')
     .update({ intake_status: 'READY_FOR_DOCTOR' })
-    .eq('id', data.token_id);
+    .eq('id', data.token_id)
+    .eq('hospital_id', hospitalId);
 
   return { success: true, intake: data };
 }

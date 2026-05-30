@@ -3,9 +3,9 @@
  * Reference: ABHA app style with tabs (Tokens | Records)
  */
 import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '../lib/supabase';
-import { AuthUser } from '../lib/auth';
-import { formatDate, formatTime } from '../lib/dateUtils';
+import { supabase } from '../../../lib/supabase';
+import { AuthUser } from '../../../lib/auth';
+import { formatDate, formatTime } from '../../../lib/dateUtils';
 import {
   Clock, FileText, Pill, ChevronDown, ChevronUp,
   Loader2, AlertCircle, Calendar, Stethoscope, RefreshCw

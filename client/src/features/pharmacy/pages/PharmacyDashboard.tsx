@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '../lib/supabase';
-import { PrescriptionStatus, PRESCRIPTION_STATUS_COLOR, PRESCRIPTION_STATUS_LABEL } from '../types';
+import { supabase } from '../../../lib/supabase';
+import { PrescriptionStatus, PRESCRIPTION_STATUS_COLOR, PRESCRIPTION_STATUS_LABEL } from '../../../types';
 import { 
   Pill, CheckCircle2, Loader2, AlertCircle,
   RefreshCw, PlusCircle, Edit3, ShieldAlert, 

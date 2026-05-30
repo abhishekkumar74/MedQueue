@@ -57,7 +57,10 @@ router.post('/', requireRole('DOCTOR', 'ADMIN'), async (req: Request, res: Respo
 
     if (pe) return res.status(400).json({ error: pe.message });
 
-    await db.from('tokens').update({ status: 'DONE', intake_status: 'COMPLETED' }).eq('id', token_id);
+    await db.from('tokens')
+      .update({ status: 'DONE', intake_status: 'COMPLETED' })
+      .eq('id', token_id)
+      .eq('hospital_id', hospitalId);
 
     return res.json({ success: true, prescription });
   } catch (e) {
