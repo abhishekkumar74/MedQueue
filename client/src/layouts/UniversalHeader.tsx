@@ -161,7 +161,7 @@ export default function UniversalHeader({ page, navigate, currentUser, handleLog
   };
 
   return (
-    <header className="sticky top-0 z-[60] w-full bg-white/95 backdrop-blur-md border-b border-slate-150 shadow-[0_1px_3px_rgba(0,0,0,0.02)] h-[calc(3.5rem+env(safe-area-inset-top,0px))] pt-[env(safe-area-inset-top,0px)] select-none font-sans">
+    <header className="sticky top-0 z-[60] w-full bg-white border-b border-slate-150 shadow-[0_1px_3px_rgba(0,0,0,0.02)] h-[calc(3.5rem+env(safe-area-inset-top,0px))] pt-[env(safe-area-inset-top,0px)] select-none font-sans">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 h-full flex items-center justify-between gap-4">
         
         {/* ── LEFT SECTION: Product, Logo, and Hospital Isolation Context ── */}
@@ -342,7 +342,7 @@ export default function UniversalHeader({ page, navigate, currentUser, handleLog
             {showNotifications && (
               <>
                 <div className="fixed inset-0 z-40" onClick={() => setShowNotifications(false)} />
-                <div className="fixed sm:absolute top-[56px] sm:top-auto right-4 sm:right-0 left-4 sm:left-auto w-auto sm:w-72 bg-white rounded-2xl shadow-xl border border-slate-150 py-2.5 z-50 overflow-hidden text-left animate-fade-in font-sans">
+                <div className="absolute right-[-32px] sm:right-0 mt-2 w-[280px] sm:w-72 bg-white rounded-2xl shadow-xl border border-slate-150 py-2.5 z-50 overflow-hidden text-left animate-fade-in font-sans">
                   <div className="px-4 py-2 border-b border-slate-100">
                     <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Active Notifications</span>
                   </div>

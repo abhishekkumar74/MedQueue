@@ -121,7 +121,7 @@ export default function LandingPage({ onGetStarted, onStaffLogin }: Props) {
     <div className="min-h-screen bg-[#F4F8FB] font-sans text-slate-700 selection:bg-[#005EB8]/10 selection:text-[#005EB8] overflow-x-hidden">
 
       {/* ── NAVBAR ── */}
-      <nav className="fixed top-0 left-0 right-0 z-[60] bg-white/95 backdrop-blur-md border-b border-slate-100 shadow-sm h-[calc(4rem+env(safe-area-inset-top,0px))] pt-[env(safe-area-inset-top,0px)] lg:h-[calc(4.5rem+env(safe-area-inset-top,0px))] transition-all duration-200">
+      <nav className="fixed top-0 left-0 right-0 z-[60] bg-white border-b border-slate-100 shadow-sm h-[calc(4rem+env(safe-area-inset-top,0px))] pt-[env(safe-area-inset-top,0px)] lg:h-[calc(4.5rem+env(safe-area-inset-top,0px))] transition-all duration-200">
         <div className="max-w-7xl mx-auto px-4 md:px-6 h-full flex items-center justify-between">
           <div className="flex items-center gap-2.5 whitespace-nowrap">
             <div className="w-8 h-8 rounded-xl bg-[#005EB8] flex items-center justify-center shadow-md shadow-[#005EB8]/20">
