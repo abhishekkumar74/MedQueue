@@ -358,9 +358,9 @@ export default function PatientWorkspace({ currentUser, navigate, tenant }: {
               <Activity className="w-6 h-6 text-[#005EB8] animate-pulse" />
             </div>
             <div>
-              <h1 className="text-xl font-black text-slate-800 tracking-tight flex items-center gap-2">
-                Patient Workspace
-                <span className="text-[10px] font-black uppercase bg-[#005EB8]/10 text-[#005EB8] px-2 py-0.5 rounded-full tracking-wider border border-[#005EB8]/20">
+              <h1 className="text-xl font-black text-slate-800 tracking-tight flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-2">
+                <span>Patient Workspace</span>
+                <span className="w-max whitespace-nowrap text-[9px] font-bold uppercase bg-[#005EB8]/10 text-[#005EB8] px-2.5 py-1 rounded-full tracking-wider border border-[#005EB8]/20 leading-none">
                   Active Sandbox
                 </span>
               </h1>
@@ -625,7 +625,7 @@ export default function PatientWorkspace({ currentUser, navigate, tenant }: {
                   </div>
 
                   {/* Compact Vitals Grid */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-5">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3.5 md:gap-5">
                     
                     {/* BP widget */}
                     {(() => {
@@ -636,7 +636,7 @@ export default function PatientWorkspace({ currentUser, navigate, tenant }: {
                         : { label: 'Optimal', color: 'text-emerald-700 bg-emerald-50 border-emerald-100' };
 
                       return (
-                        <div className="bg-slate-50/50 border border-slate-100 rounded-2xl p-4 flex flex-col justify-between min-h-[120px] transition-all hover:bg-slate-50">
+                        <div className="bg-slate-50/50 border border-slate-100 rounded-2xl p-3.5 flex flex-col justify-between min-h-[110px] transition-all hover:bg-slate-50">
                           <div className="flex items-center justify-between text-slate-400">
                             <span className="text-[9px] font-black uppercase tracking-widest">Blood Pressure</span>
                             <Heart className="w-3.5 h-3.5 text-rose-500 fill-rose-500" />
@@ -663,7 +663,7 @@ export default function PatientWorkspace({ currentUser, navigate, tenant }: {
                           : { label: 'Normal', color: 'text-teal-700 bg-teal-50 border-teal-100' };
 
                       return (
-                        <div className="bg-slate-50/50 border border-slate-100 rounded-2xl p-4 flex flex-col justify-between min-h-[120px] transition-all hover:bg-slate-50">
+                        <div className="bg-slate-50/50 border border-slate-100 rounded-2xl p-3.5 flex flex-col justify-between min-h-[110px] transition-all hover:bg-slate-50">
                           <div className="flex items-center justify-between text-slate-400">
                             <span className="text-[9px] font-black uppercase tracking-widest">Blood Sugar</span>
                             <Activity className="w-3.5 h-3.5 text-[#00A3AD]" />
@@ -687,7 +687,7 @@ export default function PatientWorkspace({ currentUser, navigate, tenant }: {
                         : { label: 'Normal', color: 'text-teal-700 bg-teal-50 border-teal-100' };
 
                       return (
-                        <div className="bg-slate-50/50 border border-slate-100 rounded-2xl p-4 flex flex-col justify-between min-h-[120px] transition-all hover:bg-slate-50">
+                        <div className="bg-slate-50/50 border border-slate-100 rounded-2xl p-3.5 flex flex-col justify-between min-h-[110px] transition-all hover:bg-slate-50">
                           <div className="flex items-center justify-between text-slate-400">
                             <span className="text-[9px] font-black uppercase tracking-widest">Heart Rate</span>
                             <Activity className="w-3.5 h-3.5 text-red-500 animate-pulse" />
@@ -709,7 +709,7 @@ export default function PatientWorkspace({ currentUser, navigate, tenant }: {
                       const status = { label: 'Optimal', color: 'text-emerald-700 bg-emerald-50 border-emerald-100' };
 
                       return (
-                        <div className="bg-slate-50/50 border border-slate-100 rounded-2xl p-4 flex flex-col justify-between min-h-[120px] transition-all hover:bg-slate-50">
+                        <div className="bg-slate-50/50 border border-slate-100 rounded-2xl p-3.5 flex flex-col justify-between min-h-[110px] transition-all hover:bg-slate-50">
                           <div className="flex items-center justify-between text-slate-400">
                             <span className="text-[9px] font-black uppercase tracking-widest">Calculated BMI</span>
                             <Award className="w-3.5 h-3.5 text-indigo-500" />
