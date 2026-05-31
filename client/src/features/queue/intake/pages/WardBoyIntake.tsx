@@ -228,8 +228,6 @@ export default function WardBoyIntake({ token, onDone }: { token: Token; onDone?
 
       if (selectedDoctor) {
         updates.room_number = selectedDoctor.room_number;
-        // Also store doctor name for reference (no FK constraint)
-        updates.doctor_name = selectedDoctor.name;
       }
 
       const { error: tokenUpdateErr } = await supabase
