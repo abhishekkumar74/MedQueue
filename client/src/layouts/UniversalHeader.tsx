@@ -342,7 +342,7 @@ export default function UniversalHeader({ page, navigate, currentUser, handleLog
             {showNotifications && (
               <>
                 <div className="fixed inset-0 z-40" onClick={() => setShowNotifications(false)} />
-                <div className="absolute right-0 mt-2 w-72 bg-white rounded-2xl shadow-xl border border-slate-150 py-2.5 z-50 overflow-hidden text-left animate-fade-in font-sans">
+                <div className="fixed sm:absolute top-[56px] sm:top-auto right-4 sm:right-0 left-4 sm:left-auto w-auto sm:w-72 bg-white rounded-2xl shadow-xl border border-slate-150 py-2.5 z-50 overflow-hidden text-left animate-fade-in font-sans">
                   <div className="px-4 py-2 border-b border-slate-100">
                     <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Active Notifications</span>
                   </div>
@@ -363,15 +363,13 @@ export default function UniversalHeader({ page, navigate, currentUser, handleLog
             )}
           </div>
 
-          {/* Mobile burger menu for staff */}
-          {currentUser?.type === 'staff' && (
-            <button 
-              onClick={() => { setShowMobileDrawer(!showMobileDrawer); setShowNotifications(false); }}
-              className="w-8 h-8 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 flex items-center justify-center md:hidden focus:outline-none transition-all active:scale-95"
-            >
-              <Menu className="w-4 h-4 text-slate-500" />
-            </button>
-          )}
+          {/* Mobile burger menu for all users */}
+          <button 
+            onClick={() => { setShowMobileDrawer(!showMobileDrawer); setShowNotifications(false); }}
+            className="w-8 h-8 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 flex items-center justify-center md:hidden focus:outline-none transition-all active:scale-95"
+          >
+            <Menu className="w-4 h-4 text-slate-500" />
+          </button>
 
           {/* User profile with initials & dropdown menu */}
           <div className="relative">
@@ -394,7 +392,7 @@ export default function UniversalHeader({ page, navigate, currentUser, handleLog
                 {showProfileMenu && (
                   <>
                     <div className="fixed inset-0 z-40" onClick={() => setShowProfileMenu(false)} />
-                    <div className="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-xl border border-slate-150 py-1.5 z-50 overflow-hidden transform scale-100 transition-all font-sans">
+                    <div className="fixed sm:absolute top-[56px] sm:top-auto right-4 sm:right-0 w-[240px] sm:w-56 bg-white rounded-2xl shadow-xl border border-slate-150 py-1.5 z-50 overflow-hidden transform scale-100 transition-all font-sans">
                       
                       {/* Context Header */}
                       <div className="px-4 py-2.5 border-b border-slate-100 bg-slate-50/50">
@@ -462,7 +460,7 @@ export default function UniversalHeader({ page, navigate, currentUser, handleLog
                 )}
               </>
             ) : (
-              <div className="relative">
+              <div className="relative hidden md:block">
                 <button 
                   onClick={() => { setShowPortalMenu(!showPortalMenu); setShowNotifications(false); }}
                   className="px-4 py-1.5 bg-[#005EB8] hover:bg-[#004a96] text-white text-xs font-black rounded-xl shadow-sm transition-all focus:outline-none active:scale-95 flex items-center gap-1.5"
@@ -504,14 +502,14 @@ export default function UniversalHeader({ page, navigate, currentUser, handleLog
 
       </div>
 
-      {/* Staff Mobile Navigation Drawer */}
-      {showMobileDrawer && currentUser?.type === 'staff' && (
+      {/* Unified Mobile Navigation Drawer */}
+      {showMobileDrawer && (
         <>
           <div 
-            className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 transition-opacity duration-300 animate-fade-in"
+            className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[90] transition-opacity duration-300 animate-fade-in"
             onClick={() => setShowMobileDrawer(false)}
           />
-          <div className="fixed top-0 right-0 h-full w-[280px] bg-white shadow-2xl border-l border-slate-150 z-50 pt-[calc(1.5rem+env(safe-area-inset-top,0px))] pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))] px-6 flex flex-col justify-between animate-slide-in font-sans">
+          <div className="fixed top-0 right-0 h-full w-[280px] bg-white shadow-2xl border-l border-slate-150 z-[100] pt-[calc(1.5rem+env(safe-area-inset-top,0px))] pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))] px-6 flex flex-col justify-between animate-slide-in font-sans">
             <div className="space-y-6">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-black text-slate-400 uppercase tracking-widest">Navigation</span>
@@ -523,64 +521,128 @@ export default function UniversalHeader({ page, navigate, currentUser, handleLog
                 </button>
               </div>
 
-              {/* Roster & Actions */}
+              {/* Navigation Items Group */}
               <div className="space-y-2">
-                <button 
-                  onClick={() => { navigate('staff'); setShowMobileDrawer(false); }}
-                  className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl text-sm font-bold transition-all ${
-                    page === 'staff' ? 'bg-[#005EB8]/10 text-[#005EB8]' : 'text-slate-600 hover:bg-slate-50'
-                  }`}
-                >
-                  <Activity className="w-4.5 h-4.5" />
-                  Clinic Control Panel
-                </button>
+                {!currentUser ? (
+                  // Logged Out Guests
+                  <>
+                    <button 
+                      onClick={() => { navigate('patient-login'); setShowMobileDrawer(false); }}
+                      className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl text-sm font-bold transition-all text-slate-600 hover:bg-slate-50"
+                    >
+                      <User className="w-4.5 h-4.5 text-[#005EB8]" />
+                      Patient Portal
+                    </button>
+                    <button 
+                      onClick={() => { navigate('staff-login'); setShowMobileDrawer(false); }}
+                      className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl text-sm font-bold transition-all text-slate-600 hover:bg-slate-50"
+                    >
+                      <Building2 className="w-4.5 h-4.5 text-violet-500" />
+                      Staff Secure Login
+                    </button>
+                    <button 
+                      onClick={() => { navigate('tracker'); setShowMobileDrawer(false); }}
+                      className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl text-sm font-bold transition-all text-slate-600 hover:bg-slate-50"
+                    >
+                      <Activity className="w-4.5 h-4.5 text-[#00A3AD]" />
+                      Live Queue Tracker
+                    </button>
+                  </>
+                ) : currentUser.type === 'patient' ? (
+                  // Logged In Patients
+                  <>
+                    <button 
+                      onClick={() => { navigate('register'); setShowMobileDrawer(false); }}
+                      className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl text-sm font-bold transition-all ${page === 'register' ? 'bg-[#005EB8]/10 text-[#005EB8]' : 'text-slate-600 hover:bg-slate-50'}`}
+                    >
+                      <Building2 className="w-4.5 h-4.5" />
+                      Patient Workspace
+                    </button>
+                    <button 
+                      onClick={() => { navigate('tracker'); setShowMobileDrawer(false); }}
+                      className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl text-sm font-bold transition-all ${page === 'tracker' ? 'bg-[#00A3AD]/10 text-[#00A3AD]' : 'text-slate-600 hover:bg-slate-50'}`}
+                    >
+                      <Activity className="w-4.5 h-4.5" />
+                      Live Queue Tracker
+                    </button>
+                    <button 
+                      onClick={() => { navigate('appointment'); setShowMobileDrawer(false); }}
+                      className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl text-sm font-bold transition-all ${page === 'appointment' ? 'bg-[#005EB8]/10 text-[#005EB8]' : 'text-slate-600 hover:bg-slate-50'}`}
+                    >
+                      <Calendar className="w-4.5 h-4.5" />
+                      Book Appointment
+                    </button>
+                    <button 
+                      onClick={() => { navigate('history'); setShowMobileDrawer(false); }}
+                      className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl text-sm font-bold transition-all ${page === 'history' ? 'bg-violet-50 text-violet-600' : 'text-slate-600 hover:bg-slate-50'}`}
+                    >
+                      <FileText className="w-4.5 h-4.5" />
+                      Medical Records
+                    </button>
+                  </>
+                ) : (
+                  // Logged In Staff (Doctor, Pharmacy, Admin, Super Admin)
+                  <>
+                    <button 
+                      onClick={() => { navigate('staff'); setShowMobileDrawer(false); }}
+                      className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl text-sm font-bold transition-all ${
+                        page === 'staff' ? 'bg-[#005EB8]/10 text-[#005EB8]' : 'text-slate-600 hover:bg-slate-50'
+                      }`}
+                    >
+                      <Activity className="w-4.5 h-4.5" />
+                      Clinic Control Panel
+                    </button>
 
-                {(currentUser.role === 'PHARMACY' || currentUser.role === 'ADMIN' || currentUser.role === 'SUPER_ADMIN') && (
-                  <button 
-                    onClick={() => { navigate('pharmacy'); setShowMobileDrawer(false); }}
-                    className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl text-sm font-bold transition-all ${
-                      page === 'pharmacy' ? 'bg-[#005EB8]/10 text-[#005EB8]' : 'text-slate-600 hover:bg-slate-50'
-                    }`}
-                  >
-                    <Pill className="w-4.5 h-4.5" />
-                    Pharmacy Console
-                  </button>
-                )}
+                    {(currentUser.role === 'PHARMACY' || currentUser.role === 'ADMIN' || currentUser.role === 'SUPER_ADMIN') && (
+                      <button 
+                        onClick={() => { navigate('pharmacy'); setShowMobileDrawer(false); }}
+                        className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl text-sm font-bold transition-all ${
+                          page === 'pharmacy' ? 'bg-[#005EB8]/10 text-[#005EB8]' : 'text-slate-600 hover:bg-slate-50'
+                        }`}
+                      >
+                        <Pill className="w-4.5 h-4.5" />
+                        Pharmacy Console
+                      </button>
+                    )}
 
-                {currentUser.role === 'SUPER_ADMIN' && (
-                  <button 
-                    onClick={() => { navigate('super-admin'); setShowMobileDrawer(false); }}
-                    className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl text-sm font-bold transition-all ${
-                      page === 'super-admin' ? 'bg-[#00A3AD]/10 text-[#00A3AD]' : 'text-slate-600 hover:bg-slate-50'
-                    }`}
-                  >
-                    <Building2 className="w-4.5 h-4.5" />
-                    Central Cloud Controller
-                  </button>
+                    {currentUser.role === 'SUPER_ADMIN' && (
+                      <button 
+                        onClick={() => { navigate('super-admin'); setShowMobileDrawer(false); }}
+                        className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl text-sm font-bold transition-all ${
+                          page === 'super-admin' ? 'bg-[#00A3AD]/10 text-[#00A3AD]' : 'text-slate-600 hover:bg-slate-50'
+                        }`}
+                      >
+                        <Building2 className="w-4.5 h-4.5" />
+                        Central Cloud Controller
+                      </button>
+                    )}
+                  </>
                 )}
               </div>
             </div>
 
             {/* Quick Context & Sign Out */}
-            <div className="space-y-4 pt-6 border-t border-slate-100">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-[#005EB8] text-white flex items-center justify-center font-black text-sm uppercase">
-                  {currentUser.name ? currentUser.name.split(' ').map(n => n[0]).slice(0, 2).join('') : 'U'}
+            {currentUser && (
+              <div className="space-y-4 pt-6 border-t border-slate-100">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-[#005EB8] text-white flex items-center justify-center font-black text-sm uppercase">
+                    {getInitials()}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="font-extrabold text-slate-800 text-xs truncate leading-tight">{currentUser.name || currentUser.phone}</p>
+                    <p className="text-[10px] text-[#005EB8] font-bold uppercase tracking-wider mt-0.5">{getRoleLabel()}</p>
+                  </div>
                 </div>
-                <div className="min-w-0">
-                  <p className="font-extrabold text-slate-800 text-xs truncate leading-tight">{currentUser.name}</p>
-                  <p className="text-[10px] text-[#005EB8] font-bold uppercase tracking-wider mt-0.5">{getRoleLabel()}</p>
-                </div>
-              </div>
 
-              <button 
-                onClick={() => { setShowMobileDrawer(false); handleLogout(); }}
-                className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-rose-50 border border-rose-100 text-rose-600 font-extrabold text-xs rounded-2xl transition-all active:scale-95"
-              >
-                <LogOut className="w-4 h-4" />
-                Sign Out (Exit Node)
-              </button>
-            </div>
+                <button 
+                  onClick={() => { setShowMobileDrawer(false); handleLogout(); }}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-rose-50 border border-rose-100 text-rose-600 font-extrabold text-xs rounded-2xl transition-all active:scale-95"
+                >
+                  <LogOut className="w-4 h-4" />
+                  Sign Out (Exit Node)
+                </button>
+              </div>
+            )}
           </div>
         </>
       )}
