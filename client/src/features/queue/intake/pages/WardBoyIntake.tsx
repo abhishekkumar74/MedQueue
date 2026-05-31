@@ -75,17 +75,14 @@ export default function WardBoyIntake({ token, onDone }: { token: Token; onDone?
           }
         });
 
-        // 3. Load available doctors in active department
+        // 3. Load available doctors in this hospital
         const query = supabase
           .from('staff_users')
           .select('id, name, department, room_number')
           .eq('role', 'DOCTOR')
           .eq('is_active', true)
-          .neq('is_deleted', true);
-
-        if (token.department) {
-          query.eq('department', token.department);
-        }
+          .neq('is_deleted', true)
+          .eq('hospital_id', currentHospitalId);
 
         const { data: staffDoctors } = await query;
 
@@ -99,8 +96,23 @@ export default function WardBoyIntake({ token, onDone }: { token: Token; onDone?
             load: loadMap[d.room_number ?? ''] || 0
           }));
 
-          // Sort doctors by load ascending so the least busy doctor is first
-          mappedDocs.sort((a, b) => a.load - b.load);
+          // Helper to check department match (e.g. orthopedic vs orthopedics)
+          const isDeptMatch = (docDept: string, tokenDept?: string) => {
+            if (!tokenDept || !docDept) return false;
+            const d = docDept.toLowerCase().trim();
+            const t = tokenDept.toLowerCase().trim();
+            return d === t || d.startsWith(t) || t.startsWith(d) || d.substring(0, 5) === t.substring(0, 5);
+          };
+
+          // Sort doctors: matching department first (sorted by load), then other departments (sorted by load)
+          mappedDocs.sort((a, b) => {
+            const aMatch = isDeptMatch(a.department, token.department);
+            const bMatch = isDeptMatch(b.department, token.department);
+            
+            if (aMatch && !bMatch) return -1;
+            if (!aMatch && bMatch) return 1;
+            return a.load - b.load; // within group, sort by load
+          });
           
           setDoctors(mappedDocs);
           setSelectedDoctorId(mappedDocs[0].id);
@@ -428,65 +440,150 @@ export default function WardBoyIntake({ token, onDone }: { token: Token; onDone?
 
       {/* Smart Doctor Assignment Directory */}
       <div className="bg-violet-50/40 border border-violet-100 rounded-2xl p-4">
-        <div className="flex items-center gap-1.5 mb-3">
-          <MapPin className="w-4 h-4 text-violet-600" />
-          <span className="text-xs font-black text-violet-700 uppercase tracking-wider">Smart Doctor Routing Directory</span>
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-1.5">
+            <MapPin className="w-4 h-4 text-violet-600" />
+            <span className="text-xs font-black text-violet-700 uppercase tracking-wider">Smart Doctor Routing Directory</span>
+          </div>
+          <span className="text-[9px] bg-violet-100 text-violet-700 font-black px-1.5 py-0.5 rounded uppercase">
+            {doctors.length} Active Doctors
+          </span>
         </div>
 
         {doctors.length === 0 ? (
           <p className="text-xs text-slate-500 italic p-4 text-center bg-white rounded-xl border border-violet-100">
-            No active practitioners found in {token.department || 'general'}. Patient will route to default queue node.
+            No active practitioners found. Patient will route to default queue node.
           </p>
         ) : (
-          <div className="space-y-2.5">
-            {doctors.map((doc, idx) => {
-              const isSelected = selectedDoctorId === doc.id;
-              const isLeastBusy = idx === 0; // The first index is always least busy due to ASC sorting
+          <div className="space-y-4">
+            {/* Split doctors into department matches and others */}
+            {(() => {
+              const isDeptMatch = (docDept: string, tokenDept?: string) => {
+                if (!tokenDept || !docDept) return false;
+                const d = docDept.toLowerCase().trim();
+                const t = tokenDept.toLowerCase().trim();
+                return d === t || d.startsWith(t) || t.startsWith(d) || d.substring(0, 5) === t.substring(0, 5);
+              };
+
+              const deptMatches = doctors.filter(d => isDeptMatch(d.department, token.department));
+              const otherDepts = doctors.filter(d => !isDeptMatch(d.department, token.department));
 
               return (
-                <div
-                  key={doc.id}
-                  onClick={() => setSelectedDoctorId(doc.id)}
-                  className={`p-3 rounded-xl border-2 cursor-pointer transition-all flex items-center justify-between bg-white relative overflow-hidden ${
-                    isSelected 
-                      ? 'border-violet-500 shadow-md shadow-violet-500/5'
-                      : 'border-slate-150 hover:border-violet-300'
-                  }`}
-                >
-                  <div className="flex items-start gap-3">
-                    <div className={`w-8 h-8 rounded-lg font-black text-[10px] flex items-center justify-center uppercase ${isSelected ? 'bg-violet-100 text-violet-700' : 'bg-slate-50 text-slate-400'}`}>
-                      {doc.room_number.replace(/\D/g, '') || 'R'}
-                    </div>
-                    <div>
-                      <div className="font-bold text-slate-800 text-xs flex items-center gap-1.5">
-                        {doc.name}
-                        {isLeastBusy && (
-                          <span className="bg-emerald-100 text-emerald-700 text-[8px] font-black uppercase px-1.5 py-0.5 rounded tracking-wider flex items-center gap-0.5">
-                            <Sparkles className="w-2 h-2" /> Best Match
-                          </span>
-                        )}
+                <>
+                  {/* Department Matches */}
+                  {deptMatches.length > 0 ? (
+                    <div className="space-y-2">
+                      <div className="text-[9px] font-black text-violet-600 uppercase tracking-wider pl-1">
+                        Recommended Doctors ({DEPARTMENT_LABEL[token.department as Department] ?? token.department})
                       </div>
-                      <div className="text-[10px] text-slate-400 font-semibold mt-0.5">
-                        {doc.room_number} • {doc.floor} • {DEPARTMENT_LABEL[doc.department as Department] ?? doc.department}
-                      </div>
-                    </div>
-                  </div>
+                      <div className="space-y-2.5">
+                        {deptMatches.map((doc, idx) => {
+                          const isSelected = selectedDoctorId === doc.id;
+                          const isLeastBusy = idx === 0;
+                          return (
+                            <div
+                              key={doc.id}
+                              onClick={() => setSelectedDoctorId(doc.id)}
+                              className={`p-3 rounded-xl border-2 cursor-pointer transition-all flex items-center justify-between bg-white relative overflow-hidden ${
+                                isSelected 
+                                  ? 'border-violet-500 shadow-md shadow-violet-500/5'
+                                  : 'border-slate-150 hover:border-violet-300'
+                              }`}
+                            >
+                              <div className="flex items-start gap-3">
+                                <div className={`w-8 h-8 rounded-lg font-black text-[10px] flex items-center justify-center uppercase ${isSelected ? 'bg-violet-100 text-violet-700' : 'bg-slate-50 text-slate-400'}`}>
+                                  {doc.room_number.replace(/\D/g, '') || 'R'}
+                                </div>
+                                <div>
+                                  <div className="font-bold text-slate-800 text-xs flex items-center gap-1.5">
+                                    {doc.name}
+                                    {isLeastBusy && (
+                                      <span className="bg-emerald-100 text-emerald-700 text-[8px] font-black uppercase px-1.5 py-0.5 rounded tracking-wider flex items-center gap-0.5">
+                                        <Sparkles className="w-2 h-2" /> Best Match
+                                      </span>
+                                    )}
+                                  </div>
+                                  <div className="text-[10px] text-slate-400 font-bold uppercase mt-0.5">
+                                    {doc.room_number} • {doc.floor} • {DEPARTMENT_LABEL[doc.department as Department] ?? doc.department}
+                                  </div>
+                                </div>
+                              </div>
 
-                  {/* Active Doctor queues & load waiting tracker */}
-                  <div className="text-right flex items-center gap-4">
-                    <div>
-                      <div className="text-xs font-black text-slate-700">{doc.load} Patients</div>
-                      <div className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-0.5 flex items-center gap-1 justify-end">
-                        <Clock className="w-2.5 h-2.5 text-slate-300" /> ~{doc.load * 10} Mins Wait
+                              <div className="text-right flex items-center gap-4">
+                                <div>
+                                  <div className="text-xs font-black text-slate-700">{doc.load} Patients</div>
+                                  <div className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-0.5 flex items-center gap-1 justify-end">
+                                    <Clock className="w-2.5 h-2.5 text-slate-300" /> ~{doc.load * 10} Mins Wait
+                                  </div>
+                                </div>
+                                <div className={`w-5 h-5 rounded-full flex items-center justify-center border transition-all ${isSelected ? 'bg-violet-600 border-violet-600' : 'border-slate-200'}`}>
+                                  {isSelected && <Check className="w-3 h-3 text-white" />}
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
                       </div>
                     </div>
-                    <div className={`w-5 h-5 rounded-full flex items-center justify-center border transition-all ${isSelected ? 'bg-violet-600 border-violet-600' : 'border-slate-200'}`}>
-                      {isSelected && <Check className="w-3 h-3 text-white" />}
+                  ) : (
+                    <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-[11px] font-semibold text-amber-800 leading-relaxed">
+                      ⚠️ No active practitioners found online in <strong>{DEPARTMENT_LABEL[token.department as Department] ?? token.department}</strong>. You can manually route this patient to another department below:
                     </div>
-                  </div>
-                </div>
+                  )}
+
+                  {/* Other Active Doctors */}
+                  {otherDepts.length > 0 && (
+                    <div className="space-y-2 pt-2">
+                      <div className="text-[9px] font-black text-slate-400 uppercase tracking-wider pl-1">
+                        {deptMatches.length > 0 ? 'Other Active Doctors (All Departments)' : 'All Active Doctors'}
+                      </div>
+                      <div className="space-y-2.5">
+                        {otherDepts.map(doc => {
+                          const isSelected = selectedDoctorId === doc.id;
+                          return (
+                            <div
+                              key={doc.id}
+                              onClick={() => setSelectedDoctorId(doc.id)}
+                              className={`p-3 rounded-xl border-2 cursor-pointer transition-all flex items-center justify-between bg-white relative overflow-hidden ${
+                                isSelected 
+                                  ? 'border-violet-500 shadow-md shadow-violet-500/5'
+                                  : 'border-slate-150 hover:border-violet-300'
+                              }`}
+                            >
+                              <div className="flex items-start gap-3">
+                                <div className={`w-8 h-8 rounded-lg font-black text-[10px] flex items-center justify-center uppercase ${isSelected ? 'bg-violet-100 text-violet-700' : 'bg-slate-50 text-slate-400'}`}>
+                                  {doc.room_number.replace(/\D/g, '') || 'R'}
+                                </div>
+                                <div>
+                                  <div className="font-bold text-slate-800 text-xs flex items-center gap-1.5">
+                                    {doc.name}
+                                  </div>
+                                  <div className="text-[10px] text-slate-400 font-bold uppercase mt-0.5">
+                                    {doc.room_number} • {doc.floor} • {DEPARTMENT_LABEL[doc.department as Department] ?? doc.department}
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div className="text-right flex items-center gap-4">
+                                <div>
+                                  <div className="text-xs font-black text-slate-700">{doc.load} Patients</div>
+                                  <div className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-0.5 flex items-center gap-1 justify-end">
+                                    <Clock className="w-2.5 h-2.5 text-slate-300" /> ~{doc.load * 10} Mins Wait
+                                  </div>
+                                </div>
+                                <div className={`w-5 h-5 rounded-full flex items-center justify-center border transition-all ${isSelected ? 'bg-violet-600 border-violet-600' : 'border-slate-200'}`}>
+                                  {isSelected && <Check className="w-3 h-3 text-white" />}
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </>
               );
-            })}
+            })()}
           </div>
         )}
       </div>
