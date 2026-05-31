@@ -21,6 +21,7 @@ interface DoctorOption {
   room_number: string;
   floor: string;
   load: number;
+  is_available: boolean;
 }
 
 export default function WardBoyIntake({ token, onDone }: { token: Token; onDone?: () => void }) {
@@ -75,11 +76,10 @@ export default function WardBoyIntake({ token, onDone }: { token: Token; onDone?
           }
         });
 
-        // 3. Load available doctors in this hospital from the 'doctors' table
+        // 3. Load all doctors in this hospital from the 'doctors' table (available & offline)
         const query = supabase
           .from('doctors')
-          .select('id, name, department, room_number')
-          .eq('is_available', true)
+          .select('id, name, department, room_number, is_available')
           .eq('hospital_id', currentHospitalId);
 
         const { data: staffDoctors } = await query;
@@ -91,7 +91,8 @@ export default function WardBoyIntake({ token, onDone }: { token: Token; onDone?
             department: d.department ?? '',
             room_number: d.room_number ?? '',
             floor: extractFloor(d.room_number ?? ''),
-            load: loadMap[d.room_number ?? ''] || 0
+            load: loadMap[d.room_number ?? ''] || 0,
+            is_available: d.is_available ?? false
           }));
 
           // Helper to check department match (e.g. orthopedic vs orthopedics)
@@ -105,8 +106,12 @@ export default function WardBoyIntake({ token, onDone }: { token: Token; onDone?
           // Filter only doctors matching the patient's department (fuzzy match)
           const deptDocs = mappedDocs.filter(d => isDeptMatch(d.department, token.department));
 
-          // Sort matching doctors by load ascending so the least busy doctor is first
-          deptDocs.sort((a, b) => a.load - b.load);
+          // Sort matching doctors: online doctors first (by load), then offline doctors (by load)
+          deptDocs.sort((a, b) => {
+            if (a.is_available && !b.is_available) return -1;
+            if (!a.is_available && b.is_available) return 1;
+            return a.load - b.load;
+          });
           
           setDoctors(deptDocs);
           if (deptDocs.length > 0) {
@@ -448,7 +453,7 @@ export default function WardBoyIntake({ token, onDone }: { token: Token; onDone?
 
         {doctors.length === 0 ? (
           <p className="text-xs text-amber-700 font-semibold p-4 text-center bg-amber-50/60 rounded-xl border border-amber-150 leading-relaxed">
-            ⚠️ No active practitioners found online in <strong>{DEPARTMENT_LABEL[token.department as Department] ?? token.department}</strong> at this moment.
+            ⚠️ No registered practitioners found in <strong>{DEPARTMENT_LABEL[token.department as Department] ?? token.department}</strong> department.
           </p>
         ) : (
           <div className="space-y-2.5">
@@ -473,7 +478,12 @@ export default function WardBoyIntake({ token, onDone }: { token: Token; onDone?
                     <div>
                       <div className="font-bold text-slate-800 text-xs flex items-center gap-1.5">
                         {doc.name}
-                        {isLeastBusy && (
+                        {!doc.is_available && (
+                          <span className="bg-slate-100 text-slate-500 text-[8px] font-black uppercase px-1.5 py-0.5 rounded tracking-wider">
+                            Offline
+                          </span>
+                        )}
+                        {isLeastBusy && doc.is_available && (
                           <span className="bg-emerald-100 text-emerald-700 text-[8px] font-black uppercase px-1.5 py-0.5 rounded tracking-wider flex items-center gap-0.5">
                             <Sparkles className="w-2 h-2" /> Best Match
                           </span>
