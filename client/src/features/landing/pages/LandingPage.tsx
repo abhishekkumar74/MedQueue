@@ -121,7 +121,7 @@ export default function LandingPage({ onGetStarted, onStaffLogin }: Props) {
     <div className="min-h-screen bg-[#F4F8FB] font-sans text-slate-700 selection:bg-[#005EB8]/10 selection:text-[#005EB8] overflow-x-hidden">
 
       {/* ── NAVBAR ── */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-white/95 border-b border-slate-100 shadow-sm h-16 lg:h-[72px] transition-all duration-200">
+      <nav className="fixed top-0 left-0 right-0 z-[60] bg-white/95 backdrop-blur-md border-b border-slate-100 shadow-sm h-[calc(4rem+env(safe-area-inset-top,0px))] pt-[env(safe-area-inset-top,0px)] lg:h-[calc(4.5rem+env(safe-area-inset-top,0px))] transition-all duration-200">
         <div className="max-w-7xl mx-auto px-4 md:px-6 h-full flex items-center justify-between">
           <div className="flex items-center gap-2.5 whitespace-nowrap">
             <div className="w-8 h-8 rounded-xl bg-[#005EB8] flex items-center justify-center shadow-md shadow-[#005EB8]/20">
@@ -232,41 +232,9 @@ export default function LandingPage({ onGetStarted, onStaffLogin }: Props) {
         </div>
       </nav>
 
-      {/* ── 1. HERO SECTION (Full-Screen Healthcare Overlay Banner with Integrated Stats & Marquee) ── */}
-      <section className="relative min-h-screen flex flex-col justify-between overflow-hidden bg-[#F4F8FC] pt-16 lg:pt-[72px] pb-6 z-20">
+      {/* ── 1. HERO SECTION (Full-Screen Healthcare Banner with Responsive Grid) ── */}
+      <section className="relative min-h-screen flex flex-col justify-between overflow-hidden bg-[#F4F8FC] pt-[calc(4rem+env(safe-area-inset-top,0px))] lg:pt-[calc(4.5rem+env(safe-area-inset-top,0px))] pb-6 z-20">
         
-        {/* Background image full hero - restricted to right 55% on desktop to prevent excessive zooming */}
-        <div className="absolute top-16 lg:top-[72px] left-0 lg:left-[45%] right-0 bottom-0 z-0 overflow-hidden">
-          <img
-            src="/healthcare_hero.png"
-            alt="Healthcare workspace"
-            className="
-              w-full
-              h-full
-              object-cover
-              object-center
-              filter brightness-[1.05] contrast-[1.02]
-            "
-          />
-
-          {/* LEFT readable overlay - sharp transition so right side remains completely clear and colorful */}
-          <div
-            className="
-              absolute
-              inset-0
-              bg-gradient-to-b
-              from-[#F4F8FC]/80
-              via-[#F4F8FC]/95
-              to-[#F4F8FC]
-              lg:bg-gradient-to-r
-              lg:from-[#F4F8FC]
-              lg:via-[#F4F8FC]/40
-              lg:via-15%
-              lg:to-transparent
-            "
-          />
-        </div>
-
         {/* Ambient glow */}
         <div className="
           absolute
@@ -278,14 +246,15 @@ export default function LandingPage({ onGetStarted, onStaffLogin }: Props) {
           bg-[#005EB8]/10
           blur-[120px]
           pointer-events-none
+          z-0
         " />
 
-        {/* Main Content Area (Structured grid: Left Pitch, Right Stable Cards) */}
-        <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-10 w-full flex-grow flex items-center pt-8 pb-4 lg:pt-12 lg:pb-8">
-          <div className="w-full grid grid-cols-1 lg:grid-cols-12 gap-8 items-center mt-2 lg:mt-4">
+        {/* Main Content Area (Structured grid: Left Pitch, Right Image & Cards) */}
+        <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-10 w-full flex-grow flex items-center pt-8 pb-4 lg:pt-12 lg:pb-8 animate-fade-in">
+          <div className="w-full grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center mt-2 lg:mt-4">
             
             {/* Left Pitch Column */}
-            <div className="lg:col-span-6 flex flex-col justify-center text-left space-y-5 lg:space-y-6">
+            <div className="lg:col-span-6 flex flex-col justify-center text-left space-y-5 lg:space-y-6 z-10">
               {/* badge */}
               <div className="inline-flex items-center gap-1.5 bg-[#005EB8]/10 text-[#005EB8] text-xs font-black px-4 py-1.5 rounded-full border border-[#005EB8]/20 w-fit">
                 <Shield className="w-3.5 h-3.5" />
@@ -334,43 +303,57 @@ export default function LandingPage({ onGetStarted, onStaffLogin }: Props) {
               </div>
             </div>
 
-            {/* Right Stable Column (Premium Info Cards nested strictly in this right grid cell) */}
-            <div className="hidden lg:block lg:col-span-6 relative h-[380px] w-full">
-              {/* Card 1: Live Queue Tracking (Anchored top-right) */}
-              <div className="absolute top-[5%] right-[10%] bg-white/95 backdrop-blur-md border border-slate-200/50 p-4 rounded-2xl shadow-xl w-[220px] hover:-translate-y-1 transition-transform duration-300">
-                <div className="flex gap-3 items-start">
-                  <div className="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center flex-shrink-0">
-                    <Users className="w-5 h-5 text-blue-600" />
-                  </div>
-                  <div>
-                    <h4 className="font-extrabold text-[12px] text-slate-800 leading-tight">Live Queue Tracking</h4>
-                    <p className="text-[10px] text-slate-400 mt-1 leading-normal font-semibold">Real-time updates for better flow</p>
-                  </div>
-                </div>
+            {/* Right Column (Hero Image & Premium Info Cards - Renders second on mobile) */}
+            <div className="col-span-1 lg:col-span-6 relative flex flex-col items-center justify-center min-h-[300px] lg:h-[450px] w-full mt-6 lg:mt-0 z-10">
+              {/* Hero Image Container */}
+              <div className="w-full h-[220px] sm:h-[300px] lg:h-full rounded-[24px] overflow-hidden border border-slate-200/50 shadow-lg relative group">
+                <img
+                  src="/healthcare_hero.png"
+                  alt="Healthcare workspace"
+                  className="w-full h-full object-cover object-center group-hover:scale-102 transition-transform duration-750 filter brightness-[1.03] contrast-[1.01]"
+                />
+                {/* Subtle edge fade overlay */}
+                <div className="absolute inset-0 bg-gradient-to-t from-[#F4F8FC] via-transparent to-transparent lg:bg-gradient-to-r lg:from-[#F4F8FC] lg:via-transparent lg:to-transparent opacity-20 pointer-events-none" />
               </div>
 
-              {/* Card 2: Multi Hospital Nodes (Anchored center-left, overlapping transition) */}
-              <div className="absolute top-[38%] left-[5%] bg-white/95 backdrop-blur-md border border-slate-200/50 p-4 rounded-2xl shadow-xl w-[220px] hover:-translate-y-1 transition-transform duration-300">
-                <div className="flex gap-3 items-start">
-                  <div className="w-9 h-9 rounded-xl bg-indigo-50 flex items-center justify-center flex-shrink-0">
-                    <Building2 className="w-5 h-5 text-indigo-600" />
-                  </div>
-                  <div>
-                    <h4 className="font-extrabold text-[12px] text-slate-800 leading-tight">Multi Hospital Nodes</h4>
-                    <p className="text-[10px] text-slate-400 mt-1 leading-normal font-semibold">Centralized control across locations</p>
+              {/* Floating Cards (Tablet and Desktop only to prevent cluttered small viewports) */}
+              <div className="hidden sm:block">
+                {/* Card 1: Live Queue Tracking (Anchored top-right) */}
+                <div className="absolute -top-4 -right-4 bg-white/95 backdrop-blur-md border border-slate-200/50 p-3.5 rounded-2xl shadow-xl w-[200px] hover:-translate-y-1 transition-transform duration-300 z-30">
+                  <div className="flex gap-2.5 items-start">
+                    <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0">
+                      <Users className="w-4 h-4 text-blue-600" />
+                    </div>
+                    <div>
+                      <h4 className="font-extrabold text-[11px] text-slate-800 leading-tight">Live Queue Tracking</h4>
+                      <p className="text-[9px] text-slate-400 mt-0.5 leading-normal font-semibold">Real-time updates for better flow</p>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              {/* Card 3: 24/7 Operations (Anchored bottom-right) */}
-              <div className="absolute bottom-[5%] right-[2%] bg-white/95 backdrop-blur-md border border-slate-200/50 p-4 rounded-2xl shadow-xl w-[220px] hover:-translate-y-1 transition-transform duration-300">
-                <div className="flex gap-3 items-start">
-                  <div className="w-9 h-9 rounded-xl bg-violet-50 flex items-center justify-center flex-shrink-0">
-                    <Shield className="w-5 h-5 text-violet-600" />
+                {/* Card 2: Multi Hospital Nodes (Anchored center-left) */}
+                <div className="absolute top-[38%] -left-6 bg-white/95 backdrop-blur-md border border-slate-200/50 p-3.5 rounded-2xl shadow-xl w-[200px] hover:-translate-y-1 transition-transform duration-300 z-30">
+                  <div className="flex gap-2.5 items-start">
+                    <div className="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center flex-shrink-0">
+                      <Building2 className="w-4 h-4 text-indigo-600" />
+                    </div>
+                    <div>
+                      <h4 className="font-extrabold text-[11px] text-slate-800 leading-tight">Multi Hospital Nodes</h4>
+                      <p className="text-[9px] text-slate-400 mt-0.5 leading-normal font-semibold">Centralized control across locations</p>
+                    </div>
                   </div>
-                  <div>
-                    <h4 className="font-extrabold text-[12px] text-slate-800 leading-tight">24/7 Operations</h4>
-                    <p className="text-[10px] text-slate-400 mt-1 leading-normal font-semibold">Reliable, secure & always available</p>
+                </div>
+
+                {/* Card 3: 24/7 Operations (Anchored bottom-right) */}
+                <div className="absolute -bottom-4 right-2 bg-white/95 backdrop-blur-md border border-slate-200/50 p-3.5 rounded-2xl shadow-xl w-[200px] hover:-translate-y-1 transition-transform duration-300 z-30">
+                  <div className="flex gap-2.5 items-start">
+                    <div className="w-8 h-8 rounded-lg bg-violet-50 flex items-center justify-center flex-shrink-0">
+                      <Shield className="w-4 h-4 text-violet-600" />
+                    </div>
+                    <div>
+                      <h4 className="font-extrabold text-[11px] text-slate-800 leading-tight">24/7 Operations</h4>
+                      <p className="text-[9px] text-slate-400 mt-0.5 leading-normal font-semibold">Reliable, secure & always available</p>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1305,7 +1288,7 @@ export default function LandingPage({ onGetStarted, onStaffLogin }: Props) {
           </div>
 
           {/* Links Section (Responsive layout: side-by-side on mobile grid, columns on desktop) */}
-          <div className="grid grid-cols-3 md:contents gap-4">
+          <div className="grid grid-cols-3 gap-x-2 gap-y-4 md:contents">
             {/* Links Column 1: Platform */}
             <div className="space-y-3 md:col-span-2">
               <h4 className="text-[10px] font-black text-white uppercase tracking-[0.2em]">Platform</h4>
