@@ -249,6 +249,41 @@ export default function LandingPage({ onGetStarted, onStaffLogin }: Props) {
           z-0
         " />
 
+        {/* Full background hero image */}
+        <div className="absolute inset-0 z-0 overflow-hidden">
+          <img
+            src="/healthcare_hero.png"
+            alt="Healthcare workspace"
+            className="w-full h-full object-cover object-center lg:object-right"
+          />
+
+          {/* LEFT white faded overlay: strong wash on the left behind text, completely transparent on the right (blur 0) */}
+          {/* Mobile top-to-bottom white gradient wash to ensure text readability */}
+          <div className="absolute inset-0 bg-gradient-to-b from-[#F4F8FC] via-[#F4F8FC]/90 via-40% via-[#F4F8FC]/50 to-transparent lg:hidden pointer-events-none z-10" />
+          
+          {/* Desktop left-to-right white gradient wash (solid white behind text to transparent on the right) */}
+          <div className="hidden lg:block absolute inset-0 bg-gradient-to-r from-[#F4F8FC] via-[#F4F8FC] via-30% via-[#F4F8FC]/80 via-45% to-transparent pointer-events-none z-10" />
+
+          {/* White faded blur on the left side, fading to 0 blur on the right side */}
+          {/* Mobile top-to-bottom blur overlay */}
+          <div 
+            className="absolute inset-0 backdrop-blur-[8px] lg:hidden pointer-events-none z-20"
+            style={{
+              maskImage: 'linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.85) 30%, rgba(0,0,0,0) 65%)',
+              WebkitMaskImage: 'linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.85) 30%, rgba(0,0,0,0) 65%)',
+            }}
+          />
+
+          {/* Desktop left-to-right blur overlay */}
+          <div 
+            className="hidden lg:block absolute inset-0 backdrop-blur-[16px] pointer-events-none z-20"
+            style={{
+              maskImage: 'linear-gradient(to right, rgba(0,0,0,1) 0%, rgba(0,0,0,0.85) 35%, rgba(0,0,0,0) 70%)',
+              WebkitMaskImage: 'linear-gradient(to right, rgba(0,0,0,1) 0%, rgba(0,0,0,0.85) 35%, rgba(0,0,0,0) 70%)',
+            }}
+          />
+        </div>
+
         {/* Main Content Area (Structured grid: Left Pitch, Right Image & Cards) */}
         <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-10 w-full flex-grow flex items-center pt-8 pb-4 lg:pt-12 lg:pb-8 animate-fade-in">
           <div className="w-full grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center mt-2 lg:mt-4">
@@ -303,23 +338,12 @@ export default function LandingPage({ onGetStarted, onStaffLogin }: Props) {
               </div>
             </div>
 
-            {/* Right Column (Hero Image & Premium Info Cards - Renders second on mobile) */}
-            <div className="col-span-1 lg:col-span-6 relative flex flex-col items-center justify-center min-h-[300px] lg:h-[450px] w-full mt-6 lg:mt-0 z-10">
-              {/* Hero Image Container */}
-              <div className="w-full h-[220px] sm:h-[300px] lg:h-full rounded-[24px] overflow-hidden border border-slate-200/50 shadow-lg relative group">
-                <img
-                  src="/healthcare_hero.png"
-                  alt="Healthcare workspace"
-                  className="w-full h-full object-cover object-center group-hover:scale-102 transition-transform duration-750 filter brightness-[1.03] contrast-[1.01]"
-                />
-                {/* Subtle edge fade overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-[#F4F8FC] via-transparent to-transparent lg:bg-gradient-to-r lg:from-[#F4F8FC] lg:via-transparent lg:to-transparent opacity-20 pointer-events-none" />
-              </div>
-
+            {/* Right Column (Premium Floating Info Cards - overlaying the background image on desktop) */}
+            <div className="col-span-1 lg:col-span-6 relative flex flex-col items-center justify-center min-h-[160px] sm:min-h-[300px] lg:h-[450px] w-full mt-6 lg:mt-0 z-10">
               {/* Floating Cards (Tablet and Desktop only to prevent cluttered small viewports) */}
-              <div className="hidden sm:block">
+              <div className="hidden sm:block w-full h-full relative">
                 {/* Card 1: Live Queue Tracking (Anchored top-right) */}
-                <div className="absolute -top-4 -right-4 bg-white/95 backdrop-blur-md border border-slate-200/50 p-3.5 rounded-2xl shadow-xl w-[200px] hover:-translate-y-1 transition-transform duration-300 z-30">
+                <div className="absolute top-[5%] right-[5%] bg-white/95 backdrop-blur-md border border-slate-200/50 p-4 rounded-2xl shadow-xl w-[210px] hover:-translate-y-1 transition-transform duration-300 z-30">
                   <div className="flex gap-2.5 items-start">
                     <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0">
                       <Users className="w-4 h-4 text-blue-600" />
@@ -332,7 +356,7 @@ export default function LandingPage({ onGetStarted, onStaffLogin }: Props) {
                 </div>
 
                 {/* Card 2: Multi Hospital Nodes (Anchored center-left) */}
-                <div className="absolute top-[38%] -left-6 bg-white/95 backdrop-blur-md border border-slate-200/50 p-3.5 rounded-2xl shadow-xl w-[200px] hover:-translate-y-1 transition-transform duration-300 z-30">
+                <div className="absolute top-[38%] left-[5%] bg-white/95 backdrop-blur-md border border-slate-200/50 p-4 rounded-2xl shadow-xl w-[210px] hover:-translate-y-1 transition-transform duration-300 z-30">
                   <div className="flex gap-2.5 items-start">
                     <div className="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center flex-shrink-0">
                       <Building2 className="w-4 h-4 text-indigo-600" />
@@ -345,7 +369,7 @@ export default function LandingPage({ onGetStarted, onStaffLogin }: Props) {
                 </div>
 
                 {/* Card 3: 24/7 Operations (Anchored bottom-right) */}
-                <div className="absolute -bottom-4 right-2 bg-white/95 backdrop-blur-md border border-slate-200/50 p-3.5 rounded-2xl shadow-xl w-[200px] hover:-translate-y-1 transition-transform duration-300 z-30">
+                <div className="absolute bottom-[5%] right-[5%] bg-white/95 backdrop-blur-md border border-slate-200/50 p-4 rounded-2xl shadow-xl w-[210px] hover:-translate-y-1 transition-transform duration-300 z-30">
                   <div className="flex gap-2.5 items-start">
                     <div className="w-8 h-8 rounded-lg bg-violet-50 flex items-center justify-center flex-shrink-0">
                       <Shield className="w-4 h-4 text-violet-600" />
