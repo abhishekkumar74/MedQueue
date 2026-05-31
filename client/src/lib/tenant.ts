@@ -51,7 +51,19 @@ export function getTenantSlug(): string | null {
     parts[0] !== '127' &&
     parts[0] !== '192'
   ) {
-    return parts[0];
+    // If it's a Vercel standard preview/production domain (e.g. med-queue-chi.vercel.app),
+    // it requires at least 4 parts to have a tenant subdomain (e.g. apollo.med-queue-chi.vercel.app).
+    const isVercelBase = parts.includes('vercel') && parts.includes('app');
+    if (isVercelBase) {
+      if (parts.length >= 4) {
+        return parts[0];
+      }
+    } else {
+      // For standard custom domains (e.g. apollo.medqueue.com), it must have a subdomain (length >= 3)
+      if (parts.length >= 3) {
+        return parts[0];
+      }
+    }
   }
 
   // 2. Query parameters (Highly robust developer fallback)
