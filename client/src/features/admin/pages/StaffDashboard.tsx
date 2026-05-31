@@ -49,6 +49,7 @@ export default function StaffDashboard({ onNavigate, currentUser }: Props) {
         doctorDepartment={currentUser.department}
         doctorName={currentUser.name}
         roomNumber={currentUser.room_number}
+        doctorStaffId={currentUser.id}
       />
     );
   }
@@ -123,11 +124,10 @@ function WardBoyDashboard({ department }: WardBoyDashboardProps) {
       const data = await getQueue(department);
       setQueue(data);
 
-      // 2. Fetch all doctors from doctors table (same source as WardBoyIntake Smart Routing)
+      // 2. Fetch all registered doctors (regardless of availability) for sidebar
       const { data: staffDoctors } = await supabase
         .from('doctors')
         .select('id, name, department, room_number, is_available')
-        .eq('is_available', true)
         .eq('hospital_id', currentHospitalId);
 
       setDoctors(staffDoctors || []);

@@ -18,6 +18,7 @@ interface DoctorPanelProps {
   doctorDepartment?: string;
   doctorName?: string;
   roomNumber?: string;
+  doctorStaffId?: string; // staff_users.id of the logged-in doctor
 }
 
 // Predefined Medicine Directory
@@ -70,7 +71,7 @@ const PRESCRIPTION_TEMPLATES: Record<string, Omit<Medication, 'quantity'>[]> = {
 // Diagnosis Predefined Chips
 const DIAGNOSIS_CHIPS = ['Acute Fever', 'Viral Infection', 'Gastroenteritis', 'Migraine', 'Hypertension', 'Type 2 Diabetes', 'General Weakness'];
 
-export default function DoctorPanel({ doctorDepartment = 'general', doctorName = 'Doctor', roomNumber = '101' }: DoctorPanelProps = {}) {
+export default function DoctorPanel({ doctorDepartment = 'general', doctorName = 'Doctor', roomNumber = '101', doctorStaffId }: DoctorPanelProps = {}) {
   const [queue, setQueue] = useState<QueueData>({ waiting: [], serving: null });
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState('');
@@ -88,6 +89,9 @@ export default function DoctorPanel({ doctorDepartment = 'general', doctorName =
   const [followUpDays, setFollowUpDays] = useState<string>('after 1 week');
   const [showPdfModal, setShowPdfModal] = useState(false);
   const [hospitalName, setHospitalName] = useState('Central Healthcare Campus');
+
+  // Resolved doctor record id from doctors table
+  const [resolvedDoctorId, setResolvedDoctorId] = useState<string | null>(null);
 
   const currentHospitalId = getSelectedHospitalId();
 
@@ -107,17 +111,70 @@ export default function DoctorPanel({ doctorDepartment = 'general', doctorName =
     loadHospital();
   }, [currentHospitalId]);
 
+  // Resolve this doctor's record in the `doctors` table by matching name + department
+  useEffect(() => {
+    async function resolveDoctorId() {
+      if (!currentHospitalId) return;
+      const { data } = await supabase
+        .from('doctors')
+        .select('id')
+        .eq('hospital_id', currentHospitalId)
+        .ilike('name', doctorName)
+        .ilike('department', doctorDepartment)
+        .maybeSingle();
+      if (data?.id) setResolvedDoctorId(data.id);
+    }
+    resolveDoctorId();
+  }, [currentHospitalId, doctorName, doctorDepartment]);
+
   const fetchQueue = useCallback(async () => {
     try {
-      const data = await getQueue(doctorDepartment);
-      setQueue(data);
+      // Fetch all tokens for this department
+      const hospitalId = currentHospitalId;
+      const deptLower = doctorDepartment?.toLowerCase();
+
+      let waitingQuery = supabase
+        .from('tokens')
+        .select('*, patients(*), patient_intake(*)')
+        .eq('status', 'WAITING')
+        .eq('hospital_id', hospitalId)
+        .order('priority', { ascending: true })
+        .order('created_at', { ascending: true });
+
+      // If doctor has an assigned id, show only their patients; else fall back to department
+      if (resolvedDoctorId) {
+        waitingQuery = waitingQuery.eq('doctor_id', resolvedDoctorId);
+      } else if (deptLower) {
+        waitingQuery = waitingQuery.eq('department', deptLower);
+      }
+
+      const { data: waiting, error: we } = await waitingQuery;
+      if (we) throw new Error(we.message);
+
+      let servingQuery = supabase
+        .from('tokens')
+        .select('*, patients(*), patient_intake(*)')
+        .eq('status', 'SERVING')
+        .eq('hospital_id', hospitalId)
+        .order('created_at', { ascending: false })
+        .limit(1);
+
+      if (resolvedDoctorId) {
+        servingQuery = servingQuery.eq('doctor_id', resolvedDoctorId);
+      } else if (deptLower) {
+        servingQuery = servingQuery.eq('department', deptLower);
+      }
+
+      const { data: serving } = await servingQuery.maybeSingle();
+
+      setQueue({ waiting: waiting ?? [], serving: serving ?? null });
       setError('');
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to sync consultation queue');
     } finally {
       setLoading(false);
     }
-  }, [doctorDepartment]);
+  }, [doctorDepartment, currentHospitalId, resolvedDoctorId]);
 
   useEffect(() => {
     fetchQueue();
@@ -129,7 +186,47 @@ export default function DoctorPanel({ doctorDepartment = 'general', doctorName =
   async function callNext() {
     setActionLoading('calling');
     try {
-      await callNextPatient(doctorDepartment);
+      const hospitalId = currentHospitalId;
+
+      // Mark current serving patient as done
+      let currentQuery = supabase
+        .from('tokens')
+        .select('id')
+        .eq('status', 'SERVING')
+        .eq('hospital_id', hospitalId);
+      if (resolvedDoctorId) currentQuery = currentQuery.eq('doctor_id', resolvedDoctorId);
+      else currentQuery = currentQuery.eq('department', doctorDepartment);
+
+      const { data: current } = await currentQuery.maybeSingle();
+      if (current) {
+        await supabase.from('tokens')
+          .update({ status: 'DONE', intake_status: 'COMPLETED' })
+          .eq('id', current.id);
+      }
+
+      // Call next patient assigned to this doctor
+      let nextQuery = supabase
+        .from('tokens')
+        .select('*')
+        .eq('status', 'WAITING')
+        .eq('intake_status', 'READY_FOR_DOCTOR')
+        .eq('hospital_id', hospitalId)
+        .order('priority', { ascending: true })
+        .order('created_at', { ascending: true })
+        .limit(1);
+
+      if (resolvedDoctorId) nextQuery = nextQuery.eq('doctor_id', resolvedDoctorId);
+      else nextQuery = nextQuery.eq('department', doctorDepartment);
+
+      const { data: next, error: ne } = await nextQuery.maybeSingle();
+      if (ne) throw new Error(ne.message);
+
+      if (next) {
+        await supabase
+          .from('tokens')
+          .update({ status: 'SERVING', intake_status: 'WITH_DOCTOR' })
+          .eq('id', next.id);
+      }
       // Reset triage values
       setDiagnosis('');
       setMedications([{ ...EMPTY_MED }]);
