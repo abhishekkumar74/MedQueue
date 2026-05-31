@@ -588,10 +588,11 @@ export default function SuperAdminDashboard({ currentUser: _currentUser, onNavig
       if (role === 'DOCTOR') {
         const { error: docErr } = await supabase.from('doctors').insert({
           name: name.trim(),
-          email: email.toLowerCase().trim(),
+          specialty: 'General',
           department: department.toLowerCase().trim(),
+          room_number: room_number.trim() || null,
           hospital_id,
-          is_active: true
+          is_available: true
         });
         if (docErr) console.warn('Could not auto-create doctor record:', docErr.message);
       }

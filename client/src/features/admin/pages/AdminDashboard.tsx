@@ -374,11 +374,9 @@ export default function AdminDashboard({ currentUser }: Props) {
       const { error: docErr } = await supabase
         .from('doctors')
         .insert({
-          staff_user_id: staff.id,
-          id: staff.id,
           name: name.trim(),
           specialty: specialty.trim(),
-          department: department,
+          department: department.toLowerCase().trim(),
           room_number: room_number.trim(),
           hospital_id: hospitalId,
           is_available: true
