@@ -50,6 +50,7 @@ export interface Token {
   department?: Department;
   room_number?: string;
   doctor_name?: string;
+  doctor_id?: string | null;
 }
 
 export interface PatientIntake {
