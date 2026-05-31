@@ -94,7 +94,7 @@ interface DoctorListRow {
   name: string;
   department: string;
   room_number: string;
-  is_active: boolean;
+  is_available: boolean;
 }
 
 function WardBoyDashboard({ department }: WardBoyDashboardProps) {
@@ -123,13 +123,11 @@ function WardBoyDashboard({ department }: WardBoyDashboardProps) {
       const data = await getQueue(department);
       setQueue(data);
 
-      // 2. Fetch active doctors to count loads in sidebar
+      // 2. Fetch all doctors from doctors table (same source as WardBoyIntake Smart Routing)
       const { data: staffDoctors } = await supabase
-        .from('staff_users')
-        .select('id, name, department, room_number, is_active')
-        .eq('role', 'DOCTOR')
-        .eq('is_active', true)
-        .neq('is_deleted', true)
+        .from('doctors')
+        .select('id, name, department, room_number, is_available')
+        .eq('is_available', true)
         .eq('hospital_id', currentHospitalId);
 
       setDoctors(staffDoctors || []);
