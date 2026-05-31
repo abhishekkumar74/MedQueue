@@ -339,7 +339,7 @@ export default function LandingPage({ onGetStarted, onStaffLogin }: Props) {
             </div>
 
             {/* Right Column (Premium Floating Info Cards - overlaying the background image on desktop) */}
-            <div className="col-span-1 lg:col-span-6 relative flex flex-col items-center justify-center min-h-[160px] sm:min-h-[300px] lg:h-[450px] w-full mt-6 lg:mt-0 z-10">
+            <div className="hidden sm:flex col-span-1 lg:col-span-6 relative flex-col items-center justify-center sm:min-h-[300px] lg:h-[450px] w-full mt-6 lg:mt-0 z-10">
               {/* Floating Cards (Tablet and Desktop only to prevent cluttered small viewports) */}
               <div className="hidden sm:block w-full h-full relative">
                 {/* Card 1: Live Queue Tracking (Anchored top-right) */}
