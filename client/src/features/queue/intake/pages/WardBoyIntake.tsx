@@ -75,13 +75,11 @@ export default function WardBoyIntake({ token, onDone }: { token: Token; onDone?
           }
         });
 
-        // 3. Load available doctors in this hospital
+        // 3. Load available doctors in this hospital from the 'doctors' table
         const query = supabase
-          .from('staff_users')
+          .from('doctors')
           .select('id, name, department, room_number')
-          .eq('role', 'DOCTOR')
-          .eq('is_active', true)
-          .neq('is_deleted', true)
+          .eq('is_available', true)
           .eq('hospital_id', currentHospitalId);
 
         const { data: staffDoctors } = await query;
