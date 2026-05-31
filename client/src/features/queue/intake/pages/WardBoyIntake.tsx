@@ -44,7 +44,7 @@ export default function WardBoyIntake({ token, onDone }: { token: Token; onDone?
   // Symptom Tags
   const SYMPTOM_TAGS = ['Fever', 'Cough', 'Weakness', 'Chest Pain', 'Follow-up', 'Headache', 'Stomach Ache'];
 
-  // ── Load Vitals, Doctors, & Doctor active loads ───────────────────
+  // ── Load Vitals, Doctors, & Doctor active loads ─────────────────
   useEffect(() => {
     async function loadData() {
       try {
@@ -76,13 +76,14 @@ export default function WardBoyIntake({ token, onDone }: { token: Token; onDone?
           }
         });
 
-        // 3. Load all doctors in this hospital from the 'doctors' table (available & offline)
-        const query = supabase
-          .from('doctors')
-          .select('id, name, department, room_number, is_available')
+        // 3. Load ALL doctors from staff_users (source of truth) — no doctors table dependency
+        const { data: staffDoctors } = await supabase
+          .from('staff_users')
+          .select('id, name, department, room_number, is_active')
+          .eq('role', 'DOCTOR')
+          .eq('is_active', true)
+          .neq('is_deleted', true)
           .eq('hospital_id', currentHospitalId);
-
-        const { data: staffDoctors } = await query;
 
         if (staffDoctors && staffDoctors.length > 0) {
           const mappedDocs = staffDoctors.map(d => ({
@@ -92,7 +93,7 @@ export default function WardBoyIntake({ token, onDone }: { token: Token; onDone?
             room_number: d.room_number ?? '',
             floor: extractFloor(d.room_number ?? ''),
             load: loadMap[d.room_number ?? ''] || 0,
-            is_available: d.is_available ?? false
+            is_available: d.is_active ?? true
           }));
 
           // Helper to check department match (e.g. orthopedic vs orthopedics)
@@ -106,12 +107,8 @@ export default function WardBoyIntake({ token, onDone }: { token: Token; onDone?
           // Filter only doctors matching the patient's department (fuzzy match)
           const deptDocs = mappedDocs.filter(d => isDeptMatch(d.department, token.department));
 
-          // Sort matching doctors: online doctors first (by load), then offline doctors (by load)
-          deptDocs.sort((a, b) => {
-            if (a.is_available && !b.is_available) return -1;
-            if (!a.is_available && b.is_available) return 1;
-            return a.load - b.load;
-          });
+          // Sort by patient load (least busy first)
+          deptDocs.sort((a, b) => a.load - b.load);
           
           setDoctors(deptDocs);
           if (deptDocs.length > 0) {
@@ -221,15 +218,18 @@ export default function WardBoyIntake({ token, onDone }: { token: Token; onDone?
       // 1. Save intake vital details
       await updateIntake(currentIntake!.id, form);
 
-      // 2. Select matching doctor & write details back to the active Token
+      // 2. Write room_number from selected doctor to the token
+      // (room_number is unique per doctor — used by DoctorPanel to filter their queue)
       const selectedDoctor = doctors.find(d => d.id === selectedDoctorId);
       const updates: Record<string, any> = {
-        priority: priority // Save the (potentially upgraded) priority
+        priority: priority,
+        intake_status: 'READY_FOR_DOCTOR'
       };
 
       if (selectedDoctor) {
         updates.room_number = selectedDoctor.room_number;
-        updates.doctor_id = selectedDoctor.id;
+        // Also store doctor name for reference (no FK constraint)
+        updates.doctor_name = selectedDoctor.name;
       }
 
       const { error: tokenUpdateErr } = await supabase

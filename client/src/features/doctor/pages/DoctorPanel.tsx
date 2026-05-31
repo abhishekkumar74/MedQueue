@@ -90,9 +90,6 @@ export default function DoctorPanel({ doctorDepartment = 'general', doctorName =
   const [showPdfModal, setShowPdfModal] = useState(false);
   const [hospitalName, setHospitalName] = useState('Central Healthcare Campus');
 
-  // Resolved doctor record id from doctors table
-  const [resolvedDoctorId, setResolvedDoctorId] = useState<string | null>(null);
-
   const currentHospitalId = getSelectedHospitalId();
 
   // Load Hospital Name
@@ -111,27 +108,11 @@ export default function DoctorPanel({ doctorDepartment = 'general', doctorName =
     loadHospital();
   }, [currentHospitalId]);
 
-  // Resolve this doctor's record in the `doctors` table by matching name + department
-  useEffect(() => {
-    async function resolveDoctorId() {
-      if (!currentHospitalId) return;
-      const { data } = await supabase
-        .from('doctors')
-        .select('id')
-        .eq('hospital_id', currentHospitalId)
-        .ilike('name', doctorName)
-        .ilike('department', doctorDepartment)
-        .maybeSingle();
-      if (data?.id) setResolvedDoctorId(data.id);
-    }
-    resolveDoctorId();
-  }, [currentHospitalId, doctorName, doctorDepartment]);
-
+  // Resolve this doctor's queue by room_number (set during WardBoy intake assignment)
+  // room_number is unique per doctor — reliable filter for doctor-specific patients
   const fetchQueue = useCallback(async () => {
     try {
-      // Fetch all tokens for this department
       const hospitalId = currentHospitalId;
-      const deptLower = doctorDepartment?.toLowerCase();
 
       let waitingQuery = supabase
         .from('tokens')
@@ -141,11 +122,12 @@ export default function DoctorPanel({ doctorDepartment = 'general', doctorName =
         .order('priority', { ascending: true })
         .order('created_at', { ascending: true });
 
-      // If doctor has an assigned id, show only their patients; else fall back to department
-      if (resolvedDoctorId) {
-        waitingQuery = waitingQuery.eq('doctor_id', resolvedDoctorId);
-      } else if (deptLower) {
-        waitingQuery = waitingQuery.eq('department', deptLower);
+      // Filter by room_number if doctor has one (most reliable — set by WardBoy)
+      // Fallback to department if no room_number
+      if (roomNumber && roomNumber !== '101') {
+        waitingQuery = waitingQuery.eq('room_number', roomNumber);
+      } else {
+        waitingQuery = waitingQuery.eq('department', doctorDepartment?.toLowerCase());
       }
 
       const { data: waiting, error: we } = await waitingQuery;
@@ -159,10 +141,10 @@ export default function DoctorPanel({ doctorDepartment = 'general', doctorName =
         .order('created_at', { ascending: false })
         .limit(1);
 
-      if (resolvedDoctorId) {
-        servingQuery = servingQuery.eq('doctor_id', resolvedDoctorId);
-      } else if (deptLower) {
-        servingQuery = servingQuery.eq('department', deptLower);
+      if (roomNumber && roomNumber !== '101') {
+        servingQuery = servingQuery.eq('room_number', roomNumber);
+      } else {
+        servingQuery = servingQuery.eq('department', doctorDepartment?.toLowerCase());
       }
 
       const { data: serving } = await servingQuery.maybeSingle();
@@ -174,7 +156,7 @@ export default function DoctorPanel({ doctorDepartment = 'general', doctorName =
     } finally {
       setLoading(false);
     }
-  }, [doctorDepartment, currentHospitalId, resolvedDoctorId]);
+  }, [doctorDepartment, currentHospitalId, roomNumber]);
 
   useEffect(() => {
     fetchQueue();
@@ -194,8 +176,12 @@ export default function DoctorPanel({ doctorDepartment = 'general', doctorName =
         .select('id')
         .eq('status', 'SERVING')
         .eq('hospital_id', hospitalId);
-      if (resolvedDoctorId) currentQuery = currentQuery.eq('doctor_id', resolvedDoctorId);
-      else currentQuery = currentQuery.eq('department', doctorDepartment);
+
+      if (roomNumber && roomNumber !== '101') {
+        currentQuery = currentQuery.eq('room_number', roomNumber);
+      } else {
+        currentQuery = currentQuery.eq('department', doctorDepartment);
+      }
 
       const { data: current } = await currentQuery.maybeSingle();
       if (current) {
@@ -204,7 +190,7 @@ export default function DoctorPanel({ doctorDepartment = 'general', doctorName =
           .eq('id', current.id);
       }
 
-      // Call next patient assigned to this doctor
+      // Call next READY_FOR_DOCTOR patient assigned to this doctor's room
       let nextQuery = supabase
         .from('tokens')
         .select('*')
@@ -215,8 +201,11 @@ export default function DoctorPanel({ doctorDepartment = 'general', doctorName =
         .order('created_at', { ascending: true })
         .limit(1);
 
-      if (resolvedDoctorId) nextQuery = nextQuery.eq('doctor_id', resolvedDoctorId);
-      else nextQuery = nextQuery.eq('department', doctorDepartment);
+      if (roomNumber && roomNumber !== '101') {
+        nextQuery = nextQuery.eq('room_number', roomNumber);
+      } else {
+        nextQuery = nextQuery.eq('department', doctorDepartment);
+      }
 
       const { data: next, error: ne } = await nextQuery.maybeSingle();
       if (ne) throw new Error(ne.message);
