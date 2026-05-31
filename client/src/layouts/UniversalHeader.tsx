@@ -161,7 +161,7 @@ export default function UniversalHeader({ page, navigate, currentUser, handleLog
   };
 
   return (
-    <header className="sticky top-0 z-40 w-full bg-white/95 backdrop-blur-md border-b border-slate-150 shadow-[0_1px_3px_rgba(0,0,0,0.02)] h-14 select-none font-sans">
+    <header className="sticky top-0 z-40 w-full bg-white/95 backdrop-blur-md border-b border-slate-150 shadow-[0_1px_3px_rgba(0,0,0,0.02)] h-[calc(3.5rem+env(safe-area-inset-top,0px))] pt-[env(safe-area-inset-top,0px)] select-none font-sans">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 h-full flex items-center justify-between gap-4">
         
         {/* ── LEFT SECTION: Product, Logo, and Hospital Isolation Context ── */}
@@ -511,7 +511,7 @@ export default function UniversalHeader({ page, navigate, currentUser, handleLog
             className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 transition-opacity duration-300 animate-fade-in"
             onClick={() => setShowMobileDrawer(false)}
           />
-          <div className="fixed top-0 right-0 h-full w-[280px] bg-white shadow-2xl border-l border-slate-150 z-50 p-6 flex flex-col justify-between animate-slide-in font-sans">
+          <div className="fixed top-0 right-0 h-full w-[280px] bg-white shadow-2xl border-l border-slate-150 z-50 pt-[calc(1.5rem+env(safe-area-inset-top,0px))] pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))] px-6 flex flex-col justify-between animate-slide-in font-sans">
             <div className="space-y-6">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-black text-slate-400 uppercase tracking-widest">Navigation</span>

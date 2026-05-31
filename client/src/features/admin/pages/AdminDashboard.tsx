@@ -906,7 +906,7 @@ export default function AdminDashboard({ currentUser }: Props) {
               {filteredTokens.length === 0 ? (
                 <div className="text-center py-12 text-slate-400 text-xs">No tokens match your current filter parameters.</div>
               ) : (
-                <div className="overflow-x-auto">
+                <div className="overflow-x-auto w-full scrollbar-none">
                   <table className="w-full text-left text-xs border-collapse">
                     <thead>
                       <tr className="border-b border-slate-100 text-slate-400 font-bold uppercase tracking-wider">
@@ -1043,7 +1043,7 @@ export default function AdminDashboard({ currentUser }: Props) {
                 </button>
               </div>
 
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto w-full scrollbar-none">
                 <table className="w-full text-left text-xs border-collapse">
                   <thead>
                     <tr className="border-b border-slate-100 text-slate-400 font-bold uppercase tracking-wider">
@@ -1191,7 +1191,7 @@ export default function AdminDashboard({ currentUser }: Props) {
                 Upcoming Hospital Appointments
               </h3>
 
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto w-full scrollbar-none">
                 <table className="w-full text-left text-xs border-collapse">
                   <thead>
                     <tr className="border-b border-slate-100 text-slate-400 font-bold uppercase tracking-wider">
@@ -1268,7 +1268,7 @@ export default function AdminDashboard({ currentUser }: Props) {
                 </div>
               </div>
 
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto w-full scrollbar-none">
                 <table className="w-full text-left text-xs border-collapse">
                   <thead>
                     <tr className="border-b border-slate-100 text-slate-400 font-bold uppercase tracking-wider">
@@ -1460,7 +1460,7 @@ export default function AdminDashboard({ currentUser }: Props) {
                       <p className="text-[11px] text-slate-400">Real-time performance indexes computed by comparing consultations completed vs department wait loops.</p>
                     </div>
 
-                    <div className="overflow-x-auto">
+                    <div className="overflow-x-auto w-full scrollbar-none">
                       <table className="w-full text-xs text-left border-collapse">
                         <thead>
                           <tr className="border-b border-slate-100 text-[10px] uppercase text-slate-400 font-black">

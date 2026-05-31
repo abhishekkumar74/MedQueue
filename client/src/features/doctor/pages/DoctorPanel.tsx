@@ -1151,30 +1151,32 @@ export default function DoctorPanel({ doctorDepartment = 'general', doctorName =
               <div className="py-5">
                 <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-3">Prescribed Medications Rx</span>
                 
-                <table className="w-full text-xs">
-                  <thead>
-                    <tr className="border-b border-slate-200 text-slate-400 font-black text-[9px] uppercase tracking-wider text-left pb-2">
-                      <th className="pb-2">Medicine Details</th>
-                      <th className="pb-2">Dosage Size</th>
-                      <th className="pb-2">Frequency</th>
-                      <th className="pb-2">Duration</th>
-                      <th className="pb-2">Instructions</th>
-                      <th className="pb-2 text-right">Qty</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {medications.map((med, i) => (
-                      <tr key={i} className="border-b border-slate-100 text-slate-700">
-                        <td className="py-2.5 font-bold text-slate-800">{med.name || 'Medicine'}</td>
-                        <td className="py-2.5">{med.dosage || '1 tab'}</td>
-                        <td className="py-2.5">{med.frequency || '1-0-1'}</td>
-                        <td className="py-2.5">{med.duration || '5 days'}</td>
-                        <td className="py-2.5">{med.instructions || 'After meals'}</td>
-                        <td className="py-2.5 text-right font-bold text-slate-800">{med.quantity}</td>
+                <div className="overflow-x-auto w-full scrollbar-none">
+                  <table className="w-full text-xs">
+                    <thead>
+                      <tr className="border-b border-slate-200 text-slate-400 font-black text-[9px] uppercase tracking-wider text-left pb-2">
+                        <th className="pb-2">Medicine Details</th>
+                        <th className="pb-2">Dosage Size</th>
+                        <th className="pb-2">Frequency</th>
+                        <th className="pb-2">Duration</th>
+                        <th className="pb-2">Instructions</th>
+                        <th className="pb-2 text-right">Qty</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {medications.map((med, i) => (
+                        <tr key={i} className="border-b border-slate-100 text-slate-700">
+                          <td className="py-2.5 font-bold text-slate-800">{med.name || 'Medicine'}</td>
+                          <td className="py-2.5">{med.dosage || '1 tab'}</td>
+                          <td className="py-2.5">{med.frequency || '1-0-1'}</td>
+                          <td className="py-2.5">{med.duration || '5 days'}</td>
+                          <td className="py-2.5">{med.instructions || 'After meals'}</td>
+                          <td className="py-2.5 text-right font-bold text-slate-800">{med.quantity}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
 
               {/* Follow-up & Branded signature box */}

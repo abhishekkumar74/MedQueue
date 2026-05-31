@@ -254,11 +254,15 @@ export default function LandingPage({ onGetStarted, onStaffLogin }: Props) {
             className="
               absolute
               inset-0
-              bg-gradient-to-r
-              from-[#F4F8FC]
-              via-[#F4F8FC]/40
-              via-15%
-              to-transparent
+              bg-gradient-to-b
+              from-[#F4F8FC]/80
+              via-[#F4F8FC]/95
+              to-[#F4F8FC]
+              lg:bg-gradient-to-r
+              lg:from-[#F4F8FC]
+              lg:via-[#F4F8FC]/40
+              lg:via-15%
+              lg:to-transparent
             "
           />
         </div>
@@ -1035,7 +1039,7 @@ export default function LandingPage({ onGetStarted, onStaffLogin }: Props) {
                         value={demoForm.hospitalName}
                         onChange={e => setDemoForm({ ...demoForm, hospitalName: e.target.value })}
                         placeholder="Apollo Clinic"
-                        className="w-full text-xs p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:border-[#005EB8] outline-none font-semibold"
+                        className="w-full text-sm sm:text-xs p-3 sm:p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:border-[#005EB8] outline-none font-semibold"
                         required
                       />
                     </div>
@@ -1046,7 +1050,7 @@ export default function LandingPage({ onGetStarted, onStaffLogin }: Props) {
                         value={demoForm.city}
                         onChange={e => setDemoForm({ ...demoForm, city: e.target.value })}
                         placeholder="Delhi"
-                        className="w-full text-xs p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:border-[#005EB8] outline-none font-semibold"
+                        className="w-full text-sm sm:text-xs p-3 sm:p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:border-[#005EB8] outline-none font-semibold"
                         required
                       />
                     </div>
@@ -1060,7 +1064,7 @@ export default function LandingPage({ onGetStarted, onStaffLogin }: Props) {
                         value={demoForm.contactPerson}
                         onChange={e => setDemoForm({ ...demoForm, contactPerson: e.target.value })}
                         placeholder="Dr. Abhishek Kumar"
-                        className="w-full text-xs p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:border-[#005EB8] outline-none font-semibold"
+                        className="w-full text-sm sm:text-xs p-3 sm:p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:border-[#005EB8] outline-none font-semibold"
                         required
                       />
                     </div>
@@ -1069,7 +1073,7 @@ export default function LandingPage({ onGetStarted, onStaffLogin }: Props) {
                       <select
                         value={demoForm.size}
                         onChange={e => setDemoForm({ ...demoForm, size: e.target.value })}
-                        className="w-full text-xs p-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none font-semibold"
+                        className="w-full text-sm sm:text-xs p-3 sm:p-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none font-semibold"
                       >
                         <option value="Under 10 beds">Under 10 beds (OPD Clinic)</option>
                         <option value="10-50 beds">10-50 beds (Clinical Outpatient)</option>
@@ -1087,7 +1091,7 @@ export default function LandingPage({ onGetStarted, onStaffLogin }: Props) {
                         value={demoForm.phone}
                         onChange={e => setDemoForm({ ...demoForm, phone: e.target.value })}
                         placeholder="+91 99999 99999"
-                        className="w-full text-xs p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:border-[#005EB8] outline-none font-semibold"
+                        className="w-full text-sm sm:text-xs p-3 sm:p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:border-[#005EB8] outline-none font-semibold"
                         required
                       />
                     </div>
@@ -1098,7 +1102,7 @@ export default function LandingPage({ onGetStarted, onStaffLogin }: Props) {
                         value={demoForm.email}
                         onChange={e => setDemoForm({ ...demoForm, email: e.target.value })}
                         placeholder="abhishek@apollo.com"
-                        className="w-full text-xs p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:border-[#005EB8] outline-none font-semibold"
+                        className="w-full text-sm sm:text-xs p-3 sm:p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:border-[#005EB8] outline-none font-semibold"
                         required
                       />
                     </div>

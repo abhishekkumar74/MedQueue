@@ -748,7 +748,7 @@ export default function App() {
 
       {/* Mobile bottom nav for patients */}
       {user.type === 'patient' && (
-        <div className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-slate-100 z-40 md:hidden shadow-[0_-4px_16px_rgba(0,0,0,0.03)]">
+        <div className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-slate-100 z-40 md:hidden shadow-[0_-4px_16px_rgba(0,0,0,0.03)] pb-[env(safe-area-inset-bottom,0px)]">
           <div className="grid grid-cols-4 h-16">
             {[
               { id: 'register', label: 'Workspace', icon: <Home className="w-5.5 h-5.5" /> },
@@ -789,7 +789,7 @@ export default function App() {
         </div>
       )}
 
-      <main key={page} className={`animate-fade-in ${user.type === 'patient' ? 'pb-16 md:pb-0' : ''}`}>
+      <main key={page} className={`animate-fade-in ${user.type === 'patient' ? 'pb-[calc(4rem+env(safe-area-inset-bottom,0px))] md:pb-0' : ''}`}>
         {page === 'register' && <PatientWorkspace currentUser={user} navigate={navigate} tenant={tenant} />}
         {page === 'staff' && <StaffDashboard onNavigate={navigate} currentUser={user} />}
         {page === 'super-admin' && <SuperAdminDashboard currentUser={user} onNavigate={navigate} />}

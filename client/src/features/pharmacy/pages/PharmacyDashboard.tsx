@@ -902,7 +902,7 @@ export default function PharmacyDashboard() {
               </div>
             ) : (
               /* TRADITIONAL TABLE VIEW AS FALLBACK */
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto w-full scrollbar-none">
                 <table className="w-full text-left text-xs border-collapse">
                   <thead>
                     <tr className="border-b border-slate-100 text-slate-400 font-bold uppercase tracking-wider">
