@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { getIntakeByToken, startIntake, updateIntake, getSelectedHospitalId } from '../../../lib/api';
-import { supabase } from '../../../lib/supabase';
-import { Token, PatientIntake, PRIORITY_LABEL, DEPARTMENT_LABEL, Department, Priority } from '../../../types';
+import { getIntakeByToken, startIntake, updateIntake, getSelectedHospitalId } from '../../../../lib/api';
+import { supabase } from '../../../../lib/supabase';
+import { Token, PatientIntake, PRIORITY_LABEL, DEPARTMENT_LABEL, Department, Priority } from '../../../../types';
 import { 
   Loader2, AlertCircle, CheckCircle2, Heart, MapPin, Sparkles, Activity, Clock, ShieldAlert, Check
 } from 'lucide-react';

@@ -41,7 +41,7 @@ interface VaultDoc {
 
 import { TenantConfig } from '../../../lib/tenant';
 
-export default function RegisterPage({ currentUser, navigate, tenant }: {
+export default function PatientWorkspace({ currentUser, navigate, tenant }: {
   currentUser?: AuthUser | null;
   navigate?: (p: any, state?: any) => void;
   tenant?: TenantConfig | null;

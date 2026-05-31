@@ -1,3 +1,3 @@
-export { default as DisplayBoard } from './pages/DisplayBoard';
-export { default as LiveTokenTracker } from './pages/LiveTokenTracker';
-export { default as WardBoyIntake } from './pages/WardBoyIntake';
+export { LiveTokenTracker } from './tracker';
+export { WardBoyIntake } from './intake';
+export { DisplayBoard } from './display';

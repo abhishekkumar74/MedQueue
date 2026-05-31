@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
 import { LandingPage } from './features/landing';
 import { HospitalLandingPage } from './features/hospitals';
-import { PatientLoginPage, StaffLoginPage, SuperAdminLoginPage, RegisterPage } from './features/auth';
+import { PatientLoginPage, StaffLoginPage, SuperAdminLoginPage } from './features/auth';
 import { StaffDashboard, SuperAdminDashboard } from './features/admin';
 import { DisplayBoard, LiveTokenTracker } from './features/queue';
 import { AppointmentBooking } from './features/appointments';
 import { PharmacyDashboard } from './features/pharmacy';
-import { PatientHistory } from './features/patient';
+import { PatientHistory, PatientWorkspace } from './features/patient';
 import { OfflineIndicator } from './components';
 import { SetupBanner, UniversalHeader } from './layouts';
 import { supabase, isMissingConfig } from './lib/supabase';
@@ -790,7 +790,7 @@ export default function App() {
       )}
 
       <main key={page} className={`animate-fade-in ${user.type === 'patient' ? 'pb-16 md:pb-0' : ''}`}>
-        {page === 'register' && <RegisterPage currentUser={user} navigate={navigate} tenant={tenant} />}
+        {page === 'register' && <PatientWorkspace currentUser={user} navigate={navigate} tenant={tenant} />}
         {page === 'staff' && <StaffDashboard onNavigate={navigate} currentUser={user} />}
         {page === 'super-admin' && <SuperAdminDashboard currentUser={user} onNavigate={navigate} />}
         {page === 'tracker' && (

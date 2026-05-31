@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '../../../lib/supabase';
-import { getTokenStatus } from '../../../lib/api';
-import { Token, DEPARTMENT_LABEL, Department } from '../../../types';
-import { calculateEstimatedWait } from '../../../lib/analytics';
-import { todayStartUTC } from '../../../lib/dateUtils';
+import { supabase } from '../../../../lib/supabase';
+import { getTokenStatus } from '../../../../lib/api';
+import { Token, DEPARTMENT_LABEL, Department } from '../../../../types';
+import { calculateEstimatedWait } from '../../../../lib/analytics';
+import { todayStartUTC } from '../../../../lib/dateUtils';
 import {
   RefreshCw, Users, Clock, Wifi, WifiOff, Bell,
   MapPin, Stethoscope, CheckCircle2, ArrowRight,
