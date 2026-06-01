@@ -406,7 +406,7 @@ export default function UniversalHeader({ page, navigate, currentUser, handleLog
                       {/* Operational Links */}
                       <div className="py-1">
                         <button 
-                          onClick={() => { navigate(currentUser.type === 'staff' ? 'staff' : 'register'); setShowProfileMenu(false); }}
+                          onClick={() => { navigate(currentUser.type === 'staff' ? 'staff' : 'register', { tab: 'profile' }); setShowProfileMenu(false); }}
                           className="w-full flex items-center gap-2 px-4 py-2 text-left text-xs font-bold text-slate-600 hover:bg-slate-50 transition-colors"
                         >
                           <User className="w-3.5 h-3.5 text-slate-400" />

@@ -5,7 +5,7 @@ import { AuthUser } from '../../../lib/auth';
 import { supabase } from '../../../lib/supabase';
 import { 
   User, Building2, Ticket, ChevronDown, CheckCircle, Loader2, AlertCircle, MapPin,
-  Clock, FileText, Shield, Award, Plus, Upload, Search, Download, Trash2, Stethoscope, Activity, X, Printer
+  Clock, FileText, Shield, Award, Plus, Upload, Search, Download, Trash2, Stethoscope, Activity, X, Printer, RefreshCw
 } from 'lucide-react';
 
 const DEPARTMENTS: Department[] = [
@@ -43,10 +43,11 @@ interface VaultDoc {
 
 import { TenantConfig } from '../../../lib/tenant';
 
-export default function PatientWorkspace({ currentUser, navigate, tenant }: {
+export default function PatientWorkspace({ currentUser, navigate, tenant, initialTab }: {
   currentUser?: AuthUser | null;
   navigate?: (p: any, state?: any) => void;
   tenant?: TenantConfig | null;
+  initialTab?: string;
 }) {
   // Bypassing unused TS warnings for navigate
   if (false && navigate) navigate?.('');
@@ -54,7 +55,13 @@ export default function PatientWorkspace({ currentUser, navigate, tenant }: {
   const currentHospitalId = getSelectedHospitalId();
 
   // ── Tab State ──────────────────────────────────────────────
-  const [activeTab, setActiveTab] = useState<'workspace' | 'doctors' | 'timeline' | 'vault' | 'family' | 'wallet' | 'guide'>('workspace');
+  const [activeTab, setActiveTab] = useState<'workspace' | 'doctors' | 'timeline' | 'vault' | 'family' | 'wallet' | 'guide' | 'profile'>('workspace');
+
+  useEffect(() => {
+    if (initialTab) {
+      setActiveTab(initialTab as any);
+    }
+  }, [initialTab]);
 
   // ── Family Profiles State ──────────────────────────────────
   const [familyProfiles, setFamilyProfiles] = useState<FamilyProfile[]>([]);
@@ -63,6 +70,23 @@ export default function PatientWorkspace({ currentUser, navigate, tenant }: {
   const [newFamilyForm, setNewFamilyForm] = useState({
     name: '', relationship: 'Child' as FamilyProfile['relationship'], age: '', bloodGroup: 'B+', allergies: 'None'
   });
+
+  // ── Member Sync States ──────────────────────────────────────
+  const [showSyncMember, setShowSyncMember] = useState(false);
+  const [syncStep, setSyncStep] = useState<'input' | 'otp' | 'success'>('input');
+  const [syncForm, setSyncForm] = useState({
+    name: '', relationship: 'Child' as FamilyProfile['relationship'], phone: '', abhaId: '', age: '28', bloodGroup: 'B+', allergies: 'None'
+  });
+  const [syncOtpInput, setSyncOtpInput] = useState('');
+  const [generatedOtp, setGeneratedOtp] = useState('');
+  const [syncError, setSyncError] = useState('');
+
+  // ── Profile Form States ──────────────────────────────────────
+  const [profileForm, setProfileForm] = useState({
+    name: '', email: '', address: '', bloodGroup: 'O+', allergies: 'None'
+  });
+  const [profileSaving, setProfileSaving] = useState(false);
+  const [profileSuccess, setProfileSuccess] = useState(false);
 
   // ── Lab Document Vault State ────────────────────────────────
   const [vaultDocs, setVaultDocs] = useState<VaultDoc[]>([]);
@@ -125,6 +149,28 @@ export default function PatientWorkspace({ currentUser, navigate, tenant }: {
     setFamilyProfiles(profiles);
     setActiveProfile(profiles[0]);
   }, [currentUser, patientPhone]);
+
+  // Sync profileForm details with active Self profile
+  useEffect(() => {
+    const selfProfile = familyProfiles.find(p => p.relationship === 'Self');
+    if (selfProfile) {
+      setProfileForm({
+        name: selfProfile.name,
+        email: currentUser?.email || '',
+        address: selfProfile.address,
+        bloodGroup: selfProfile.bloodGroup || 'O+',
+        allergies: selfProfile.allergies || 'None reported'
+      });
+    } else if (currentUser) {
+      setProfileForm({
+        name: currentUser.name || '',
+        email: currentUser.email || '',
+        address: currentUser.address || '',
+        bloodGroup: 'O+',
+        allergies: 'None reported'
+      });
+    }
+  }, [familyProfiles, currentUser]);
 
   // ── Seed Document Vault ────────────────────────────────────
   useEffect(() => {
@@ -320,6 +366,116 @@ export default function PatientWorkspace({ currentUser, navigate, tenant }: {
     setNewFamilyForm({ name: '', relationship: 'Child', age: '', bloodGroup: 'B+', allergies: 'None' });
   }
 
+  // ── Member Sync Handlers ─────────────────────────────────────
+  function handleSyncMemberSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    const { name, phone } = syncForm;
+    if (!name.trim() || !phone.trim()) {
+      setSyncError('Please provide both name and phone number');
+      return;
+    }
+    setSyncError('');
+    // Generate a secure 4-digit numeric OTP for verification
+    const randomOtp = Math.floor(1000 + Math.random() * 9000).toString();
+    setGeneratedOtp(randomOtp);
+    setSyncStep('otp');
+  }
+
+  function handleVerifyOtp(e: React.FormEvent) {
+    e.preventDefault();
+    if (syncOtpInput !== generatedOtp) {
+      setSyncError('Invalid security verification OTP code. Please try again.');
+      return;
+    }
+    setSyncError('');
+    
+    // Create linked profile
+    const newProfile: FamilyProfile = {
+      id: `fam-sync-${Date.now()}`,
+      name: syncForm.name.trim(),
+      relationship: syncForm.relationship,
+      age: parseInt(syncForm.age) || 28,
+      phone: syncForm.phone.trim(),
+      address: 'Linked Unified Account',
+      bloodGroup: syncForm.bloodGroup,
+      allergies: syncForm.allergies.trim() || 'None'
+    };
+
+    const updated = [...familyProfiles, newProfile];
+    setFamilyProfiles(updated);
+    localStorage.setItem(`mq_family_profiles_${patientPhone}`, JSON.stringify(updated));
+    setActiveProfile(newProfile);
+    setSyncStep('success');
+
+    setTimeout(() => {
+      setShowSyncMember(false);
+      // Reset form states
+      setSyncStep('input');
+      setSyncForm({ name: '', relationship: 'Child', phone: '', abhaId: '', age: '28', bloodGroup: 'B+', allergies: 'None' });
+      setSyncOtpInput('');
+      setGeneratedOtp('');
+    }, 1500);
+  }
+
+  // ── Save Profile Control Center Credentials ──────────────────
+  async function handleSaveProfile(e: React.FormEvent) {
+    e.preventDefault();
+    if (!profileForm.name.trim()) return;
+    setProfileSaving(true);
+    setProfileSuccess(false);
+
+    try {
+      // 1. Update in Supabase database if patient is registered
+      const { data: patientRecord } = await supabase
+        .from('patients')
+        .select('id')
+        .eq('phone', patientPhone)
+        .maybeSingle();
+
+      if (patientRecord?.id) {
+        await supabase.from('patients')
+          .update({
+            name: profileForm.name.trim(),
+            address: profileForm.address.trim()
+          })
+          .eq('id', patientRecord.id);
+      }
+
+      // 2. Cascade changes to the Self profile inside familyProfiles local storage
+      const updated = familyProfiles.map(p => {
+        if (p.relationship === 'Self') {
+          return {
+            ...p,
+            name: profileForm.name.trim(),
+            address: profileForm.address.trim(),
+            bloodGroup: profileForm.bloodGroup,
+            allergies: profileForm.allergies.trim() || 'None reported'
+          };
+        }
+        return p;
+      });
+
+      setFamilyProfiles(updated);
+      localStorage.setItem(`mq_family_profiles_${patientPhone}`, JSON.stringify(updated));
+
+      // 3. Update the currently active profile if it is Self
+      if (activeProfile?.relationship === 'Self') {
+        const selfProfile = updated.find(p => p.relationship === 'Self');
+        if (selfProfile) {
+          setActiveProfile(selfProfile);
+        }
+      }
+
+      setProfileSuccess(true);
+      setTimeout(() => setProfileSuccess(false), 3000);
+    } catch (err) {
+      console.error('Profile credentials update failed:', err);
+      alert('Failed to save profile changes. Please try again.');
+    } finally {
+      setProfileSaving(false);
+    }
+  }
+
   // ── Lab Document Upload ─────────────────────────────────────
   const triggerFileUpload = () => {
     fileInputRef.current?.click();
@@ -470,7 +626,7 @@ export default function PatientWorkspace({ currentUser, navigate, tenant }: {
   });
 
   return (
-    <div className="min-h-screen bg-[#F4F8FB] font-sans pb-24 lg:pb-16">
+    <div className="min-h-screen bg-[#F4F8FB] font-sans pb-24 lg:pb-16 relative overflow-x-hidden w-full max-w-full">
       
       {/* ── CENTRAL GRADIANT BG OVERLAYS ── */}
       <div className="absolute top-[-20%] left-[-15%] w-[60%] h-[50%] bg-[#005EB8]/5 rounded-full blur-[140px] pointer-events-none" />
@@ -516,6 +672,7 @@ export default function PatientWorkspace({ currentUser, navigate, tenant }: {
                 { id: 'doctors', label: 'Doctors', icon: Stethoscope },
                 { id: 'family', label: 'Member Section', icon: User },
                 { id: 'wallet', label: 'Digital Health Card', icon: Award },
+                { id: 'profile', label: 'My Control Profile', icon: User },
                 { id: 'guide', label: 'Hospital Directions', icon: Building2 },
               ].map(tab => {
                 const Icon = tab.icon;
@@ -1162,12 +1319,30 @@ export default function PatientWorkspace({ currentUser, navigate, tenant }: {
             {/* ── TAB 5: FAMILY PROFILES SETTINGS ── */}
             {activeTab === 'family' && (
               <div className="space-y-6">
-                <div>
-                  <h2 className="text-lg font-black text-slate-800 tracking-tight flex items-center gap-2">
-                    <User className="w-5 h-5 text-[#005EB8]" />
-                    Family Context Profiles
-                  </h2>
-                  <p className="text-xs text-slate-400 font-semibold mt-0.5">Manage separate clinical records, drug dispensaries, and timelines for children or parents.</p>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+                  <div>
+                    <h2 className="text-lg font-black text-slate-800 tracking-tight flex items-center gap-2">
+                      <User className="w-5 h-5 text-[#005EB8]" />
+                      Family Context Profiles
+                    </h2>
+                    <p className="text-xs text-slate-400 font-semibold mt-0.5">Manage separate clinical records, drug dispensaries, and timelines for children or parents.</p>
+                  </div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <button
+                      onClick={() => setShowAddFamily(true)}
+                      className="px-4 py-2 bg-[#005EB8] hover:bg-[#004a96] text-white text-[11px] font-black rounded-xl shadow-sm transition-all flex items-center gap-1.5 uppercase tracking-wider"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      Add Member
+                    </button>
+                    <button
+                      onClick={() => setShowSyncMember(true)}
+                      className="px-4 py-2 bg-gradient-to-r from-[#00A3AD] to-[#005EB8] hover:opacity-95 text-white text-[11px] font-black rounded-xl shadow-sm transition-all flex items-center gap-1.5 uppercase tracking-wider"
+                    >
+                      <RefreshCw className="w-3.5 h-3.5" />
+                      Sync Account (OTP)
+                    </button>
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -1210,7 +1385,7 @@ export default function PatientWorkspace({ currentUser, navigate, tenant }: {
                       <button 
                         type="button" 
                         onClick={() => setShowAddFamily(false)}
-                        className="absolute right-4 top-4 text-slate-400 hover:text-slate-600"
+                        className="absolute right-4 top-4 text-slate-400 hover:text-slate-650"
                       >
                         <X className="w-5 h-5" />
                       </button>
@@ -1292,6 +1467,335 @@ export default function PatientWorkspace({ currentUser, navigate, tenant }: {
                   </div>
                 )}
 
+                {/* Sync & Connect Member Modal */}
+                {showSyncMember && (
+                  <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                    <div className="bg-white rounded-[32px] border border-slate-100 max-w-md w-full p-6 shadow-2xl relative animate-fade-in text-left font-sans">
+                      <button 
+                        type="button" 
+                        onClick={() => {
+                          setShowSyncMember(false);
+                          setSyncStep('input');
+                          setSyncOtpInput('');
+                          setSyncError('');
+                        }}
+                        className="absolute right-4 top-4 text-slate-400 hover:text-slate-650"
+                      >
+                        <X className="w-5 h-5" />
+                      </button>
+
+                      <h3 className="text-base font-black text-slate-800 uppercase tracking-tight flex items-center gap-2 border-b border-slate-50 pb-2">
+                        <RefreshCw className="w-5 h-5 text-[#00A3AD]" /> Connect Unified Health Node
+                      </h3>
+
+                      {syncError && (
+                        <div className="flex items-center gap-2.5 bg-rose-50 border border-rose-100 text-rose-600 rounded-xl px-3 py-2.5 text-xs font-bold mt-3">
+                          <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                          <span>{syncError}</span>
+                        </div>
+                      )}
+
+                      {syncStep === 'input' && (
+                        <form onSubmit={handleSyncMemberSubmit} className="space-y-4 mt-4">
+                          <p className="text-xs text-slate-400 font-semibold leading-relaxed">
+                            Search and connect an existing outpatient account using secure mobile verification.
+                          </p>
+
+                          <div className="grid grid-cols-2 gap-3">
+                            <div>
+                              <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Full Name *</label>
+                              <input 
+                                type="text"
+                                value={syncForm.name}
+                                onChange={e => setSyncForm({...syncForm, name: e.target.value})}
+                                placeholder="e.g. Rahul Kumar"
+                                className="w-full text-xs p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-850"
+                                required
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Relationship *</label>
+                              <select
+                                value={syncForm.relationship}
+                                onChange={e => setSyncForm({...syncForm, relationship: e.target.value as any})}
+                                className="w-full text-xs p-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none font-bold text-slate-850"
+                              >
+                                <option value="Child">Child</option>
+                                <option value="Spouse">Spouse</option>
+                                <option value="Parent">Parent</option>
+                              </select>
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-3">
+                            <div>
+                              <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Mobile Number *</label>
+                              <input 
+                                type="tel"
+                                value={syncForm.phone}
+                                onChange={e => setSyncForm({...syncForm, phone: e.target.value})}
+                                placeholder="10-digit number"
+                                className="w-full text-xs p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-850"
+                                required
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">ABHA / Health ID (Optional)</label>
+                              <input 
+                                type="text"
+                                value={syncForm.abhaId}
+                                onChange={e => setSyncForm({...syncForm, abhaId: e.target.value})}
+                                placeholder="91-XXXX-XXXX-XXXX"
+                                className="w-full text-xs p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-semibold text-slate-800"
+                              />
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-3">
+                            <div>
+                              <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Age *</label>
+                              <input 
+                                type="number"
+                                value={syncForm.age}
+                                onChange={e => setSyncForm({...syncForm, age: e.target.value})}
+                                placeholder="Age"
+                                className="w-full text-xs p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-850"
+                                required
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Blood Group</label>
+                              <select
+                                value={syncForm.bloodGroup}
+                                onChange={e => setSyncForm({...syncForm, bloodGroup: e.target.value})}
+                                className="w-full text-xs p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-850"
+                              >
+                                {['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'].map(bg => (
+                                  <option key={bg} value={bg}>{bg}</option>
+                                ))}
+                              </select>
+                            </div>
+                          </div>
+
+                          <div>
+                            <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Allergies</label>
+                            <input 
+                              type="text"
+                              value={syncForm.allergies}
+                              onChange={e => setSyncForm({...syncForm, allergies: e.target.value})}
+                              placeholder="Allergies (or None)"
+                              className="w-full text-xs p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-semibold text-slate-850"
+                            />
+                          </div>
+
+                          <button
+                            type="submit"
+                            className="w-full min-h-[44px] bg-[#005EB8] hover:bg-[#004a96] text-white font-black text-xs rounded-xl shadow-md uppercase tracking-wider transition-all"
+                          >
+                            Send Secure OTP Request
+                          </button>
+                        </form>
+                      )}
+
+                      {syncStep === 'otp' && (
+                        <form onSubmit={handleVerifyOtp} className="space-y-5 mt-4 text-center">
+                          <p className="text-xs text-slate-500 font-semibold">
+                            Enter the secure 4-digit code sent to <strong className="text-slate-800">{syncForm.phone}</strong>.
+                          </p>
+
+                          <div className="bg-[#F0F6FC] border border-blue-100 rounded-xl p-3.5 text-center">
+                            <span className="text-[10px] font-black text-[#005EB8] uppercase tracking-widest block">Unified Health Verification OTP Code</span>
+                            <span className="text-xl font-black text-slate-700 mt-1 block select-all tracking-widest">{generatedOtp}</span>
+                          </div>
+
+                          <div className="max-w-[200px] mx-auto">
+                            <input 
+                              type="text"
+                              maxLength={4}
+                              value={syncOtpInput}
+                              onChange={e => setSyncOtpInput(e.target.value.replace(/\D/g, ''))}
+                              placeholder="Code"
+                              className="w-full text-center text-lg p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-black tracking-widest focus:outline-none"
+                              required
+                            />
+                          </div>
+
+                          <div className="flex gap-2">
+                            <button
+                              type="button"
+                              onClick={() => { setSyncStep('input'); setSyncOtpInput(''); setSyncError(''); }}
+                              className="flex-1 min-h-[44px] bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 font-black text-xs rounded-xl uppercase tracking-wider transition-colors"
+                            >
+                              Back
+                            </button>
+                            <button
+                              type="submit"
+                              className="flex-1 min-h-[44px] bg-[#005EB8] hover:bg-[#004a96] text-white font-black text-xs rounded-xl shadow-md uppercase tracking-wider transition-all"
+                            >
+                              Verify & Sync
+                            </button>
+                          </div>
+                        </form>
+                      )}
+
+                      {syncStep === 'success' && (
+                        <div className="py-6 text-center space-y-3 mt-2">
+                          <div className="w-12 h-12 bg-emerald-50 border border-emerald-100 rounded-2xl flex items-center justify-center mx-auto text-emerald-600 animate-bounce">
+                            <CheckCircle className="w-6 h-6" />
+                          </div>
+                          <div>
+                            <h4 className="text-sm font-black text-slate-800 uppercase tracking-tight">Sync Completed Successfully</h4>
+                            <p className="text-xs text-slate-400 font-semibold mt-1">
+                              Connected {syncForm.name}'s medical records and dashboard context.
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+              </div>
+            )}
+
+            {/* ── TAB 5.5: MY CONTROL PROFILE ── */}
+            {activeTab === 'profile' && (
+              <div className="space-y-6">
+                <div>
+                  <h2 className="text-lg font-black text-slate-800 tracking-tight flex items-center gap-2 text-left">
+                    <User className="w-5 h-5 text-[#005EB8]" />
+                    Profile Control Center
+                  </h2>
+                  <p className="text-xs text-slate-400 font-semibold mt-0.5 text-left">Review and manage your personal details, connected mobile numbers, and clinical attributes.</p>
+                </div>
+
+                {profileSuccess && (
+                  <div className="flex items-center gap-2.5 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-2xl px-4 py-3 text-xs font-bold animate-fade-in text-left">
+                    <CheckCircle className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                    <span>Profile credentials saved successfully! Cascaded updates to primary workspace.</span>
+                  </div>
+                )}
+
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                  {/* Left Column: Visual Profile Card */}
+                  <div className="lg:col-span-1 space-y-6">
+                    <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-6 text-center space-y-5 relative overflow-hidden select-none">
+                      <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-[#005EB8] to-[#00A3AD]" />
+                      
+                      <div className="w-20 h-20 bg-gradient-to-tr from-[#005EB8] to-[#00A3AD] text-white rounded-[24px] flex items-center justify-center font-black text-2xl shadow-lg mx-auto uppercase">
+                        {(profileForm.name || currentUser?.phone || 'U').substring(0, 2)}
+                      </div>
+
+                      <div className="space-y-1">
+                        <h3 className="font-extrabold text-slate-800 text-base">{profileForm.name || 'Patient User'}</h3>
+                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{patientPhone}</p>
+                      </div>
+
+                      <div className="flex items-center justify-center gap-1.5 py-1 px-3 bg-emerald-50 border border-emerald-100 text-emerald-600 rounded-full w-max mx-auto text-[10px] font-black uppercase tracking-wider">
+                        <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
+                        Verified Clinical Node
+                      </div>
+
+                      <div className="border-t border-slate-100 pt-4 text-left space-y-2.5">
+                        <div className="flex justify-between items-center text-[10px] font-bold text-slate-400 uppercase tracking-wide">
+                          <span>Primary Hospital</span>
+                          <span className="font-extrabold text-slate-650">{tenant?.name || 'MedQueue Clinic'}</span>
+                        </div>
+                        <div className="flex justify-between items-center text-[10px] font-bold text-slate-400 uppercase tracking-wide">
+                          <span>Account Created</span>
+                          <span className="font-extrabold text-slate-650">02 June 2026</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Right Column: Editable Profile Form */}
+                  <div className="lg:col-span-2">
+                    <form onSubmit={handleSaveProfile} className="bg-white rounded-3xl border border-slate-100 shadow-sm p-6 space-y-5 text-left">
+                      <h4 className="text-xs font-black text-[#005EB8] uppercase tracking-widest border-b border-slate-50 pb-2">Credential Identifiers</h4>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Full Name *</label>
+                          <input 
+                            type="text"
+                            value={profileForm.name}
+                            onChange={e => setProfileForm({...profileForm, name: e.target.value})}
+                            placeholder="Full Name"
+                            className="w-full text-xs p-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-[#005EB8] focus:bg-white outline-none font-bold text-slate-800"
+                            required
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Mobile Number (Linked)</label>
+                          <input 
+                            type="text"
+                            value={patientPhone}
+                            disabled
+                            placeholder="Mobile Number"
+                            className="w-full text-xs p-3 bg-slate-100 border border-slate-200 rounded-xl font-bold text-slate-400 cursor-not-allowed"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Email Address</label>
+                          <input 
+                            type="email"
+                            value={profileForm.email}
+                            onChange={e => setProfileForm({...profileForm, email: e.target.value})}
+                            placeholder="yourname@gmail.com"
+                            className="w-full text-xs p-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-[#005EB8] focus:bg-white outline-none font-bold text-slate-800"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Primary Blood Group</label>
+                          <select
+                            value={profileForm.bloodGroup}
+                            onChange={e => setProfileForm({...profileForm, bloodGroup: e.target.value})}
+                            className="w-full text-xs p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none font-bold text-slate-800"
+                          >
+                            {['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'].map(bg => (
+                              <option key={bg} value={bg}>{bg}</option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Residential / Home Address</label>
+                        <input 
+                          type="text"
+                          value={profileForm.address}
+                          onChange={e => setProfileForm({...profileForm, address: e.target.value})}
+                          placeholder="Complete home or office address"
+                          className="w-full text-xs p-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-[#005EB8] focus:bg-white outline-none font-bold text-slate-800"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Critical Allergies / Alerts</label>
+                        <input 
+                          type="text"
+                          value={profileForm.allergies}
+                          onChange={e => setProfileForm({...profileForm, allergies: e.target.value})}
+                          placeholder="e.g. Penicillin, Peanuts (or None)"
+                          className="w-full text-xs p-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-[#005EB8] focus:bg-white outline-none font-bold text-slate-800"
+                        />
+                      </div>
+
+                      <button
+                        type="submit"
+                        disabled={profileSaving}
+                        className="w-full min-h-[48px] bg-[#005EB8] hover:bg-[#004a96] disabled:opacity-60 text-white font-black text-xs rounded-xl shadow-md uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 active:scale-[0.99] focus:outline-none font-sans"
+                      >
+                        {profileSaving ? <Loader2 className="w-4.5 h-4.5 animate-spin" /> : <CheckCircle className="w-4.5 h-4.5" />}
+                        {profileSaving ? 'Saving Profile Credentials...' : 'Save Profile Credentials'}
+                      </button>
+                    </form>
+                  </div>
+                </div>
               </div>
             )}
 

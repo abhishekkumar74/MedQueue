@@ -21,6 +21,7 @@ type Page = 'landing' | 'patient-login' | 'staff-login' | 'register' | 'staff'
 interface PageState {
   tokenNumber?: number;
   phone?: string;
+  tab?: string;
 }
 
 export default function App() {
@@ -743,7 +744,7 @@ export default function App() {
 
   // ── Main layout ───────────────────────────────────────
   return (
-    <div className="min-h-screen bg-[#E8F3FF]">
+    <div className="min-h-screen bg-[#E8F3FF] overflow-x-hidden w-full relative">
       <UniversalHeader page={page} navigate={navigate} currentUser={user} handleLogout={handleLogout} />
 
       {/* Mobile bottom nav for patients */}
@@ -789,7 +790,7 @@ export default function App() {
       )}
 
       <main key={page} className={`animate-fade-in ${user.type === 'patient' ? 'pb-[calc(4rem+env(safe-area-inset-bottom,0px))] md:pb-0' : ''}`}>
-        {page === 'register' && <PatientWorkspace currentUser={user} navigate={navigate} tenant={tenant} />}
+        {page === 'register' && <PatientWorkspace currentUser={user} navigate={navigate} tenant={tenant} initialTab={pageState.tab} />}
         {page === 'staff' && <StaffDashboard onNavigate={navigate} currentUser={user} />}
         {page === 'super-admin' && <SuperAdminDashboard currentUser={user} onNavigate={navigate} />}
         {page === 'tracker' && (
