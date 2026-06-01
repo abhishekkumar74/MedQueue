@@ -14,6 +14,9 @@ import { getCachedUser } from './auth';
 
 export function getSelectedHospitalId(): string {
   const cachedUser = getCachedUser();
+  if (cachedUser?.type === 'patient') {
+    return localStorage.getItem('mq_selected_hospital_id') || 'd290f1ee-6c54-4b01-90e6-d701748f0851';
+  }
   if (cachedUser?.role === 'SUPER_ADMIN') {
     return localStorage.getItem('mq_selected_hospital_id') || cachedUser.hospital_id || 'd290f1ee-6c54-4b01-90e6-d701748f0851';
   }
