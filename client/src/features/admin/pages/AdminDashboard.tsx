@@ -210,7 +210,7 @@ export default function AdminDashboard({ currentUser }: Props) {
       const rows = tokensRes.data ?? [];
       setTokens(rows);
       setDoctors(doctorsRes.data ?? []);
-      setStaffUsers(staffRes.data ?? []);
+      setStaffUsers((staffRes.data ?? []).filter((s: any) => s.role !== 'SUPER_ADMIN'));
       setAppointments(appointmentsRes.data ?? []);
       setPrescriptions(prescriptionsRes.data ?? []);
       setActivityLogs(logsRes.data ?? []);
@@ -371,25 +371,35 @@ export default function AdminDashboard({ currentUser }: Props) {
       if (staffErr) throw staffErr;
       if (!staffData) throw new Error('Failed to retrieve registered staff user details');
 
-      // Create doctor practitioner record
-      const { error: docErr } = await supabase
+      // Create doctor practitioner record with duplicate-checking self-healing guard
+      const { data: existingDoc } = await supabase
         .from('doctors')
-        .insert({
-          staff_user_id: staffData.id,
-          name: name.trim(),
-          specialty: specialty ? specialty.trim() : 'General',
-          department: department ? department.toLowerCase().trim() : 'general',
-          room_number: room_number ? room_number.trim() || null : null,
-          hospital_id: hospitalId,
-          is_available: true
-        });
+        .select('id')
+        .eq('staff_user_id', staffData.id)
+        .maybeSingle();
 
-      if (docErr) throw docErr;
+      if (!existingDoc) {
+        const { error: docErr } = await supabase
+          .from('doctors')
+          .insert({
+            staff_user_id: staffData.id,
+            name: name.trim(),
+            specialty: specialty ? specialty.trim() : 'General',
+            department: department ? department.toLowerCase().trim() : 'general',
+            room_number: room_number ? room_number.trim() || null : null,
+            hospital_id: hospitalId,
+            is_available: true
+          });
+
+        if (docErr && !docErr.message.toLowerCase().includes('duplicate')) {
+          throw docErr;
+        }
+      }
 
       setSuccess(`Doctor "${name}" successfully registered!`);
       logLocalActivity(`New practitioner registered: Doctor ${name} (${specialty}).`, 'doctors', 'bg-[#00A3AD]');
       setShowAddDoctor(false);
-      setDoctorForm({ name: '', specialty: 'General', department: 'general', room_number: '', email: '', password: '' });
+      setDoctorForm({ name: '', specialty: 'General', department: 'general' as Department, room_number: '', email: '', password: '' });
       fetchData();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Registering doctor failed');
@@ -406,7 +416,7 @@ export default function AdminDashboard({ currentUser }: Props) {
       const salt = bcrypt.genSaltSync(10);
       const hash = bcrypt.hashSync(password, salt);
 
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('staff_users')
         .insert({
           name: name.trim(),
@@ -417,9 +427,39 @@ export default function AdminDashboard({ currentUser }: Props) {
           room_number: room_number ? room_number.trim() || null : null,
           hospital_id: hospitalId,
           is_active: true
-        });
+        })
+        .select()
+        .single();
 
       if (error) throw error;
+      if (!data) throw new Error('Failed to retrieve registered staff user details');
+
+      // If registered role is a DOCTOR, auto-create a safe matching doctor record
+      if (role === 'DOCTOR') {
+        const { data: existingDoc } = await supabase
+          .from('doctors')
+          .select('id')
+          .eq('staff_user_id', data.id)
+          .maybeSingle();
+
+        if (!existingDoc) {
+          const { error: docErr } = await supabase
+            .from('doctors')
+            .insert({
+              staff_user_id: data.id,
+              name: name.trim(),
+              specialty: 'General',
+              department: department ? department.toLowerCase().trim() : 'general',
+              room_number: room_number ? room_number.trim() || null : null,
+              hospital_id: hospitalId,
+              is_available: true
+            });
+
+          if (docErr && !docErr.message.toLowerCase().includes('duplicate')) {
+            console.warn('Could not auto-onboard matching doctor profile:', docErr.message);
+          }
+        }
+      }
 
       setSuccess(`Staff member "${name}" registered successfully!`);
       logLocalActivity(`Registered staff operator: ${name} (${role}).`, 'staff', 'bg-[#005EB8]');
