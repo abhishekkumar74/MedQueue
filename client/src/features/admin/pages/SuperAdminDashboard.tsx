@@ -168,6 +168,7 @@ export default function SuperAdminDashboard({ currentUser: _currentUser, onNavig
 
   const [securityLogs, setSecurityLogs] = useState<SecurityLog[]>([]);
   const [activityFeed, setActivityFeed] = useState<ActivityEvent[]>([]);
+  const [onboardingRequests, setOnboardingRequests] = useState<ActivityEvent[]>([]);
 
   const [deptSplit, setDeptSplit] = useState({ cardiology: 45, pediatrics: 30, general: 25 });
   const [noShowRate, setNoShowRate] = useState('4.8 %');
@@ -287,6 +288,26 @@ export default function SuperAdminDashboard({ currentUser: _currentUser, onNavig
         }
       } catch (err) {
         console.warn('Could not load activity logs dynamically:', err);
+      }
+
+      // 5.5 Fetch onboarding logs separately from database
+      try {
+        const { data: onboardingData } = await supabase
+          .from('activity_logs')
+          .select('*')
+          .eq('category', 'onboarding')
+          .order('created_at', { ascending: false });
+        if (onboardingData) {
+          setOnboardingRequests(onboardingData.map(l => ({
+            id: l.id,
+            timestamp: l.created_at,
+            message: l.message,
+            category: l.category as any,
+            badgeColor: l.badge_color
+          })));
+        }
+      } catch (err) {
+        console.warn('Could not load onboarding logs dynamically:', err);
       }
 
       // 6. Fetch security intrusion logs from database
@@ -1610,20 +1631,19 @@ export default function SuperAdminDashboard({ currentUser: _currentUser, onNavig
               </div>
 
               {/* Onboarding & Demo Bookings Desk */}
-              {activityFeed.some(evt => evt.category === 'onboarding') && (
+              {onboardingRequests.length > 0 && (
                 <div className="bg-white rounded-3xl border border-slate-200/60 p-6 shadow-sm mb-6 animate-fadeIn">
                   <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
                     <h3 className="text-xs font-black text-slate-900 uppercase tracking-widest flex items-center gap-2">
                       <Sparkles className="w-4 h-4 text-[#00A3AD] animate-pulse" /> Pending Hospital Onboarding & Demo Requests
                     </h3>
                     <span className="text-[9px] bg-indigo-50 border border-indigo-100 text-indigo-700 px-2.5 py-0.5 rounded-full font-bold">
-                      {activityFeed.filter(evt => evt.category === 'onboarding').length} Requests Pending
+                      {onboardingRequests.length} Requests Pending
                     </span>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {activityFeed
-                      .filter(evt => evt.category === 'onboarding')
+                    {onboardingRequests
                       .map(evt => {
                         const rawMsg = evt.message;
                         const matchHosp = rawMsg.match(/"([^"]+)"/);

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { getQueue, callNextPatient, markTokenNoShow, createPrescription, getSelectedHospitalId } from '../../../lib/api';
+import { markTokenNoShow, createPrescription, getSelectedHospitalId } from '../../../lib/api';
 import { supabase } from '../../../lib/supabase';
 import { Token, PatientIntake, Medication, PRIORITY_LABEL, INTAKE_STATUS_COLOR, INTAKE_STATUS_LABEL } from '../../../types';
 import { 
@@ -71,7 +71,7 @@ const PRESCRIPTION_TEMPLATES: Record<string, Omit<Medication, 'quantity'>[]> = {
 // Diagnosis Predefined Chips
 const DIAGNOSIS_CHIPS = ['Acute Fever', 'Viral Infection', 'Gastroenteritis', 'Migraine', 'Hypertension', 'Type 2 Diabetes', 'General Weakness'];
 
-export default function DoctorPanel({ doctorDepartment = 'general', doctorName = 'Doctor', roomNumber = '101', doctorStaffId }: DoctorPanelProps = {}) {
+export default function DoctorPanel({ doctorDepartment = 'general', doctorName = 'Doctor', roomNumber = '101' }: DoctorPanelProps = {}) {
   const [queue, setQueue] = useState<QueueData>({ waiting: [], serving: null });
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState('');
@@ -423,32 +423,34 @@ export default function DoctorPanel({ doctorDepartment = 'general', doctorName =
       
       {/* ── STICKY TOP ACTIONS SUB-HEADER ──────────────────────── */}
       <div className="sticky top-0 bg-white/80 backdrop-blur-md border-b border-slate-150 z-30 shadow-[0_2px_12px_rgba(0,0,0,0.02)]">
-        <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-[#005EB8] flex items-center justify-center text-white shadow-md shadow-blue-500/20">
-              <Stethoscope className="w-5 h-5 animate-pulse" />
+        <div className="max-w-7xl mx-auto px-4 min-h-[4rem] py-2 md:py-0 md:h-16 flex flex-row items-center justify-between gap-2">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+            <div className="hidden xs:flex w-8 h-8 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl bg-[#005EB8] items-center justify-center text-white shadow-md shadow-blue-500/20 flex-shrink-0">
+              <Stethoscope className="w-4.5 h-4.5 sm:w-5 sm:h-5 animate-pulse" />
             </div>
-            <div>
-              <h1 className="text-sm font-black text-slate-800 tracking-tight flex items-center gap-1.5">
-                {doctorName}
-                <span className="text-[9px] bg-[#00A3AD]/10 text-[#00A3AD] font-black px-1.5 py-0.5 rounded uppercase">Room {roomNumber}</span>
+            <div className="min-w-0">
+              <h1 className="text-xs sm:text-sm font-black text-slate-800 tracking-tight flex items-center flex-wrap gap-1 sm:gap-1.5 leading-tight">
+                <span className="truncate">{doctorName}</span>
+                <span className="text-[8px] sm:text-[9px] bg-[#00A3AD]/10 text-[#00A3AD] font-black px-1.5 py-0.5 rounded uppercase flex-shrink-0">Room {roomNumber}</span>
               </h1>
-              <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-widest block mt-0.5">
-                {doctorDepartment.toUpperCase()} CONSULTATION DASHBOARD
+              <span className="text-[8px] sm:text-[10px] text-slate-400 font-extrabold uppercase tracking-wider sm:tracking-widest block mt-0.5 truncate max-w-[140px] xs:max-w-none">
+                <span className="inline sm:hidden">{doctorDepartment.toUpperCase()} DEPT</span>
+                <span className="hidden sm:inline">{doctorDepartment.toUpperCase()} CONSULTATION DASHBOARD</span>
               </span>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
             <button
               onClick={callNext}
               disabled={!!actionLoading || readyCount === 0}
-              className="flex items-center gap-1.5 px-4 h-9 bg-[#005EB8] hover:bg-[#004a96] disabled:opacity-50 text-white text-xs font-black uppercase tracking-wider rounded-xl transition-all shadow-md shadow-blue-500/10 active:scale-95"
+              className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-4 h-9 bg-[#005EB8] hover:bg-[#004a96] disabled:opacity-50 text-white text-[10px] sm:text-xs font-black uppercase tracking-wider rounded-xl transition-all shadow-md shadow-blue-500/10 active:scale-95 min-h-[36px]"
             >
-              {actionLoading === 'calling' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Phone className="w-3.5 h-3.5" />}
-              <span>Call Next Patient</span>
+              {actionLoading === 'calling' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Phone className="w-3 h-3 sm:w-3.5 sm:h-3.5" />}
+              <span className="hidden sm:inline">Call Next Patient</span>
+              <span className="inline sm:hidden">Call Next</span>
               {readyCount > 0 && (
-                <span className="bg-white/20 text-[10px] font-black px-1.5 py-0.5 rounded-full ml-1">
+                <span className="bg-white/20 text-[9px] sm:text-[10px] font-black px-1.5 py-0.5 rounded-full ml-0.5 sm:ml-1">
                   {readyCount}
                 </span>
               )}
@@ -456,7 +458,7 @@ export default function DoctorPanel({ doctorDepartment = 'general', doctorName =
 
             <button
               onClick={fetchQueue}
-              className="w-9 h-9 border border-slate-200 hover:border-slate-350 bg-white text-slate-500 flex items-center justify-center rounded-xl transition-all hover:bg-slate-50 active:scale-95"
+              className="w-9 h-9 border border-slate-200 hover:border-slate-350 bg-white text-slate-500 flex items-center justify-center rounded-xl transition-all hover:bg-slate-50 active:scale-95 min-h-[36px]"
             >
               <RefreshCw className="w-4 h-4 text-[#005EB8]" />
             </button>
@@ -1001,7 +1003,7 @@ export default function DoctorPanel({ doctorDepartment = 'general', doctorName =
                 </div>
               </>
             ) : (
-              <div className="bg-white/80 border border-slate-150 rounded-3xl p-20 text-center shadow-sm">
+              <div className="bg-white/80 border border-slate-150 rounded-3xl p-6 sm:p-12 md:p-20 text-center shadow-sm">
                 <div className="w-14 h-14 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-400 mx-auto mb-4 border border-slate-100">
                   <Clock className="w-6 h-6" />
                 </div>
@@ -1011,7 +1013,7 @@ export default function DoctorPanel({ doctorDepartment = 'general', doctorName =
                 <button
                   onClick={callNext}
                   disabled={!!actionLoading || readyCount === 0}
-                  className="mt-5 inline-flex items-center gap-2 px-5 py-2.5 bg-[#005EB8] hover:bg-[#004a96] disabled:opacity-50 text-white text-xs font-black uppercase tracking-wider rounded-xl transition-all shadow-md shadow-blue-500/10 active:scale-95"
+                  className="mt-5 inline-flex items-center gap-2 px-4 py-2.5 sm:px-5 bg-[#005EB8] hover:bg-[#004a96] disabled:opacity-50 text-white text-xs font-black uppercase tracking-wider rounded-xl transition-all shadow-md shadow-blue-500/10 active:scale-95"
                 >
                   <Phone className="w-3.5 h-3.5" />
                   <span>Call Next Patient ({readyCount} Ready)</span>
@@ -1129,19 +1131,23 @@ export default function DoctorPanel({ doctorDepartment = 'general', doctorName =
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
           <div className="bg-white rounded-3xl max-w-2xl w-full shadow-2xl overflow-hidden border border-slate-150 max-h-[90vh] flex flex-col animate-fade-in">
             {/* Modal Header Actions */}
-            <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50 flex-shrink-0">
-              <span className="text-xs font-black text-slate-700 uppercase tracking-widest">EHR Verified Prescription Record</span>
-              <div className="flex items-center gap-2">
+            <div className="px-4 sm:px-5 py-3 sm:py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50 flex-shrink-0 gap-2">
+              <span className="text-xs font-black text-slate-700 uppercase tracking-widest truncate min-w-0">
+                <span className="hidden sm:inline">EHR Verified Prescription Record</span>
+                <span className="inline sm:hidden">Prescription Record</span>
+              </span>
+              <div className="flex items-center gap-2 flex-shrink-0">
                 <button
                   onClick={() => window.print()}
-                  className="flex items-center gap-1 px-3 py-1.5 bg-[#005EB8] hover:bg-[#004a96] text-white text-[10px] font-black uppercase tracking-wider rounded-xl"
+                  className="flex items-center gap-1 px-2.5 sm:px-3 py-1.5 bg-[#005EB8] hover:bg-[#004a96] text-white text-[10px] font-black uppercase tracking-wider rounded-xl flex-shrink-0"
                 >
                   <Printer className="w-3.5 h-3.5" />
-                  <span>Download/Print PDF</span>
+                  <span className="hidden xs:inline">Download/Print PDF</span>
+                  <span className="inline xs:hidden">Print</span>
                 </button>
                 <button
                   onClick={() => setShowPdfModal(false)}
-                  className="w-7 h-7 bg-slate-200 text-slate-500 hover:bg-slate-350 hover:text-slate-800 flex items-center justify-center rounded-xl transition-all"
+                  className="w-7 h-7 bg-slate-200 text-slate-500 hover:bg-slate-350 hover:text-slate-800 flex items-center justify-center rounded-xl transition-all flex-shrink-0"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -1149,40 +1155,40 @@ export default function DoctorPanel({ doctorDepartment = 'general', doctorName =
             </div>
 
             {/* Modal Scroll Content (Printable Branded Sheet) */}
-            <div className="p-8 overflow-y-auto flex-1 text-left font-sans print-sheet" id="printable-prescription-container">
+            <div className="p-4 xs:p-6 sm:p-8 overflow-y-auto flex-1 text-left font-sans print-sheet" id="printable-prescription-container">
               
               {/* Branded Hospital Header */}
               <div className="border-b-4 border-[#005EB8] pb-5 flex justify-between items-start gap-4">
                 <div>
-                  <h2 className="text-lg font-black text-slate-800 tracking-tight flex items-center gap-1.5 uppercase">
-                    <Building2 className="w-5 h-5 text-[#005EB8]" />
+                  <h2 className="text-base sm:text-lg font-black text-slate-800 tracking-tight flex items-center gap-1.5 uppercase">
+                    <Building2 className="w-4 h-4 sm:w-5 sm:h-5 text-[#005EB8]" />
                     {hospitalName}
                   </h2>
-                  <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-widest block mt-1">
+                  <span className="text-[9px] sm:text-[10px] text-slate-400 font-extrabold uppercase tracking-widest block mt-1">
                     MedQueue SecurEHR Cloud Integration
                   </span>
                 </div>
-                <div className="text-right">
-                  <div className="text-xs font-black text-slate-700 uppercase tracking-wider">Triage Node</div>
-                  <div className="text-[10px] text-[#00A3AD] font-bold mt-0.5">TOKEN #{queue.serving.token_number}</div>
-                  <div className="text-[9px] text-slate-400 mt-0.5">{new Date().toLocaleDateString()}</div>
+                <div className="text-right flex-shrink-0">
+                  <div className="text-[10px] sm:text-xs font-black text-slate-700 uppercase tracking-wider">Triage Node</div>
+                  <div className="text-[9px] sm:text-[10px] text-[#00A3AD] font-bold mt-0.5">TOKEN #{queue.serving.token_number}</div>
+                  <div className="text-[8px] sm:text-[9px] text-slate-400 mt-0.5">{new Date().toLocaleDateString()}</div>
                 </div>
               </div>
 
               {/* Doctors & Patient details split */}
-              <div className="grid grid-cols-2 gap-6 py-5 border-b border-slate-100 text-xs">
-                <div>
+              <div className="grid grid-cols-2 gap-4 sm:gap-6 py-5 border-b border-slate-100 text-xs">
+                <div className="min-w-0">
                   <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Prescribing Doctor</span>
-                  <div className="font-extrabold text-slate-800">{doctorName}</div>
-                  <div className="text-slate-400 font-semibold mt-0.5 uppercase tracking-wide">
-                    {doctorDepartment} • Room {roomNumber}
+                  <div className="font-extrabold text-slate-800 truncate">{doctorName}</div>
+                  <div className="text-slate-400 font-semibold mt-0.5 uppercase tracking-wide truncate">
+                    {doctorDepartment} • {roomNumber.toLowerCase().startsWith('room') ? roomNumber : `Room ${roomNumber}`}
                   </div>
                 </div>
 
-                <div>
+                <div className="min-w-0">
                   <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Patient Details</span>
-                  <div className="font-extrabold text-slate-800">{queue.serving.patients?.name || 'Patient'}</div>
-                  <div className="text-slate-400 font-semibold mt-0.5">
+                  <div className="font-extrabold text-slate-800 truncate">{queue.serving.patients?.name || 'Patient'}</div>
+                  <div className="text-slate-400 font-semibold mt-0.5 truncate">
                     Age: {queue.serving.patients?.age || 'TBD'} yrs • Phone: {queue.serving.phone}
                   </div>
                 </div>
@@ -1191,7 +1197,7 @@ export default function DoctorPanel({ doctorDepartment = 'general', doctorName =
               {/* Vitals summary block */}
               <div className="py-4 border-b border-slate-100">
                 <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-2">Patient Vitals Snapshot</span>
-                <div className="grid grid-cols-5 gap-2.5">
+                <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 sm:gap-2.5">
                   {[
                     { label: 'BP', val: servingIntake?.bp || '120/80' },
                     { label: 'Sugar', val: (servingIntake?.sugar || '96') + ' mg/dL' },
@@ -1201,21 +1207,21 @@ export default function DoctorPanel({ doctorDepartment = 'general', doctorName =
                   ].map((v, i) => (
                     <div key={i} className="bg-slate-50 rounded-xl p-2 border border-slate-150/60 text-center">
                       <div className="text-[8px] font-black text-slate-400 uppercase tracking-wider">{v.label}</div>
-                      <div className="text-xs font-black text-slate-800 mt-1">{v.val}</div>
+                      <div className="text-[10px] sm:text-xs font-black text-slate-800 mt-1 truncate">{v.val}</div>
                     </div>
                   ))}
                 </div>
               </div>
 
               {/* Chief symptoms & Diagnosis split */}
-              <div className="py-4 border-b border-slate-100 grid grid-cols-2 gap-6 text-xs font-semibold">
+              <div className="py-4 border-b border-slate-100 grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 text-xs font-semibold">
                 <div>
                   <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Chief Triage Symptoms</span>
-                  <div className="text-slate-700">{servingIntake?.symptoms || 'None reported'}</div>
+                  <div className="text-slate-700 bg-slate-50/50 rounded-xl p-2.5 border border-slate-100/50 sm:p-0 sm:border-none sm:bg-transparent">{servingIntake?.symptoms || 'None reported'}</div>
                 </div>
                 <div>
                   <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Doctor Diagnosis</span>
-                  <div className="text-slate-700 font-bold">{diagnosis || 'General Consultation Findings'}</div>
+                  <div className="text-slate-700 font-bold bg-slate-50/50 rounded-xl p-2.5 border border-slate-100/50 sm:p-0 sm:border-none sm:bg-transparent">{diagnosis || 'General Consultation Findings'}</div>
                 </div>
               </div>
 
@@ -1223,7 +1229,7 @@ export default function DoctorPanel({ doctorDepartment = 'general', doctorName =
               {selectedLabTests.length > 0 && (
                 <div className="py-4 border-b border-slate-100">
                   <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1.5">Prescribed Diagnostic Lab Investigations</span>
-                  <div className="flex gap-2">
+                  <div className="flex flex-wrap gap-2">
                     {selectedLabTests.map(test => (
                       <span key={test} className="bg-violet-50 border border-violet-100 text-violet-700 text-[9px] font-black uppercase tracking-wider px-2.5 py-1 rounded-xl">
                         {test}
@@ -1237,26 +1243,26 @@ export default function DoctorPanel({ doctorDepartment = 'general', doctorName =
               <div className="py-5">
                 <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-3">Prescribed Medications Rx</span>
                 
-                <div className="overflow-x-auto w-full scrollbar-none">
-                  <table className="w-full text-xs">
+                <div className="overflow-x-auto w-full border border-slate-100 rounded-2xl p-3 bg-slate-50/30 sm:border-none sm:p-0 sm:bg-transparent scrollbar-thin">
+                  <table className="w-full text-xs min-w-[550px] sm:min-w-0 table-layout-fixed">
                     <thead>
                       <tr className="border-b border-slate-200 text-slate-400 font-black text-[9px] uppercase tracking-wider text-left pb-2">
-                        <th className="pb-2">Medicine Details</th>
-                        <th className="pb-2">Dosage Size</th>
-                        <th className="pb-2">Frequency</th>
-                        <th className="pb-2">Duration</th>
-                        <th className="pb-2">Instructions</th>
-                        <th className="pb-2 text-right">Qty</th>
+                        <th className="pb-2 w-[30%]">Medicine Details</th>
+                        <th className="pb-2 w-[15%]">Dosage Size</th>
+                        <th className="pb-2 w-[15%]">Frequency</th>
+                        <th className="pb-2 w-[15%]">Duration</th>
+                        <th className="pb-2 w-[20%]">Instructions</th>
+                        <th className="pb-2 w-[5%] text-right">Qty</th>
                       </tr>
                     </thead>
                     <tbody>
                       {medications.map((med, i) => (
                         <tr key={i} className="border-b border-slate-100 text-slate-700">
-                          <td className="py-2.5 font-bold text-slate-800">{med.name || 'Medicine'}</td>
-                          <td className="py-2.5">{med.dosage || '1 tab'}</td>
-                          <td className="py-2.5">{med.frequency || '1-0-1'}</td>
-                          <td className="py-2.5">{med.duration || '5 days'}</td>
-                          <td className="py-2.5">{med.instructions || 'After meals'}</td>
+                          <td className="py-2.5 font-bold text-slate-800 break-words">{med.name || 'Medicine'}</td>
+                          <td className="py-2.5 break-words">{med.dosage || '1 tab'}</td>
+                          <td className="py-2.5 break-words">{med.frequency || '1-0-1'}</td>
+                          <td className="py-2.5 break-words">{med.duration || '5 days'}</td>
+                          <td className="py-2.5 break-words">{med.instructions || 'After meals'}</td>
                           <td className="py-2.5 text-right font-bold text-slate-800">{med.quantity}</td>
                         </tr>
                       ))}
@@ -1266,7 +1272,7 @@ export default function DoctorPanel({ doctorDepartment = 'general', doctorName =
               </div>
 
               {/* Follow-up & Branded signature box */}
-              <div className="border-t border-slate-200 pt-5 mt-6 flex justify-between items-end gap-6">
+              <div className="border-t border-slate-200 pt-5 mt-4 sm:mt-6 flex flex-row justify-between items-center gap-4 sm:items-end sm:gap-6">
                 <div>
                   <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Follow-Up Schedule Advice</div>
                   <div className="text-xs font-black text-emerald-600 uppercase tracking-wider bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-150/60 inline-block">
@@ -1275,13 +1281,13 @@ export default function DoctorPanel({ doctorDepartment = 'general', doctorName =
                 </div>
 
                 {/* Secure EHR QR Code validation stamp */}
-                <div className="text-right flex items-center gap-3">
+                <div className="text-right flex items-center gap-2 sm:gap-3">
                   <div className="text-right">
-                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block leading-none">MedQueue EHR</span>
-                    <span className="text-[8px] font-black text-[#00A3AD] uppercase tracking-widest block mt-1 leading-none">SecurEHR Verified</span>
+                    <span className="text-[8px] sm:text-[9px] font-black text-slate-400 uppercase tracking-widest block leading-none">MedQueue EHR</span>
+                    <span className="text-[7px] sm:text-[8px] font-black text-[#00A3AD] uppercase tracking-widest block mt-1 leading-none">SecurEHR Verified</span>
                   </div>
                   {/* Simulated verification QR matrix */}
-                  <div className="w-12 h-12 bg-slate-100 rounded-lg border-2 border-slate-200 p-1 flex items-center justify-center flex-shrink-0">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-slate-100 rounded-lg border-2 border-slate-200 p-1 flex items-center justify-center flex-shrink-0">
                     <div className="w-full h-full bg-slate-900 grid grid-cols-3 gap-0.5 opacity-90">
                       {[...Array(9)].map((_, i) => (
                         <div key={i} className={`w-full h-full ${i % 2 === 0 ? 'bg-white' : 'bg-slate-900'}`} />
