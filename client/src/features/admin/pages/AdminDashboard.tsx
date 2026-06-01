@@ -182,6 +182,24 @@ export default function AdminDashboard({ currentUser }: Props) {
       const startIST = `${selectedDate}T00:00:00+05:30`;
       const endIST   = `${selectedDate}T23:59:59+05:30`;
 
+      // 1. Fetch patient IDs in parallel for strict multi-tenant isolation
+      const [tokensPat, apptsPat, visitsPat, legacyPat] = await Promise.all([
+        supabase.from('tokens').select('patient_id').eq('hospital_id', hospitalId),
+        supabase.from('appointments').select('patient_id').eq('hospital_id', hospitalId),
+        supabase.from('visits').select('patient_id').eq('hospital_id', hospitalId),
+        supabase.from('patients').select('id').eq('hospital_id', hospitalId)
+      ]);
+
+      const patientIds = new Set<string>();
+      tokensPat.data?.forEach(t => t.patient_id && patientIds.add(t.patient_id));
+      apptsPat.data?.forEach(a => a.patient_id && patientIds.add(a.patient_id));
+      visitsPat.data?.forEach(v => v.patient_id && patientIds.add(v.patient_id));
+      legacyPat.data?.forEach(p => p.id && patientIds.add(p.id));
+
+      const patientsPromise = patientIds.size > 0
+        ? supabase.from('patients').select('*').in('id', Array.from(patientIds)).order('name')
+        : Promise.resolve({ data: [] as any[], error: null as any });
+
       // Parallel reads across all SaaS database nodes
       const [
         tokensRes,
@@ -205,7 +223,7 @@ export default function AdminDashboard({ currentUser }: Props) {
         supabase.from('activity_logs').select('*').order('created_at', { ascending: false }).limit(20),
         supabase.from('security_logs').select('*').order('created_at', { ascending: false }).limit(10),
         supabase.from('system_settings').select('*'),
-        supabase.from('patients').select('*').eq('hospital_id', hospitalId).order('name'),
+        patientsPromise,
         supabase.from('tokens').select('*, patients(id, name, age, address)').eq('hospital_id', hospitalId).order('created_at', { ascending: false }).limit(400)
       ]);
 
@@ -495,7 +513,6 @@ export default function AdminDashboard({ currentUser }: Props) {
         .from('patients')
         .select('*')
         .eq('phone', phone)
-        .eq('hospital_id', hospitalId)
         .maybeSingle();
 
       if (pe) throw pe;
@@ -576,8 +593,8 @@ export default function AdminDashboard({ currentUser }: Props) {
     setSelectedPatientId(pId);
     try {
       const [historyRes, vitalsRes] = await Promise.all([
-        supabase.from('visits').select('*, tokens(*), prescriptions(id, diagnosis, medications, status, created_at)').eq('patient_id', pId).order('created_at', { ascending: false }),
-        supabase.from('patient_intake').select('*').eq('patient_id', pId).order('created_at', { ascending: false })
+        supabase.from('visits').select('*, tokens(*), prescriptions(id, diagnosis, medications, status, created_at)').eq('patient_id', pId).eq('hospital_id', hospitalId).order('created_at', { ascending: false }),
+        supabase.from('patient_intake').select('*').eq('patient_id', pId).eq('hospital_id', hospitalId).order('created_at', { ascending: false })
       ]);
       setSelectedPatientHistory(historyRes.data ?? []);
       setSelectedPatientVitals(vitalsRes.data ?? []);

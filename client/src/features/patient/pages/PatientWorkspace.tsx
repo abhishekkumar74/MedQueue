@@ -296,6 +296,7 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
         .from('tokens')
         .select('*, patients(*)')
         .eq('phone', patientPhone)
+        .eq('hospital_id', currentHospitalId)
         .gte('created_at', todayStart.toISOString())
         .order('created_at', { ascending: false })
         .limit(1)
