@@ -12,7 +12,7 @@ import { SetupBanner, UniversalHeader } from './layouts';
 import { supabase, isMissingConfig } from './lib/supabase';
 import { AuthUser, getCachedUser, fetchMe, logout, getAccessToken } from './lib/auth';
 import { getTokenStatus } from './lib/api';
-import { LogOut, Clock, Calendar, FileText, Home, AlertTriangle, ShieldAlert, Mail, Phone } from 'lucide-react';
+import { LogOut, Clock, FileText, Home, AlertTriangle, ShieldAlert, Mail, Phone } from 'lucide-react';
 import { getTenantSlug, resolveTenantConfig, TenantConfig, getHomeRoute } from './lib/tenant';
 
 type Page = 'landing' | 'patient-login' | 'staff-login' | 'register' | 'staff'
@@ -747,13 +747,12 @@ export default function App() {
       <UniversalHeader page={page} navigate={navigate} currentUser={user} handleLogout={handleLogout} />
 
       {/* Mobile bottom nav for patients */}
-      {user.type === 'patient' && (
+      {user.type === 'patient' && page !== 'register' && (
         <div className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-slate-100 z-40 md:hidden shadow-[0_-4px_16px_rgba(0,0,0,0.03)] pb-[env(safe-area-inset-bottom,0px)]">
-          <div className="grid grid-cols-4 h-16">
+          <div className="grid grid-cols-3 h-16">
             {[
               { id: 'register', label: 'Workspace', icon: <Home className="w-5.5 h-5.5" /> },
               { id: 'tracker', label: 'Live Queue', icon: <Clock className="w-5.5 h-5.5" /> },
-              { id: 'appointment', label: 'Book Doc', icon: <Calendar className="w-5.5 h-5.5" /> },
               { id: 'history', label: 'Health Vault', icon: <FileText className="w-5.5 h-5.5" /> },
             ].map(link => (
               <button key={link.id} onClick={() => navigate(link.id)}
