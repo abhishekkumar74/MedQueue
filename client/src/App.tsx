@@ -429,7 +429,7 @@ export default function App() {
   }
 
   // ── Tenant Mismatch Interceptor ──────────────────────
-  const isTenantMismatch = tenant && user && user.role !== 'SUPER_ADMIN' && user.hospital_id !== tenant?.id;
+  const isTenantMismatch = tenant && user && user.type !== 'patient' && user.role !== 'SUPER_ADMIN' && user.hospital_id !== tenant?.id;
 
   if (isTenantMismatch) {
     const userHospName = user.hospital_id === 'd290f1ee-6c54-4b01-90e6-d701748f0851' ? 'Apollo Clinic' :
