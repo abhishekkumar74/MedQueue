@@ -845,7 +845,7 @@ export default function PatientWorkspace({ currentUser, navigate, tenant }: {
                     No clinical visit history recorded yet.
                   </div>
                 ) : (
-                  <div className="relative border-l-2 border-slate-200 pl-6 ml-4 space-y-6">
+                  <div className="relative border-l-2 border-slate-200 pl-5 sm:pl-6 ml-1 sm:ml-4 space-y-6">
                     {dbVisits.map((vis, visIdx) => {
                       const presc = dbPrescriptions.find(p => p.token_id === vis.token_id || p.visit_id === vis.id);
                       const matchedDoc = hospDoctors.find((d: any) => d.room_number === vis.tokens?.room_number || d.room_number === vis.room_number);
@@ -857,11 +857,11 @@ export default function PatientWorkspace({ currentUser, navigate, tenant }: {
                         <div key={vis.id || visIdx} className="relative group text-left">
                           
                           {/* Timeline bullet */}
-                          <span className="absolute -left-[31px] top-1.5 w-4.5 h-4.5 bg-white border-2 border-[#005EB8] rounded-full flex items-center justify-center shadow-sm relative group-hover:scale-110 transition-transform duration-300">
+                          <span className="absolute -left-[30px] sm:-left-[31px] top-1.5 w-4.5 h-4.5 bg-white border-2 border-[#005EB8] rounded-full flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform duration-300">
                             <span className="w-1.5 h-1.5 bg-[#005EB8] rounded-full" />
                           </span>
 
-                          <div className="bg-white border border-slate-100 hover:border-slate-200 rounded-3xl p-5 shadow-sm hover:shadow-md transition-all duration-300 space-y-4 relative overflow-hidden">
+                          <div className="bg-white border border-slate-100 hover:border-slate-200 rounded-3xl p-4 sm:p-5 shadow-sm hover:shadow-md transition-all duration-300 space-y-4 relative overflow-hidden">
                             {/* Top small accent line */}
                             <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#005EB8] to-[#00A3AD] opacity-70" />
 
@@ -888,12 +888,12 @@ export default function PatientWorkspace({ currentUser, navigate, tenant }: {
                               </div>
                               <div>
                                 <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest block mb-1">Triage Node Intake</span>
-                                <div className="text-slate-700">BP: <strong className="text-slate-800">{vis.bp || '120/80'}</strong> • Sugar: <strong className="text-slate-800">{vis.sugar || '98'}</strong></div>
+                                <div className="text-slate-750">BP: <strong className="text-slate-800">{vis.bp || '120/80'}</strong> • Sugar: <strong className="text-slate-800">{vis.sugar || '98'}</strong></div>
                                 <div className="text-[10px] text-slate-450 mt-0.5">Temp: {vis.tokens?.patient_intake?.[0]?.temperature || vis.temperature || '98.6'} °F</div>
                               </div>
                             </div>
 
-                            <div className="bg-slate-50/50 border border-slate-100 rounded-2xl p-4 text-xs space-y-2">
+                            <div className="bg-slate-50/50 border border-slate-100 rounded-2xl p-3 sm:p-4 text-xs space-y-2">
                               <div>
                                 <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest block mb-0.5">Reported Symptoms</span>
                                 <p className="text-slate-700 italic">{vis.symptoms || 'General routine followup checkup'}</p>
@@ -901,7 +901,7 @@ export default function PatientWorkspace({ currentUser, navigate, tenant }: {
                               {presc?.diagnosis && (
                                 <div className="pt-2 border-t border-slate-150/40">
                                   <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest block mb-0.5">Clinical Diagnosis</span>
-                                  <p className="text-slate-800 font-extrabold">{presc.diagnosis}</p>
+                                  <p className="text-slate-850 font-black">{presc.diagnosis}</p>
                                 </div>
                               )}
                             </div>
