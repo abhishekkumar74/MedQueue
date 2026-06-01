@@ -23,11 +23,6 @@ export function filterTenant(
   requestedHospitalId?: string
 ) {
   if (!user) return query;
-  if (user.type === 'patient') {
-    // Patients own all their clinical data across hospitals. Under patient-access rules,
-    // they should see their records globally, so we bypass hospital isolation limits.
-    return query;
-  }
   if (user.role === 'SUPER_ADMIN') {
     if (requestedHospitalId) {
       return query.eq('hospital_id', requestedHospitalId);

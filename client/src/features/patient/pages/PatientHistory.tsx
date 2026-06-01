@@ -70,11 +70,14 @@ export default function PatientHistory({ currentUser }: Props) {
     if (!currentUser.id) return;
     setLoading(true);
     try {
+      const currentHospitalId = localStorage.getItem('mq_selected_hospital_id') || 'd290f1ee-6c54-4b01-90e6-d701748f0851';
+
       // Fetch visits with prescriptions
       const { data: visitData, error: ve } = await supabase
         .from('visits')
         .select('*, tokens(token_number, department, status), prescriptions(id, diagnosis, medications, status, created_at)')
         .eq('patient_id', currentUser.id)
+        .eq('hospital_id', currentHospitalId)
         .order('created_at', { ascending: false })
         .limit(50);
 
@@ -86,6 +89,7 @@ export default function PatientHistory({ currentUser }: Props) {
         .from('tokens')
         .select('id, token_number, department, status, priority, created_at')
         .eq('patient_id', currentUser.id)
+        .eq('hospital_id', currentHospitalId)
         .order('created_at', { ascending: false })
         .limit(50);
 

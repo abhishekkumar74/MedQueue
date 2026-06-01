@@ -242,9 +242,9 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
 
         if (resolvedPatientId && resolvedPatientId !== 'self') {
           const [visitsRes, prescRes, apptsRes] = await Promise.all([
-            supabase.from('visits').select('*, tokens(*)').eq('patient_id', resolvedPatientId).order('created_at', { ascending: false }),
-            supabase.from('prescriptions').select('*').eq('patient_id', resolvedPatientId).order('created_at', { ascending: false }),
-            supabase.from('appointments').select('*').eq('patient_id', resolvedPatientId).order('created_at', { ascending: false })
+            supabase.from('visits').select('*, tokens(*)').eq('patient_id', resolvedPatientId).eq('hospital_id', currentHospitalId).order('created_at', { ascending: false }),
+            supabase.from('prescriptions').select('*').eq('patient_id', resolvedPatientId).eq('hospital_id', currentHospitalId).order('created_at', { ascending: false }),
+            supabase.from('appointments').select('*').eq('patient_id', resolvedPatientId).eq('hospital_id', currentHospitalId).order('created_at', { ascending: false })
           ]);
           setDbVisits(visitsRes.data || []);
           setDbPrescriptions(prescRes.data || []);

@@ -139,7 +139,7 @@ router.post('/patient/verify-otp', async (req: Request, res: Response) => {
       sub: patient.id,
       type: 'patient',
       name: patient.name || phone,
-      hospital_id: patient.hospital_id,
+      hospital_id: hospitalId,
     });
     const refreshToken = await createRefreshToken(patient.id, 'patient');
 

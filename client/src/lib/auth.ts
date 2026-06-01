@@ -350,6 +350,8 @@ export async function verifyOtp(phone: string, code: string): Promise<AuthUser> 
     patient = created;
   }
 
+  const activeHospitalId = localStorage.getItem('mq_selected_hospital_id') || 'd290f1ee-6c54-4b01-90e6-d701748f0851';
+
   const user: AuthUser = {
     id: patient.id,
     name: patient.name || phone,
@@ -357,7 +359,7 @@ export async function verifyOtp(phone: string, code: string): Promise<AuthUser> 
     phone: patient.phone,
     age: patient.age,
     address: patient.address,
-    hospital_id: patient.hospital_id ?? undefined,
+    hospital_id: activeHospitalId,
   };
 
   setCachedUser(user);
