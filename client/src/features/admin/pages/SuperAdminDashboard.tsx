@@ -2962,7 +2962,7 @@ export default function SuperAdminDashboard({ currentUser: _currentUser, onNavig
                 />
               </div>
               <div>
-                <label className="block text-[10px] font-black text-slate-450 uppercase tracking-wider mb-1">Logo Image URL</label>
+                <label className="block text-[10px] font-black text-slate-455 uppercase tracking-wider mb-1">Logo / Landing Banner Image URL</label>
                 <input
                   type="text"
                   placeholder="e.g. https://images.unsplash.com/photo-..."

@@ -152,8 +152,8 @@ export default function HospitalLandingPage({ tenant, navigate }: Props) {
             <div className="space-y-4">
               <h1 className="text-4xl sm:text-5xl font-black text-slate-800 tracking-tight leading-[1.08] lg:max-w-xl">
                 Welcome to <br />
-                <span className="text-transparent bg-clip-text animate-pulse"
-                  style={{ backgroundImage: `linear-gradient(to right, ${themeColor}, ${themeColor}d9, #14b8a6)` }}>
+                <span className="animate-pulse"
+                  style={{ color: themeColor }}>
                   {tenant?.name}
                 </span>
               </h1>
@@ -204,7 +204,7 @@ export default function HospitalLandingPage({ tenant, navigate }: Props) {
               </div>
 
               <img
-                src={meta.heroImage}
+                src={tenant?.logo_url || meta.heroImage}
                 alt={tenant?.name}
                 className="w-full h-64 sm:h-80 object-cover rounded-[32px] shadow-[0_20px_50px_rgba(0,0,0,0.04)] border border-slate-100 relative z-10 transition-all duration-500 group-hover:scale-[1.005] group-hover:shadow-[0_25px_60px_rgba(0,0,0,0.08)]"
               />
