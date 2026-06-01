@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import bcrypt from 'bcryptjs';
 import { supabase } from '../../../lib/supabase';
 import { AuthUser } from '../../../lib/auth';
 import { setSelectedHospitalId } from '../../../lib/api';
@@ -79,7 +80,7 @@ export default function SuperAdminDashboard({ currentUser: _currentUser, onNavig
 
   // Form States
   const [showAddHospital, setShowAddHospital] = useState(false);
-  const [hospitalForm, setHospitalForm] = useState({ name: '', slug: '', address: '', phone: '' });
+  const [hospitalForm, setHospitalForm] = useState({ name: '', slug: '', address: '', phone: '', logo_url: '', theme_color: '#005EB8' });
   
   const [showAddStaff, setShowAddStaff] = useState(false);
   const [staffForm, setStaffForm] = useState({
@@ -489,27 +490,51 @@ export default function SuperAdminDashboard({ currentUser: _currentUser, onNavig
     setAddHospError('');
     setSuccess('');
     try {
+      const insertPayload: any = {
+        name: hospitalForm.name.trim(),
+        slug: hospitalForm.slug.toLowerCase().trim(),
+        address: hospitalForm.address.trim(),
+        phone: hospitalForm.phone.trim(),
+        logo_url: hospitalForm.logo_url.trim() || null,
+        subscription_status: 'ACTIVE',
+        subscription_tier: 'Basic'
+      };
+
+      // Try inserting with theme_color. If column doesn't exist, we retry without it!
       const { data, error } = await supabase
         .from('hospitals')
         .insert({
-          name: hospitalForm.name.trim(),
-          slug: hospitalForm.slug.toLowerCase().trim(),
-          address: hospitalForm.address.trim(),
-          phone: hospitalForm.phone.trim(),
-          subscription_status: 'ACTIVE',
-          subscription_tier: 'Basic'
+          ...insertPayload,
+          theme_color: hospitalForm.theme_color.trim() || null
         })
         .select()
         .single();
 
-      if (error) throw error;
-      setSuccess(`Hospital "${data.name}" registered successfully as active SaaS tenant!`);
+      if (error) {
+        if (error.message && error.message.toLowerCase().includes('theme_color')) {
+          console.warn('theme_color column not found. Retrying without it.');
+          const { data: retryData, error: retryError } = await supabase
+            .from('hospitals')
+            .insert(insertPayload)
+            .select()
+            .single();
 
-      setHospitalForm({ name: '', slug: '', address: '', phone: '' });
-      setShowAddHospital(false);
-      
-      // Log event
-      logActivity(`SaaS Tenant "${data.name}" has been registered successfully.`, 'system', 'bg-[#005EB8]');
+          if (retryError) throw retryError;
+          setSuccess(`Hospital "${retryData.name}" registered successfully! Run the SQL command in Supabase to enable custom brand colors: "ALTER TABLE hospitals ADD COLUMN IF NOT EXISTS theme_color VARCHAR(50);"`);
+          
+          setHospitalForm({ name: '', slug: '', address: '', phone: '', logo_url: '', theme_color: '#005EB8' });
+          setShowAddHospital(false);
+          logActivity(`SaaS Tenant "${retryData.name}" has been registered successfully (fallback theme).`, 'system', 'bg-[#005EB8]');
+        } else {
+          throw error;
+        }
+      } else {
+        setSuccess(`Hospital "${data.name}" registered successfully as active SaaS tenant with custom brand elements!`);
+        
+        setHospitalForm({ name: '', slug: '', address: '', phone: '', logo_url: '', theme_color: '#005EB8' });
+        setShowAddHospital(false);
+        logActivity(`SaaS Tenant "${data.name}" has been registered successfully with brand elements.`, 'system', 'bg-[#005EB8]');
+      }
 
       loadData(true);
     } catch (err) {
@@ -583,8 +608,6 @@ export default function SuperAdminDashboard({ currentUser: _currentUser, onNavig
     setAddStaffError('');
     setSuccess('');
     try {
-      // Import bcrypt dynamically to hash password client-side
-      const bcrypt = await import('bcryptjs');
       const salt = bcrypt.genSaltSync(10);
       const hash = bcrypt.hashSync(password, salt);
 
@@ -595,8 +618,8 @@ export default function SuperAdminDashboard({ currentUser: _currentUser, onNavig
           email: email.toLowerCase().trim(),
           password_hash: hash,
           role,
-          department: department.toLowerCase().trim(),
-          room_number: room_number.trim() || null,
+          department: department ? department.toLowerCase().trim() : 'general',
+          room_number: room_number ? room_number.trim() || null : null,
           hospital_id,
           is_active: true
         })
@@ -604,14 +627,16 @@ export default function SuperAdminDashboard({ currentUser: _currentUser, onNavig
         .single();
 
       if (error) throw error;
+      if (!data) throw new Error('Failed to retrieve registered staff user details');
 
       // If user is a DOCTOR, also create a corresponding doctor record
       if (role === 'DOCTOR') {
         const { error: docErr } = await supabase.from('doctors').insert({
+          staff_user_id: data.id,
           name: name.trim(),
           specialty: 'General',
-          department: department.toLowerCase().trim(),
-          room_number: room_number.trim() || null,
+          department: department ? department.toLowerCase().trim() : 'general',
+          room_number: room_number ? room_number.trim() || null : null,
           hospital_id,
           is_available: true
         });
@@ -1631,131 +1656,146 @@ export default function SuperAdminDashboard({ currentUser: _currentUser, onNavig
               </div>
 
               {/* Onboarding & Demo Bookings Desk */}
-              {onboardingRequests.length > 0 && (
-                <div className="bg-white rounded-3xl border border-slate-200/60 p-6 shadow-sm mb-6 animate-fadeIn">
-                  <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
-                    <h3 className="text-xs font-black text-slate-900 uppercase tracking-widest flex items-center gap-2">
-                      <Sparkles className="w-4 h-4 text-[#00A3AD] animate-pulse" /> Pending Hospital Onboarding & Demo Requests
-                    </h3>
-                    <span className="text-[9px] bg-indigo-50 border border-indigo-100 text-indigo-700 px-2.5 py-0.5 rounded-full font-bold">
-                      {onboardingRequests.length} Requests Pending
-                    </span>
-                  </div>
+              {(() => {
+                const activeOnboardingRequests = onboardingRequests.filter(evt => {
+                  const rawMsg = evt.message;
+                  const matchHosp = rawMsg.match(/"([^"]+)"/);
+                  if (!matchHosp) return true;
+                  const hospitalName = matchHosp[1].trim().toLowerCase();
+                  // Check if this hospital name is already registered (case-insensitive)
+                  return !hospitals.some(h => h.name.trim().toLowerCase() === hospitalName);
+                });
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {onboardingRequests
-                      .map(evt => {
-                        const rawMsg = evt.message;
-                        const matchHosp = rawMsg.match(/"([^"]+)"/);
-                        const hospitalName = matchHosp ? matchHosp[1] : 'New Clinic Setup';
+                if (activeOnboardingRequests.length === 0) return null;
 
-                        // Parse selected plan
-                        const matchPlan = rawMsg.match(/Request for\s+([^:]+):/);
-                        const planName = matchPlan ? matchPlan[1].trim() : 'Professional Ops';
+                return (
+                  <div className="bg-white rounded-3xl border border-slate-200/60 p-6 shadow-sm mb-6 animate-fadeIn">
+                    <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
+                      <h3 className="text-xs font-black text-slate-900 uppercase tracking-widest flex items-center gap-2">
+                        <Sparkles className="w-4 h-4 text-[#00A3AD] animate-pulse" /> Pending Hospital Onboarding & Demo Requests
+                      </h3>
+                      <span className="text-[9px] bg-indigo-50 border border-indigo-100 text-indigo-700 px-2.5 py-0.5 rounded-full font-bold">
+                        {activeOnboardingRequests.length} Requests Pending
+                      </span>
+                    </div>
 
-                        // Parse city
-                        const matchCity = rawMsg.match(/in\s+([^\s]+)\s+requested/) || rawMsg.match(/in\s+([^,]+),/);
-                        const city = matchCity ? matchCity[1].trim() : 'N/A';
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {activeOnboardingRequests
+                        .map(evt => {
+                          const rawMsg = evt.message;
+                          const matchHosp = rawMsg.match(/"([^"]+)"/);
+                          const hospitalName = matchHosp ? matchHosp[1] : 'New Clinic Setup';
 
-                        // Parse contact person
-                        const matchPerson = rawMsg.match(/requested by\s+([^(\n\r]+)/);
-                        const contactPerson = matchPerson ? matchPerson[1].split('(')[0].trim() : 'N/A';
+                          // Parse selected plan
+                          const matchPlan = rawMsg.match(/Request for\s+([^:]+):/);
+                          const planName = matchPlan ? matchPlan[1].trim() : 'Professional Ops';
 
-                        // Parse phone
-                        const matchPhone = rawMsg.match(/Phone:\s*([^\s,)]+)/) || rawMsg.match(/Phone:\s*([^\s)]+)/);
-                        const phone = matchPhone ? matchPhone[1].trim() : '';
+                          // Parse city
+                          const matchCity = rawMsg.match(/in\s+([^\s]+)\s+requested/) || rawMsg.match(/in\s+([^,]+),/);
+                          const city = matchCity ? matchCity[1].trim() : 'N/A';
 
-                        // Parse email
-                        const matchEmail = rawMsg.match(/Email:\s*([^\s,)]+)/) || rawMsg.match(/Email:\s*([^\s)]+)/);
-                        const email = matchEmail ? matchEmail[1].trim() : '';
+                          // Parse contact person
+                          const matchPerson = rawMsg.match(/requested by\s+([^(\n\r]+)/);
+                          const contactPerson = matchPerson ? matchPerson[1].split('(')[0].trim() : 'N/A';
 
-                        // Parse size/beds
-                        const matchSize = rawMsg.match(/\(([^)]+)\)/);
-                        const bedsSize = matchSize ? matchSize[1] : '10-50 beds';
-                        
-                        return (
-                          <div key={evt.id} className="bg-slate-50/50 border border-slate-100 p-5 rounded-2xl flex flex-col justify-between space-y-4 hover:border-indigo-200 transition-all shadow-inner">
-                            <div className="space-y-3.5 text-xs">
-                              <div className="flex items-center justify-between">
-                                <strong className="font-extrabold text-slate-800 text-[14px]">{hospitalName}</strong>
-                                <span className={`text-[8px] font-black uppercase px-2.5 py-0.5 rounded-full border ${
-                                  planName.includes('Starter') 
-                                    ? 'bg-emerald-50 border-emerald-100 text-emerald-600' 
-                                    : planName.includes('Enterprise')
-                                    ? 'bg-rose-50 border-rose-100 text-rose-600 animate-pulse'
-                                    : 'bg-[#005EB8]/5 border-[#005EB8]/10 text-[#005EB8]'
-                                }`}>
-                                  {planName}
-                                </span>
+                          // Parse phone
+                          const matchPhone = rawMsg.match(/Phone:\s*([^\s,)]+)/) || rawMsg.match(/Phone:\s*([^\s)]+)/);
+                          const phone = matchPhone ? matchPhone[1].trim() : '';
+
+                          // Parse email
+                          const matchEmail = rawMsg.match(/Email:\s*([^\s,)]+)/) || rawMsg.match(/Email:\s*([^\s)]+)/);
+                          const email = matchEmail ? matchEmail[1].trim() : '';
+
+                          // Parse size/beds
+                          const matchSize = rawMsg.match(/\(([^)]+)\)/);
+                          const bedsSize = matchSize ? matchSize[1] : '10-50 beds';
+                          
+                          return (
+                            <div key={evt.id} className="bg-slate-50/50 border border-slate-100 p-5 rounded-2xl flex flex-col justify-between space-y-4 hover:border-indigo-200 transition-all shadow-inner">
+                              <div className="space-y-3.5 text-xs">
+                                <div className="flex items-center justify-between">
+                                  <strong className="font-extrabold text-slate-800 text-[14px]">{hospitalName}</strong>
+                                  <span className={`text-[8px] font-black uppercase px-2.5 py-0.5 rounded-full border ${
+                                    planName.includes('Starter') 
+                                      ? 'bg-emerald-50 border-emerald-100 text-emerald-600' 
+                                      : planName.includes('Enterprise')
+                                      ? 'bg-rose-50 border-rose-100 text-rose-600 animate-pulse'
+                                      : 'bg-[#005EB8]/5 border-[#005EB8]/10 text-[#005EB8]'
+                                  }`}>
+                                    {planName}
+                                  </span>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-3 text-[10px] bg-white border border-slate-100 rounded-xl p-3 shadow-sm font-semibold text-slate-600">
+                                  <div>
+                                    <span className="text-slate-400 block text-[8px] font-black uppercase tracking-wider">City Location</span>
+                                    <span className="text-slate-800 font-bold">{city}</span>
+                                  </div>
+                                  <div>
+                                    <span className="text-slate-400 block text-[8px] font-black uppercase tracking-wider">Contact Person</span>
+                                    <span className="text-slate-800 font-bold">{contactPerson}</span>
+                                  </div>
+                                  <div>
+                                    <span className="text-slate-400 block text-[8px] font-black uppercase tracking-wider">Phone</span>
+                                    {phone ? (
+                                      <a href={`tel:${phone}`} className="text-[#005EB8] hover:underline font-bold block">{phone}</a>
+                                    ) : (
+                                      <span className="text-slate-400">N/A</span>
+                                    )}
+                                  </div>
+                                  <div>
+                                    <span className="text-slate-400 block text-[8px] font-black uppercase tracking-wider">Email Address</span>
+                                    {email ? (
+                                      <a href={`mailto:${email}`} className="text-[#005EB8] hover:underline font-bold block truncate">{email}</a>
+                                    ) : (
+                                      <span className="text-slate-400">N/A</span>
+                                    )}
+                                  </div>
+                                </div>
+
+                                <div className="flex items-center gap-1.5 text-[9px] text-slate-400 font-bold">
+                                  <span>Scale: <strong className="text-slate-600 font-extrabold">{bedsSize}</strong></span>
+                                  <span>•</span>
+                                  <span>Requested {new Date(evt.timestamp).toLocaleDateString()}</span>
+                                </div>
                               </div>
 
-                              <div className="grid grid-cols-2 gap-3 text-[10px] bg-white border border-slate-100 rounded-xl p-3 shadow-sm font-semibold text-slate-600">
-                                <div>
-                                  <span className="text-slate-400 block text-[8px] font-black uppercase tracking-wider">City Location</span>
-                                  <span className="text-slate-800 font-bold">{city}</span>
-                                </div>
-                                <div>
-                                  <span className="text-slate-400 block text-[8px] font-black uppercase tracking-wider">Contact Person</span>
-                                  <span className="text-slate-800 font-bold">{contactPerson}</span>
-                                </div>
-                                <div>
-                                  <span className="text-slate-400 block text-[8px] font-black uppercase tracking-wider">Phone</span>
-                                  {phone ? (
-                                    <a href={`tel:${phone}`} className="text-[#005EB8] hover:underline font-bold block">{phone}</a>
-                                  ) : (
-                                    <span className="text-slate-400">N/A</span>
-                                  )}
-                                </div>
-                                <div>
-                                  <span className="text-slate-400 block text-[8px] font-black uppercase tracking-wider">Email Address</span>
-                                  {email ? (
-                                    <a href={`mailto:${email}`} className="text-[#005EB8] hover:underline font-bold block truncate">{email}</a>
-                                  ) : (
-                                    <span className="text-slate-400">N/A</span>
-                                  )}
-                                </div>
-                              </div>
-
-                              <div className="flex items-center gap-1.5 text-[9px] text-slate-400 font-bold">
-                                <span>Scale: <strong className="text-slate-600 font-extrabold">{bedsSize}</strong></span>
-                                <span>•</span>
-                                <span>Requested {new Date(evt.timestamp).toLocaleDateString()}</span>
-                              </div>
-                            </div>
-
-                            <div className="flex gap-2 justify-end pt-2 border-t border-slate-100/50">
-                              {/* Direct WhatsApp Call/Chat */}
-                              {phone && (
-                                <a 
-                                  href={`https://wa.me/${phone.replace(/[^0-9]/g, '')}`}
-                                  target="_blank"
-                                  rel="noreferrer"
-                                  className="bg-[#25D366] hover:bg-[#20ba59] text-white px-3 py-1.5 rounded-xl font-black text-[9px] uppercase tracking-wider transition-all shadow-sm flex items-center justify-center gap-1 cursor-pointer"
+                              <div className="flex gap-2 justify-end pt-2 border-t border-slate-100/50">
+                                {/* Direct WhatsApp Call/Chat */}
+                                {phone && (
+                                  <a 
+                                    href={`https://wa.me/${phone.replace(/[^0-9]/g, '')}`}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="bg-[#25D366] hover:bg-[#20ba59] text-white px-3 py-1.5 rounded-xl font-black text-[9px] uppercase tracking-wider transition-all shadow-sm flex items-center justify-center gap-1 cursor-pointer"
+                                  >
+                                    WhatsApp Lead
+                                  </a>
+                                )}
+                                <button 
+                                  onClick={() => {
+                                    setHospitalForm({
+                                      name: hospitalName,
+                                      slug: hospitalName.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').substring(0, 15),
+                                      address: `${city} Branch OPD Desk`,
+                                      phone: phone || '9999999999',
+                                      logo_url: '',
+                                      theme_color: '#005EB8'
+                                    });
+                                    setShowAddHospital(true);
+                                  }}
+                                  className="bg-[#005EB8] hover:bg-[#004A94] text-white px-3 py-1.5 rounded-xl font-black text-[9px] uppercase tracking-wider transition-all shadow-sm shadow-[#005EB8]/10 cursor-pointer"
                                 >
-                                  WhatsApp Lead
-                                </a>
-                              )}
-                              <button 
-                                onClick={() => {
-                                  setHospitalForm({
-                                    name: hospitalName,
-                                    slug: hospitalName.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').substring(0, 15),
-                                    address: `${city} Branch OPD Desk`,
-                                    phone: phone || '9999999999'
-                                  });
-                                  setShowAddHospital(true);
-                                }}
-                                className="bg-[#005EB8] hover:bg-[#004A94] text-white px-3 py-1.5 rounded-xl font-black text-[9px] uppercase tracking-wider transition-all shadow-sm shadow-[#005EB8]/10 cursor-pointer"
-                              >
-                                Approve & Provision
-                              </button>
+                                  Approve & Provision
+                                </button>
+                              </div>
                             </div>
-                          </div>
-                        );
-                      })}
+                          );
+                        })}
+                    </div>
                   </div>
-                </div>
-              )}
+                );
+              })()}
 
               {/* Grid block for stream logs */}
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -2715,6 +2755,34 @@ export default function SuperAdminDashboard({ currentUser: _currentUser, onNavig
                   onChange={e => setHospitalForm(f => ({ ...f, phone: e.target.value }))}
                   className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs text-slate-800 placeholder-slate-400 focus:border-[#005EB8] focus:outline-none"
                 />
+              </div>
+              <div>
+                <label className="block text-[10px] font-black text-slate-450 uppercase tracking-wider mb-1">Logo Image URL</label>
+                <input
+                  type="text"
+                  placeholder="e.g. https://images.unsplash.com/photo-..."
+                  value={hospitalForm.logo_url}
+                  onChange={e => setHospitalForm(f => ({ ...f, logo_url: e.target.value }))}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs text-slate-800 placeholder-slate-400 focus:border-[#005EB8] focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] font-black text-slate-450 tracking-wider mb-1 uppercase">Theme Brand Color</label>
+                <div className="flex gap-2">
+                  <input
+                    type="color"
+                    value={hospitalForm.theme_color || '#005EB8'}
+                    onChange={e => setHospitalForm(f => ({ ...f, theme_color: e.target.value }))}
+                    className="w-10 h-10 border border-slate-200 rounded-xl cursor-pointer p-1 bg-slate-50"
+                  />
+                  <input
+                    type="text"
+                    placeholder="#005EB8"
+                    value={hospitalForm.theme_color}
+                    onChange={e => setHospitalForm(f => ({ ...f, theme_color: e.target.value }))}
+                    className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs text-slate-800 placeholder-slate-400 focus:border-[#005EB8] focus:outline-none font-mono font-bold"
+                  />
+                </div>
               </div>
               <div className="flex gap-3 pt-2">
                 <button

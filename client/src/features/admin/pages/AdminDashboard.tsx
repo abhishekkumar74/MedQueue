@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import bcrypt from 'bcryptjs';
 import { supabase } from '../../../lib/supabase';
 import { AuthUser } from '../../../lib/auth';
 import {
@@ -106,7 +107,7 @@ export default function AdminDashboard({ currentUser }: Props) {
   // ── Date filter ───────────────────────────────────────────
   const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
   // selectedDate drives queue date filter UI
-  const [selectedDate] = useState(todayStr);
+  const [selectedDate, setSelectedDate] = useState(todayStr);
 
   // ── Dashboard States ──────────────────────────────────────
   const [stats, setStats] = useState<Stats>({
@@ -345,37 +346,40 @@ export default function AdminDashboard({ currentUser }: Props) {
   const handleAddDoctorSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const { name, specialty, department, room_number, email, password } = doctorForm;
-    if (!name || !email || !password || !room_number) return setError('Please fill all fields');
+    if (!name || !email || !password) return setError('Please fill all required fields');
 
     try {
-      const bcrypt = await import('bcryptjs');
       const salt = bcrypt.genSaltSync(10);
       const hash = bcrypt.hashSync(password, salt);
 
       // Create staff user credentials first
-      const { error: staffErr } = await supabase
+      const { data: staffData, error: staffErr } = await supabase
         .from('staff_users')
         .insert({
           name: name.trim(),
           email: email.toLowerCase().trim(),
           password_hash: hash,
           role: 'DOCTOR',
-          department: department.toLowerCase().trim(),
-          room_number: room_number.trim(),
+          department: department ? department.toLowerCase().trim() : 'general',
+          room_number: room_number ? room_number.trim() || null : null,
           hospital_id: hospitalId,
           is_active: true
-        });
+        })
+        .select()
+        .single();
 
       if (staffErr) throw staffErr;
+      if (!staffData) throw new Error('Failed to retrieve registered staff user details');
 
       // Create doctor practitioner record
       const { error: docErr } = await supabase
         .from('doctors')
         .insert({
+          staff_user_id: staffData.id,
           name: name.trim(),
-          specialty: specialty.trim(),
-          department: department.toLowerCase().trim(),
-          room_number: room_number.trim(),
+          specialty: specialty ? specialty.trim() : 'General',
+          department: department ? department.toLowerCase().trim() : 'general',
+          room_number: room_number ? room_number.trim() || null : null,
           hospital_id: hospitalId,
           is_available: true
         });
@@ -399,7 +403,6 @@ export default function AdminDashboard({ currentUser }: Props) {
     if (!name || !email || !password) return setError('Please fill all required fields');
 
     try {
-      const bcrypt = await import('bcryptjs');
       const salt = bcrypt.genSaltSync(10);
       const hash = bcrypt.hashSync(password, salt);
 
@@ -410,8 +413,8 @@ export default function AdminDashboard({ currentUser }: Props) {
           email: email.toLowerCase().trim(),
           password_hash: hash,
           role,
-          department: department.toLowerCase().trim(),
-          room_number: room_number.trim() || null,
+          department: department ? department.toLowerCase().trim() : 'general',
+          room_number: room_number ? room_number.trim() || null : null,
           hospital_id: hospitalId,
           is_active: true
         });
@@ -874,7 +877,13 @@ export default function AdminDashboard({ currentUser }: Props) {
                   <p className="text-xs text-slate-400 mt-0.5">Manage priorities, serving rooms, and live status states.</p>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-2">
+                 <div className="flex flex-wrap items-center gap-2">
+                  <input 
+                    type="date"
+                    value={selectedDate}
+                    onChange={e => setSelectedDate(e.target.value)}
+                    className="px-3 py-1.5 text-xs font-bold bg-slate-100 text-slate-700 rounded-xl outline-none border border-slate-200 focus:border-[#005EB8]"
+                  />
                   <select 
                     value={statusFilter} 
                     onChange={e => setStatusFilter(e.target.value)} 

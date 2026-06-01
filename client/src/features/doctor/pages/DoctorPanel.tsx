@@ -1128,7 +1128,7 @@ export default function DoctorPanel({ doctorDepartment = 'general', doctorName =
 
       {/* ── 10. PRESCRIPTION PRINT/PDF PREVIEW OVERLAY MODAL ────────────────── */}
       {showPdfModal && queue.serving && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[80] flex items-center justify-center p-4 overflow-y-auto">
           <div className="bg-white rounded-3xl max-w-2xl w-full shadow-2xl overflow-hidden border border-slate-150 max-h-[90vh] flex flex-col animate-fade-in">
             {/* Modal Header Actions */}
             <div className="px-4 sm:px-5 py-3 sm:py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50 flex-shrink-0 gap-2">

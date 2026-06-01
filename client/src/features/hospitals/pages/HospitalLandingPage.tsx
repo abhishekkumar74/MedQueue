@@ -27,6 +27,7 @@ export default function HospitalLandingPage({ tenant, navigate }: Props) {
   const [waitingCount, setWaitingCount] = useState<number>(0);
   const [activeDoctorsCount, setActiveDoctorsCount] = useState<number>(0);
   const [showEmergencyDialog, setShowEmergencyDialog] = useState(false);
+  const [selectedDept, setSelectedDept] = useState<string>('All');
 
   // Dynamic branch configurations
   const branchMeta: Record<string, {
@@ -104,31 +105,55 @@ export default function HospitalLandingPage({ tenant, navigate }: Props) {
     return () => clearInterval(interval);
   }, [tenant?.id]);
 
-  return (
-    <div className="min-h-screen bg-[#F4F8FB] font-sans pb-12 select-none relative overflow-hidden">
+  const getInitials = (name: string) => {
+    const cleanName = name.replace(/^(dr\.|dr)\s+/i, '').trim();
+    const parts = cleanName.split(/\s+/);
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[1][0]).toUpperCase();
+    }
+    return cleanName.substring(0, 2).toUpperCase();
+  };
 
-      {/* Background soft color patterns */}
+  const themeColor = tenant?.theme_color || '#005EB8';
+
+  // Dynamic filter lists for available doctors
+  const filteredDoctors = selectedDept === 'All'
+    ? doctors
+    : doctors.filter(doc =>
+        (doc.department || '').toLowerCase().trim() === selectedDept.toLowerCase().trim() ||
+        (doc.specialty || '').toLowerCase().trim() === selectedDept.toLowerCase().trim()
+      );
+
+  return (
+    <div className="min-h-screen bg-[#F8FAFC] font-sans pb-16 select-none relative overflow-hidden">
+
+      {/* Decorative ambient background glows */}
       <div
-        className="absolute top-[-250px] left-[-250px] w-[500px] h-[500px] rounded-full blur-[140px] opacity-20 pointer-events-none"
-        style={{ backgroundColor: tenant?.theme_color || '#005EB8' }}
+        className="absolute top-[-300px] left-[-300px] w-[600px] h-[600px] rounded-full blur-[160px] opacity-[0.12] pointer-events-none transition-all duration-700"
+        style={{ backgroundColor: themeColor }}
       />
-      <div className="absolute bottom-[-150px] right-[-150px] w-[400px] h-[400px] bg-sky-300 rounded-full blur-[120px] opacity-15 pointer-events-none" />
+      <div className="absolute bottom-[-150px] right-[-150px] w-[500px] h-[500px] bg-cyan-300 rounded-full blur-[140px] opacity-[0.1] pointer-events-none" />
 
       {/* ── HERO BANNER SECTION ───────────────────────────────── */}
-      <section className="bg-white border-b border-slate-150 py-10 relative">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col lg:flex-row items-center gap-10">
+      <section className="bg-white border-b border-slate-100 py-12 relative overflow-hidden">
+        {/* Subtle grid pattern background */}
+        <div className="absolute inset-0 bg-[radial-gradient(#e2e8f0_1px,transparent_1px)] [background-size:20px_20px] opacity-35 pointer-events-none" />
+        
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col lg:flex-row items-center gap-12 relative z-10">
 
           {/* Hero Left Content */}
-          <div className="flex-1 text-left space-y-6 animate-fade-in">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-[#E8F3FF] text-[#005EB8] rounded-full text-[10px] font-black uppercase tracking-wider">
-              <Sparkles className="w-3.5 h-3.5" />
+          <div className="flex-1 text-left space-y-7 animate-fade-in">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider border shadow-sm transition-all duration-300"
+              style={{ color: themeColor, backgroundColor: `${themeColor}12`, borderColor: `${themeColor}20` }}>
+              <Sparkles className="w-3.5 h-3.5 animate-pulse" />
               <span>Smart Clinic Workspace Node</span>
             </div>
 
-            <div className="space-y-3">
-              <h1 className="text-4xl sm:text-5xl font-black text-slate-800 tracking-tight leading-none">
+            <div className="space-y-4">
+              <h1 className="text-4xl sm:text-5xl font-black text-slate-800 tracking-tight leading-[1.08] lg:max-w-xl">
                 Welcome to <br />
-                <span className="text-[#005EB8]" style={{ color: tenant?.theme_color }}>
+                <span className="text-transparent bg-clip-text animate-pulse"
+                  style={{ backgroundImage: `linear-gradient(to right, ${themeColor}, ${themeColor}d9, #14b8a6)` }}>
                   {tenant?.name}
                 </span>
               </h1>
@@ -138,33 +163,50 @@ export default function HospitalLandingPage({ tenant, navigate }: Props) {
             </div>
 
             {/* Quick Contact Specs */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4.5 pt-2">
-              <div className="flex items-start gap-2.5">
-                <MapPin className="w-5 h-5 text-slate-400 mt-0.5" />
-                <div>
-                  <h4 className="text-xs font-black text-slate-700 leading-none">Location</h4>
-                  <p className="text-xs text-slate-400 font-semibold mt-1">{tenant?.address || 'Main Campus Address'}</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-4 border-t border-slate-100/80">
+              <div className="flex items-center gap-3.5 bg-slate-50/50 hover:bg-slate-50 border border-slate-100/50 p-3 rounded-2xl transition-all duration-300 shadow-sm hover:shadow-md">
+                <div className="w-10 h-10 bg-white border border-slate-100 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm">
+                  <MapPin className="w-5 h-5 text-[#005EB8]" style={{ color: themeColor }} />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-wider leading-none">Location</h4>
+                  <p className="text-xs text-slate-700 font-bold mt-1.5 truncate" title={tenant?.address || 'Main Campus Address'}>
+                    {tenant?.address || 'Main Campus Address'}
+                  </p>
                 </div>
               </div>
 
-              <div className="flex items-start gap-2.5">
-                <Clock className="w-5 h-5 text-slate-400 mt-0.5" />
-                <div>
-                  <h4 className="text-xs font-black text-slate-700 leading-none">Operating Hours</h4>
-                  <p className="text-xs text-slate-400 font-semibold mt-1">{meta.timings}</p>
+              <div className="flex items-center gap-3.5 bg-slate-50/50 hover:bg-slate-50 border border-slate-100/50 p-3 rounded-2xl transition-all duration-300 shadow-sm hover:shadow-md">
+                <div className="w-10 h-10 bg-white border border-slate-100 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm">
+                  <Clock className="w-5 h-5 text-[#00A3AD]" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-wider leading-none">Operating Hours</h4>
+                  <p className="text-xs text-slate-700 font-bold mt-1.5 truncate" title={meta.timings}>
+                    {meta.timings}
+                  </p>
                 </div>
               </div>
             </div>
           </div>
 
           {/* Hero Right Graphic */}
-          <div className="flex-1 w-full max-w-md lg:max-w-none animate-fade-in">
+          <div className="flex-1 w-full max-w-md lg:max-w-none animate-fade-in relative">
             <div className="relative group">
-              <div className="absolute inset-0 bg-gradient-to-tr from-[#005EB8] to-[#00A3AD] rounded-[32px] opacity-10 group-hover:opacity-15 transition-opacity blur-2xl" />
+              {/* Backglow blur matching dynamic brand theme */}
+              <div className="absolute inset-0 rounded-[32px] opacity-15 group-hover:opacity-20 transition-all duration-500 blur-3xl pointer-events-none"
+                style={{ backgroundImage: `linear-gradient(to top right, ${themeColor}, #06b6d4)` }} />
+              
+              {/* Floating Overlay Roster Tag */}
+              <div className="absolute top-4 left-4 z-20 bg-white/95 backdrop-blur-md border border-slate-100 px-4 py-2 rounded-2xl shadow-lg flex items-center gap-2 group-hover:scale-105 transition-transform duration-300">
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="text-[10px] font-black uppercase tracking-wider text-slate-800">Operational Live Status</span>
+              </div>
+
               <img
                 src={meta.heroImage}
                 alt={tenant?.name}
-                className="w-full h-64 sm:h-80 object-cover rounded-[32px] shadow-lg border border-white/50 relative z-10 transition-transform duration-500 group-hover:scale-[1.01]"
+                className="w-full h-64 sm:h-80 object-cover rounded-[32px] shadow-[0_20px_50px_rgba(0,0,0,0.04)] border border-slate-100 relative z-10 transition-all duration-500 group-hover:scale-[1.005] group-hover:shadow-[0_25px_60px_rgba(0,0,0,0.08)]"
               />
             </div>
           </div>
@@ -174,40 +216,51 @@ export default function HospitalLandingPage({ tenant, navigate }: Props) {
 
       {/* ── OPERATIONAL QUEUE TELEMETRY METRICS ─────────────────────── */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 -mt-8 relative z-20">
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
 
-          {/* Metric Waiting Patients */}
-          <div className="bg-white border border-slate-150 p-6 rounded-3xl shadow-sm flex items-center justify-between gap-4">
-            <div>
-              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">Patients Waiting</span>
-              <h3 className="text-3xl font-black text-slate-800 mt-2">{waitingCount}</h3>
-              <p className="text-[10px] text-slate-400 font-semibold mt-1">Operational live check-in queue</p>
+          {/* Metric 1: Patients Waiting */}
+          <div className="bg-white border border-slate-100 hover:border-slate-200 p-6 rounded-[28px] shadow-[0_8px_30px_rgb(0,0,0,0.015)] hover:shadow-[0_12px_40px_rgba(0,0,0,0.04)] hover:scale-[1.01] transition-all duration-300 flex items-center justify-between gap-4 relative overflow-hidden group">
+            <div className="absolute top-0 right-0 w-24 h-24 rounded-full blur-2xl pointer-events-none group-hover:scale-110 transition-transform duration-500"
+              style={{ backgroundColor: `${themeColor}08` }} />
+            <div className="min-w-0 flex-1">
+              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block leading-none">Patients Waiting</span>
+              <h3 className="text-3xl font-black text-slate-800 mt-2.5 flex items-baseline gap-1" style={{ color: themeColor }}>
+                {waitingCount} <span className="text-xs font-bold text-slate-400">Tokens</span>
+              </h3>
+              <p className="text-[10px] text-slate-400 font-semibold mt-1">Live active clinic queue waitlist</p>
             </div>
-            <div className="w-12 h-12 bg-blue-50 border border-blue-100 text-[#005EB8] rounded-2xl flex items-center justify-center flex-shrink-0">
+            <div className="w-12 h-12 bg-blue-50/50 border border-blue-100/50 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-sm"
+              style={{ color: themeColor, borderColor: `${themeColor}20`, backgroundColor: `${themeColor}08` }}>
               <Users className="w-6 h-6 animate-pulse" />
             </div>
           </div>
 
-          {/* Metric Active Doctors */}
-          <div className="bg-white border border-slate-150 p-6 rounded-3xl shadow-sm flex items-center justify-between gap-4">
-            <div>
-              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">Practitioners Active</span>
-              <h3 className="text-3xl font-black text-slate-800 mt-2">{activeDoctorsCount}</h3>
+          {/* Metric 2: Active Doctors */}
+          <div className="bg-white border border-slate-100 hover:border-slate-200 p-6 rounded-[28px] shadow-[0_8px_30px_rgb(0,0,0,0.015)] hover:shadow-[0_12px_40px_rgba(0,0,0,0.04)] hover:scale-[1.01] transition-all duration-300 flex items-center justify-between gap-4 relative overflow-hidden group">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-teal-50/20 rounded-full blur-2xl pointer-events-none group-hover:scale-110 transition-transform duration-500" />
+            <div className="min-w-0 flex-1">
+              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block leading-none">Practitioners Active</span>
+              <h3 className="text-3xl font-black text-slate-800 mt-2.5 flex items-baseline gap-1 text-teal-650">
+                {activeDoctorsCount} <span className="text-xs font-bold text-slate-400">Online</span>
+              </h3>
               <p className="text-[10px] text-slate-400 font-semibold mt-1">Available in consulting booths</p>
             </div>
-            <div className="w-12 h-12 bg-teal-50 border border-teal-100 text-teal-600 rounded-2xl flex items-center justify-center flex-shrink-0">
+            <div className="w-12 h-12 bg-teal-50/50 border border-teal-100/50 text-teal-600 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-sm">
               <Stethoscope className="w-6 h-6" />
             </div>
           </div>
 
-          {/* Metric Queue Wait Time */}
-          <div className="bg-white border border-slate-150 p-6 rounded-3xl shadow-sm flex items-center justify-between gap-4">
-            <div>
-              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">Estimated Wait Time</span>
-              <h3 className="text-3xl font-black text-slate-800 mt-2">{waitingCount > 0 ? `${waitingCount * 8}m` : '0m'}</h3>
+          {/* Metric 3: Est Wait Time */}
+          <div className="bg-white border border-slate-100 hover:border-slate-200 p-6 rounded-[28px] shadow-[0_8px_30px_rgb(0,0,0,0.015)] hover:shadow-[0_12px_40px_rgba(0,0,0,0.04)] hover:scale-[1.01] transition-all duration-300 flex items-center justify-between gap-4 relative overflow-hidden group">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-50/20 rounded-full blur-2xl pointer-events-none group-hover:scale-110 transition-transform duration-500" />
+            <div className="min-w-0 flex-1">
+              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block leading-none">Estimated Wait Time</span>
+              <h3 className="text-3xl font-black text-slate-800 mt-2.5 flex items-baseline gap-1 text-indigo-650">
+                {waitingCount > 0 ? `${waitingCount * 8}` : '0'}<span className="text-xs font-bold text-slate-400">mins</span>
+              </h3>
               <p className="text-[10px] text-slate-400 font-semibold mt-1">Dynamic queue load pacing</p>
             </div>
-            <div className="w-12 h-12 bg-indigo-50 border border-indigo-100 text-indigo-600 rounded-2xl flex items-center justify-center flex-shrink-0">
+            <div className="w-12 h-12 bg-indigo-50/50 border border-indigo-100/50 text-indigo-600 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-sm">
               <Clock className="w-6 h-6" />
             </div>
           </div>
@@ -215,89 +268,95 @@ export default function HospitalLandingPage({ tenant, navigate }: Props) {
         </div>
       </section>
 
-      {/* ── MAIN ACTION CARDS (Kiosk & phone optimized grid) ──────────── */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 mt-12 space-y-6 text-left">
-        <h2 className="text-xl font-black text-slate-800 tracking-tight leading-none">Workspace Quick Actions</h2>
+      {/* ── MAIN ACTION CARDS (Highly-polished application cards) ─────── */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 mt-16 space-y-6 text-left">
+        <div>
+          <h2 className="text-2xl font-black text-slate-800 tracking-tight leading-none">Workspace Quick Actions</h2>
+          <p className="text-xs text-slate-400 font-semibold mt-1.5">Direct entry points to patient, practitioner and queue tracking channels</p>
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
 
           {/* Card 1: Patient Portal */}
           <button
             onClick={() => navigate('patient-login')}
-            className="bg-white hover:bg-slate-50 border border-slate-150 p-6 rounded-3xl shadow-sm group text-left flex flex-col justify-between min-h-[170px] transition-all hover:border-[#005EB8]/30 hover:shadow-md focus:outline-none"
+            className="bg-white hover:bg-slate-50/40 border border-slate-100 p-6 rounded-[28px] shadow-[0_8px_30px_rgb(0,0,0,0.015)] group text-left flex flex-col justify-between min-h-[190px] transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_12px_40px_rgba(0,0,0,0.04)] focus:outline-none"
+            style={{ hoverBorderColor: themeColor } as any}
           >
-            <div className="w-11 h-11 bg-[#E8F3FF] text-[#005EB8] rounded-xl flex items-center justify-center">
-              <HeartPulse className="w-5.5 h-5.5" />
+            <div className="w-11 h-11 rounded-xl flex items-center justify-center text-[#005EB8] group-hover:scale-105 transition-transform duration-300 shadow-sm"
+              style={{ color: themeColor, borderColor: `${themeColor}20`, backgroundColor: `${themeColor}08`, borderWidth: '1px' }}>
+              <HeartPulse className="w-6 h-6" />
             </div>
-            <div>
-              <h3 className="text-sm font-black text-slate-800">Patient Portal</h3>
-              <p className="text-xs text-slate-400 font-semibold mt-1.5 leading-relaxed">
-                Check-in, request OTP and check-in to dynamic clinical queue nodes.
+            <div className="mt-4">
+              <h3 className="text-sm font-black text-slate-800 group-hover:text-slate-900 transition-colors"
+                style={{ color: themeColor }}>Patient Portal</h3>
+              <p className="text-xs text-slate-400 font-semibold mt-2 leading-relaxed">
+                Check-in dynamically, request secure OTP access and log patient files.
               </p>
             </div>
-            <div className="flex items-center gap-1 text-[10px] font-black text-[#005EB8] uppercase tracking-wider mt-4">
+            <div className="flex items-center gap-1 text-[10px] font-black uppercase tracking-wider mt-4 text-[#005EB8] group-hover:gap-2 transition-all" style={{ color: themeColor }}>
               <span>Access Portal</span>
-              <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
+              <ArrowRight className="w-3.5 h-3.5" />
             </div>
           </button>
 
           {/* Card 2: Book Appointment */}
           <button
             onClick={() => navigate('appointment')}
-            className="bg-white hover:bg-slate-50 border border-slate-150 p-6 rounded-3xl shadow-sm group text-left flex flex-col justify-between min-h-[170px] transition-all hover:border-[#00A3AD]/30 hover:shadow-md focus:outline-none"
+            className="bg-white hover:bg-slate-50/40 border border-slate-100 p-6 rounded-[28px] shadow-[0_8px_30px_rgb(0,0,0,0.015)] group text-left flex flex-col justify-between min-h-[190px] transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_12px_40px_rgba(0,0,0,0.04)] focus:outline-none hover:border-teal-200"
           >
-            <div className="w-11 h-11 bg-teal-50 text-teal-600 rounded-xl flex items-center justify-center">
-              <Calendar className="w-5.5 h-5.5" />
+            <div className="w-11 h-11 bg-teal-50 border border-teal-100 text-teal-600 rounded-xl flex items-center justify-center group-hover:scale-105 transition-transform duration-300 shadow-sm">
+              <Calendar className="w-6 h-6" />
             </div>
-            <div>
-              <h3 className="text-sm font-black text-slate-800">Book Appointment</h3>
-              <p className="text-xs text-slate-400 font-semibold mt-1.5 leading-relaxed">
-                Schedule consultations and save appointment time slots today.
+            <div className="mt-4">
+              <h3 className="text-sm font-black text-teal-700">Book Appointment</h3>
+              <p className="text-xs text-slate-400 font-semibold mt-2 leading-relaxed">
+                Schedule dynamic priority visits and pre-book token numbers.
               </p>
             </div>
-            <div className="flex items-center gap-1 text-[10px] font-black text-teal-600 uppercase tracking-wider mt-4">
+            <div className="flex items-center gap-1 text-[10px] font-black text-teal-600 uppercase tracking-wider mt-4 group-hover:gap-2 transition-all">
               <span>Book Doctor</span>
-              <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
+              <ArrowRight className="w-3.5 h-3.5" />
             </div>
           </button>
 
           {/* Card 3: Track Token */}
           <button
             onClick={() => navigate('tracker')}
-            className="bg-white hover:bg-slate-50 border border-slate-150 p-6 rounded-3xl shadow-sm group text-left flex flex-col justify-between min-h-[170px] transition-all hover:border-indigo-500/30 hover:shadow-md focus:outline-none"
+            className="bg-white hover:bg-slate-50/40 border border-slate-100 p-6 rounded-[28px] shadow-[0_8px_30px_rgb(0,0,0,0.015)] group text-left flex flex-col justify-between min-h-[190px] transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_12px_40px_rgba(0,0,0,0.04)] focus:outline-none hover:border-indigo-200"
           >
-            <div className="w-11 h-11 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center">
-              <Activity className="w-5.5 h-5.5" />
+            <div className="w-11 h-11 bg-indigo-50 border border-indigo-100 text-indigo-600 rounded-xl flex items-center justify-center group-hover:scale-105 transition-transform duration-300 shadow-sm">
+              <Activity className="w-6 h-6" />
             </div>
-            <div>
-              <h3 className="text-sm font-black text-slate-800">Live Token Status</h3>
-              <p className="text-xs text-slate-400 font-semibold mt-1.5 leading-relaxed">
-                Track active token numbers and check position ahead in real-time.
+            <div className="mt-4">
+              <h3 className="text-sm font-black text-indigo-700">Live Token Status</h3>
+              <p className="text-xs text-slate-400 font-semibold mt-2 leading-relaxed">
+                Track waiting positions, real-time board updates and ticket statuses.
               </p>
             </div>
-            <div className="flex items-center gap-1 text-[10px] font-black text-indigo-600 uppercase tracking-wider mt-4">
+            <div className="flex items-center gap-1 text-[10px] font-black text-indigo-600 uppercase tracking-wider mt-4 group-hover:gap-2 transition-all">
               <span>Track Queue</span>
-              <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
+              <ArrowRight className="w-3.5 h-3.5" />
             </div>
           </button>
 
           {/* Card 4: Staff Access */}
           <button
             onClick={() => navigate('staff-login')}
-            className="bg-white hover:bg-slate-50 border border-slate-150 p-6 rounded-3xl shadow-sm group text-left flex flex-col justify-between min-h-[170px] transition-all hover:border-violet-500/30 hover:shadow-md focus:outline-none"
+            className="bg-white hover:bg-slate-50/40 border border-slate-100 p-6 rounded-[28px] shadow-[0_8px_30px_rgb(0,0,0,0.015)] group text-left flex flex-col justify-between min-h-[190px] transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_12px_40px_rgba(0,0,0,0.04)] focus:outline-none hover:border-violet-200"
           >
-            <div className="w-11 h-11 bg-violet-50 text-violet-600 rounded-xl flex items-center justify-center">
-              <Building2 className="w-5.5 h-5.5" />
+            <div className="w-11 h-11 bg-violet-50 border border-violet-100 text-violet-600 rounded-xl flex items-center justify-center group-hover:scale-105 transition-transform duration-300 shadow-sm">
+              <Building2 className="w-6 h-6" />
             </div>
-            <div>
-              <h3 className="text-sm font-black text-slate-800">Staff Secure Portal</h3>
-              <p className="text-xs text-slate-400 font-semibold mt-1.5 leading-relaxed">
-                Secure entry node for doctor panels, ward boys, and clinic pharmacy logs.
+            <div className="mt-4">
+              <h3 className="text-sm font-black text-violet-700">Staff Secure Portal</h3>
+              <p className="text-xs text-slate-400 font-semibold mt-2 leading-relaxed">
+                Management entry for clinical leads, ward assistants, and pharmacists.
               </p>
             </div>
-            <div className="flex items-center gap-1 text-[10px] font-black text-violet-600 uppercase tracking-wider mt-4">
+            <div className="flex items-center gap-1 text-[10px] font-black text-violet-600 uppercase tracking-wider mt-4 group-hover:gap-2 transition-all">
               <span>Secure Login</span>
-              <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
+              <ArrowRight className="w-3.5 h-3.5" />
             </div>
           </button>
 
@@ -305,80 +364,139 @@ export default function HospitalLandingPage({ tenant, navigate }: Props) {
       </section>
 
       {/* ── CLINIC DEPARTMENTS & REAL-TIME DOCTOR ROSTER ───────────────── */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 mt-12 grid grid-cols-1 lg:grid-cols-3 gap-8 text-left animate-fade-in">
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 mt-16 grid grid-cols-1 lg:grid-cols-3 gap-8 text-left animate-fade-in">
 
-        {/* Left Side: Department list card */}
-        <div className="lg:col-span-1 bg-white border border-slate-150 p-6 rounded-3xl shadow-sm space-y-5">
+        {/* Left Side: Department Filter desk */}
+        <div className="lg:col-span-1 bg-white border border-slate-100 p-6 rounded-[28px] shadow-[0_8px_30px_rgb(0,0,0,0.015)] space-y-6">
           <div>
             <h3 className="text-sm font-black text-slate-800 uppercase tracking-wider">Clinical Departments</h3>
-            <p className="text-[10px] text-slate-400 font-semibold mt-1">Active specialized consultations units</p>
+            <p className="text-[10px] text-slate-400 font-semibold mt-1">Select a branch specialty to filter dynamic doctor lists</p>
           </div>
 
           <div className="space-y-2">
-            {meta.departments.map((dept, i) => (
-              <div
-                key={i}
-                className="flex items-center gap-3 p-3 bg-[#F4F8FB] hover:bg-[#E8F3FF]/50 border border-slate-100 rounded-2xl font-bold text-xs text-[#005EB8] transition-colors"
-                style={{ color: tenant?.theme_color }}
-              >
-                <div className="w-2 h-2 rounded-full bg-[#005EB8]" style={{ backgroundColor: tenant?.theme_color }} />
-                <span>{dept}</span>
+            {/* 'All' category button */}
+            <button
+              onClick={() => setSelectedDept('All')}
+              className="w-full flex items-center justify-between p-3.5 rounded-2xl font-bold text-xs transition-all duration-300 text-left border"
+              style={selectedDept === 'All'
+                ? { color: themeColor, backgroundColor: `${themeColor}12`, borderColor: `${themeColor}25`, boxShadow: '0 4px 12px rgba(0,0,0,0.01)' }
+                : { color: '#475569', backgroundColor: '#F8FAFC50', borderColor: '#F1F5F9' }
+              }
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: selectedDept === 'All' ? themeColor : '#cbd5e1' }} />
+                <span>All Departments</span>
               </div>
-            ))}
+              <span className="text-[9px] bg-white px-2 py-0.5 rounded-md font-black border border-slate-100 shadow-sm text-slate-400">{doctors.length}</span>
+            </button>
+
+            {meta.departments.map((dept, i) => {
+              const count = doctors.filter(doc =>
+                (doc.department || '').toLowerCase().trim() === dept.toLowerCase().trim() ||
+                (doc.specialty || '').toLowerCase().trim() === dept.toLowerCase().trim()
+              ).length;
+              const isSelected = selectedDept.toLowerCase() === dept.toLowerCase();
+
+              return (
+                <button
+                  key={i}
+                  onClick={() => setSelectedDept(dept)}
+                  className="w-full flex items-center justify-between p-3.5 rounded-2xl font-bold text-xs transition-all duration-300 text-left border"
+                  style={isSelected
+                    ? { color: themeColor, backgroundColor: `${themeColor}12`, borderColor: `${themeColor}25`, boxShadow: '0 4px 12px rgba(0,0,0,0.01)' }
+                    : { color: '#475569', backgroundColor: '#F8FAFC50', borderColor: '#F1F5F9' }
+                  }
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: isSelected ? themeColor : '#cbd5e1' }} />
+                    <span className="truncate max-w-[150px]">{dept}</span>
+                  </div>
+                  <span className="text-[9px] bg-white px-2 py-0.5 rounded-md font-black border border-slate-100 shadow-sm text-slate-400">{count}</span>
+                </button>
+              );
+            })}
           </div>
 
           {/* Emergency Hotline Button */}
           <button
             onClick={() => setShowEmergencyDialog(true)}
-            className="w-full mt-4 bg-rose-50 border border-rose-100 hover:bg-rose-100 text-rose-600 font-black text-xs uppercase py-3.5 rounded-2xl tracking-wider transition-all flex items-center justify-center gap-2 active:scale-98 focus:outline-none"
+            className="w-full mt-4 bg-rose-50/50 border border-rose-100 hover:bg-rose-50 text-rose-600 font-black text-xs uppercase py-3.5 rounded-2xl tracking-wider transition-all flex items-center justify-center gap-2 active:scale-98 focus:outline-none shadow-sm hover:shadow"
           >
-            <AlertTriangle className="w-4 h-4" />
+            <AlertTriangle className="w-4 h-4 animate-bounce" />
             Emergency Hotline
           </button>
         </div>
 
-        {/* Right Side: Available Doctors Grid */}
-        <div className="lg:col-span-2 space-y-5">
-          <div>
-            <h3 className="text-sm font-black text-slate-800 uppercase tracking-wider">Today's Available Doctors</h3>
-            <p className="text-[10px] text-slate-400 font-semibold mt-1">Live active practitioner consultation preview</p>
+        {/* Right Side: Available Doctors Interactive Grid */}
+        <div className="lg:col-span-2 space-y-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-sm font-black text-slate-800 uppercase tracking-wider">Today's Available Doctors</h3>
+              <p className="text-[10px] text-slate-400 font-semibold mt-1">Live active practitioner consultation preview</p>
+            </div>
+            {selectedDept !== 'All' && (
+              <button
+                onClick={() => setSelectedDept('All')}
+                className="text-[9px] font-black text-slate-400 hover:text-slate-700 uppercase tracking-wider bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-xl transition-all"
+              >
+                Clear Filter
+              </button>
+            )}
           </div>
 
-          {doctors.length === 0 ? (
-            <div className="bg-white border border-slate-150 p-8 rounded-3xl shadow-sm text-center flex flex-col items-center justify-center min-h-[220px]">
-              <div className="w-12 h-12 bg-slate-50 border border-slate-100 text-slate-400 rounded-2xl flex items-center justify-center mb-3">
-                <Stethoscope className="w-6 h-6 animate-pulse" />
+          {filteredDoctors.length === 0 ? (
+            <div className="bg-white border border-slate-100 p-12 rounded-[28px] shadow-[0_8px_30px_rgb(0,0,0,0.015)] text-center flex flex-col items-center justify-center min-h-[300px] animate-fadeIn">
+              <div className="w-14 h-14 bg-slate-50 border border-slate-100 text-slate-400 rounded-2xl flex items-center justify-center mb-4 shadow-inner">
+                <Stethoscope className="w-7 h-7" />
               </div>
-              <h4 className="text-sm font-black text-slate-700">All Doctors Currently offline</h4>
-              <p className="text-xs text-slate-400 font-semibold mt-1.5 max-w-sm">
-                No active doctors are currently clocked into consultation rooms. Waiting queues remain open for intake forms.
+              <h4 className="text-sm font-black text-slate-700">No practitioners available in "{selectedDept}"</h4>
+              <p className="text-xs text-slate-400 font-semibold mt-2.5 max-w-sm leading-relaxed">
+                There are currently no consulting doctors active in this specialty category. Please check other departments or search the dynamic workspace directory.
               </p>
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {doctors.map((doc) => (
-                <div
-                  key={doc.id}
-                  className="bg-white border border-slate-150 p-4.5 rounded-3xl shadow-sm flex items-center gap-3.5 hover:shadow-md transition-all hover:border-[#005EB8]/10"
-                >
-                  <div className="w-10 h-10 rounded-xl bg-teal-50 border border-teal-100 text-teal-600 flex items-center justify-center flex-shrink-0 font-black text-xs uppercase tracking-wider">
-                    {doc.name.substring(4, 6).toUpperCase()}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <h4 className="text-xs font-black text-slate-800 truncate">{doc.name}</h4>
-                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">{doc.specialty}</p>
-                    <div className="flex items-center gap-2 mt-2">
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-50 text-emerald-600 rounded-full text-[8px] font-black uppercase tracking-wider leading-none">
-                        <span className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse" />
-                        Available
+              {filteredDoctors.map((doc) => {
+                const initials = getInitials(doc.name);
+                
+                // Clean duplicate 'Room' strings
+                const rawRoom = doc.room_number || '';
+                const displayRoom = rawRoom.toLowerCase().startsWith('room')
+                  ? rawRoom.replace(/^room\s+/i, 'Room ')
+                  : `Room ${rawRoom}`;
+
+                return (
+                  <div
+                    key={doc.id}
+                    className="bg-white border border-slate-100 p-5 rounded-[24px] shadow-[0_8px_30px_rgb(0,0,0,0.015)] flex items-center gap-4 hover:shadow-[0_12px_40px_rgba(0,0,0,0.04)] hover:border-slate-200 hover:scale-[1.01] transition-all duration-300 group"
+                  >
+                    {/* Avatar Badge */}
+                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-teal-50 to-[#E8F3FF] border border-teal-100 text-[#005EB8] flex items-center justify-center flex-shrink-0 font-black text-sm uppercase tracking-wider group-hover:scale-105 transition-transform duration-300 shadow-inner"
+                      style={{ color: themeColor }}>
+                      {initials}
+                    </div>
+                    
+                    <div className="min-w-0 flex-1">
+                      <h4 className="text-xs font-black text-slate-800 truncate tracking-tight">{doc.name}</h4>
+                      <span className="inline-block text-[9px] bg-slate-50 border border-slate-150 text-slate-500 font-bold uppercase px-2 py-0.5 rounded-md tracking-wider mt-1.5">
+                        {doc.specialty || 'General Practitioner'}
                       </span>
-                      {doc.room_number && (
-                        <span className="text-[9px] text-slate-400 font-semibold font-mono">Room {doc.room_number}</span>
-                      )}
+                      <div className="flex items-center justify-between gap-2 mt-3 pt-2 border-t border-slate-50">
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 bg-emerald-50 text-emerald-600 rounded-full text-[8px] font-black uppercase tracking-wider leading-none border border-emerald-100">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                          Available
+                        </span>
+                        {doc.room_number && (
+                          <span className="text-[9px] font-black uppercase tracking-wider bg-blue-50/50 border border-blue-100/50 px-2 py-0.5 rounded-md font-mono"
+                            style={{ color: themeColor, borderColor: `${themeColor}20`, backgroundColor: `${themeColor}08` }}>
+                            {displayRoom}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
