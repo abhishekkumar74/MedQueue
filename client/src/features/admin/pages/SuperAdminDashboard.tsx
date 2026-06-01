@@ -1978,7 +1978,11 @@ export default function SuperAdminDashboard({ currentUser: _currentUser, onNavig
                               {meta.status}
                             </span>
                             {/* Tier badge */}
-                            <span className="text-[9px] font-black px-2.5 py-0.5 rounded-full uppercase bg-slate-50 border border-slate-200 text-slate-600">
+                            <span className={`text-[9px] font-black px-2.5 py-0.5 rounded-full uppercase border ${
+                              meta.tier === 'Enterprise' ? 'bg-amber-50 border-amber-200 text-amber-700' :
+                              meta.tier === 'Pro' ? 'bg-blue-50 border border-blue-200 text-[#005EB8]' :
+                              'bg-teal-50 border border-teal-200 text-[#00A3AD]'
+                            }`}>
                               {meta.tier}
                             </span>
                           </div>
@@ -2531,39 +2535,74 @@ export default function SuperAdminDashboard({ currentUser: _currentUser, onNavig
                   const renewalInfo = getSubscriptionRenewalInfo(h.created_at);
                   const dynamicPrice = meta.tier === 'Enterprise' ? enterprisePrice : meta.tier === 'Pro' ? proPrice : basicPrice;
 
+                  // Define dynamic styling configurations based on the SaaS Subscription Tier
+                  let cardStyles = '';
+                  let badgeStyles = '';
+                  let detailBg = '';
+                  let blobStyles = '';
+                  let activePlanBtnStyles = '';
+                  let badgeAddon = null;
+
+                  if (meta.tier === 'Enterprise') {
+                    cardStyles = 'bg-gradient-to-br from-white to-amber-50/20 border-amber-200/80 ring-2 ring-amber-100/20 shadow-md hover:shadow-lg hover:border-amber-350';
+                    badgeStyles = 'bg-amber-50 border border-amber-200 text-amber-700 relative flex items-center gap-1.5';
+                    detailBg = 'bg-amber-50/30 border border-amber-100/50';
+                    blobStyles = 'bg-gradient-to-br from-amber-400/20 to-orange-400/0';
+                    activePlanBtnStyles = 'bg-amber-600 text-white border-amber-600 shadow-sm shadow-amber-100';
+                    badgeAddon = (
+                      <span className="relative flex h-1.5 w-1.5">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-amber-500"></span>
+                      </span>
+                    );
+                  } else if (meta.tier === 'Pro') {
+                    cardStyles = 'bg-gradient-to-br from-white to-blue-50/20 border-blue-250/60 shadow-sm hover:shadow-md hover:border-blue-350';
+                    badgeStyles = 'bg-blue-50 border border-blue-200 text-[#005EB8]';
+                    detailBg = 'bg-blue-50/25 border border-blue-100/40';
+                    blobStyles = 'bg-gradient-to-br from-blue-400/12 to-[#005EB8]/0';
+                    activePlanBtnStyles = 'bg-[#005EB8] text-white border-blue-600 shadow-sm shadow-blue-100';
+                  } else {
+                    // Basic
+                    cardStyles = 'bg-gradient-to-br from-white to-teal-50/25 border-teal-250/60 shadow-sm hover:shadow-md hover:border-teal-350';
+                    badgeStyles = 'bg-teal-50 border border-teal-200 text-[#00A3AD]';
+                    detailBg = 'bg-teal-50/20 border border-teal-100/40';
+                    blobStyles = 'bg-gradient-to-br from-teal-400/12 to-emerald-400/0';
+                    activePlanBtnStyles = 'bg-[#00A3AD] text-white border-teal-600 shadow-sm shadow-teal-100';
+                  }
+
                   return (
-                    <div key={h.id} className="bg-white p-6 rounded-3xl border border-slate-200/60 flex flex-col justify-between min-h-[290px] shadow-sm hover:shadow-md transition-all relative overflow-hidden group">
+                    <div key={h.id} className={`${cardStyles} p-6 rounded-3xl border flex flex-col justify-between min-h-[290px] transition-all relative overflow-hidden group`}>
+                      {/* Ambient premium blur blob */}
+                      <div className={`absolute top-0 right-0 w-24 h-24 ${blobStyles} rounded-full blur-xl -mr-6 -mt-6 pointer-events-none transition-all duration-500 group-hover:scale-125`} />
+                      
                       <div>
                         {/* Card top */}
-                        <div className="flex justify-between items-start">
+                        <div className="flex justify-between items-start relative z-10">
                           <div className="min-w-0">
                             <h4 className="font-extrabold text-slate-950 text-sm truncate max-w-[140px]" title={h.name}>{h.name}</h4>
                             <span className="text-[9px] text-slate-400 font-bold block mt-0.5">Joined: {renewalInfo.joiningDate}</span>
                           </div>
                           <div className="flex flex-col items-end gap-1.5">
-                            <span className={`text-[9px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider ${
-                              meta.tier === 'Enterprise' ? 'bg-amber-50 border border-amber-200 text-amber-700' :
-                              meta.tier === 'Pro' ? 'bg-blue-50 border border-blue-200 text-[#005EB8]' :
-                              'bg-teal-50 border border-teal-200 text-[#00A3AD]'
-                            }`}>
+                            <span className={`text-[9px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider ${badgeStyles}`}>
+                              {badgeAddon}
                               {meta.tier}
                             </span>
-                            <span className="text-[10px] font-black text-slate-700 bg-slate-50 border border-slate-150 px-2 py-0.5 rounded-md">${dynamicPrice}/mo</span>
+                            <span className="text-[10px] font-black text-slate-700 bg-white/80 border border-slate-150 px-2 py-0.5 rounded-md backdrop-blur-[2px]">${dynamicPrice}/mo</span>
                           </div>
                         </div>
 
                         {/* Detailed subscription details starting from day of joining */}
-                        <div className="mt-4 space-y-2 bg-[#F8FAFC] border border-slate-100 rounded-2xl p-4 text-xs font-semibold text-slate-600">
-                          <div className="flex justify-between items-center text-[10px] border-b border-slate-100/50 pb-1.5">
-                            <span className="text-slate-400 font-bold uppercase tracking-wider">Billing Start</span>
+                        <div className={`mt-4 space-y-2 ${detailBg} rounded-2xl p-4 text-xs font-semibold text-slate-650 relative z-10`}>
+                          <div className="flex justify-between items-center text-[10px] border-b border-slate-200/40 pb-1.5">
+                            <span className="text-slate-450 font-bold uppercase tracking-wider">Billing Start</span>
                             <span className="text-slate-800 font-extrabold">{renewalInfo.joiningDate}</span>
                           </div>
-                          <div className="flex justify-between items-center text-[10px] border-b border-slate-100/50 pb-1.5">
-                            <span className="text-slate-400 font-bold uppercase tracking-wider">Next Renewal</span>
+                          <div className="flex justify-between items-center text-[10px] border-b border-slate-200/40 pb-1.5">
+                            <span className="text-slate-455 font-bold uppercase tracking-wider">Next Renewal</span>
                             <span className="text-slate-800 font-extrabold">{renewalInfo.nextBillingDate}</span>
                           </div>
                           <div className="flex justify-between items-center text-[10px] pt-0.5">
-                            <span className="text-slate-400 font-bold uppercase tracking-wider">Remaining Cycle</span>
+                            <span className="text-slate-455 font-bold uppercase tracking-wider">Remaining Cycle</span>
                             <span className={`font-black uppercase text-[9px] px-2 py-0.5 rounded-md flex items-center gap-1.5 ${
                               renewalInfo.daysRemaining <= 5 
                                 ? 'bg-rose-50 border border-rose-100 text-rose-600 animate-pulse' 
@@ -2577,7 +2616,7 @@ export default function SuperAdminDashboard({ currentUser: _currentUser, onNavig
                       </div>
 
                       {/* Config buttons */}
-                      <div className="border-t border-slate-100 pt-3.5 mt-4">
+                      <div className="border-t border-slate-100/80 pt-3.5 mt-4 relative z-10">
                         <span className="text-[9px] text-slate-400 font-black uppercase tracking-wider block mb-2">Change subscription plan</span>
                         <div className="grid grid-cols-3 gap-1.5">
                           {['Basic', 'Pro', 'Enterprise'].map(plan => (
@@ -2587,7 +2626,7 @@ export default function SuperAdminDashboard({ currentUser: _currentUser, onNavig
                               onClick={() => handleChangeHospTier(h.id, h.name, plan)}
                               className={`py-1.5 rounded-lg text-[9px] font-black border transition-all cursor-pointer ${
                                 meta.tier === plan
-                                  ? 'bg-[#005EB8] text-white border-blue-600 shadow-sm shadow-blue-100'
+                                  ? activePlanBtnStyles
                                   : 'bg-white text-slate-400 hover:text-slate-900 border-slate-200 hover:bg-slate-50'
                               }`}
                             >
@@ -3140,7 +3179,11 @@ export default function SuperAdminDashboard({ currentUser: _currentUser, onNavig
                 <div>
                   <div className="flex items-center gap-2">
                     <h3 className="text-xl font-black text-slate-900">{selectedHospDetail.name}</h3>
-                    <span className="text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase bg-[#E8F3FF] text-[#005EB8] border border-blue-100">
+                    <span className={`text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase border ${
+                      getLocalHospMeta(selectedHospDetail.id).tier === 'Enterprise' ? 'bg-amber-50 border-amber-200 text-amber-700' :
+                      getLocalHospMeta(selectedHospDetail.id).tier === 'Pro' ? 'bg-blue-50 border border-blue-200 text-[#005EB8]' :
+                      'bg-teal-50 border border-teal-200 text-[#00A3AD]'
+                    }`}>
                       {getLocalHospMeta(selectedHospDetail.id).tier} Plan
                     </span>
                     <span className="text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase bg-emerald-50 text-emerald-700 border border-emerald-100">
