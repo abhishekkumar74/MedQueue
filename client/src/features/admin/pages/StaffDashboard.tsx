@@ -434,14 +434,19 @@ function WardBoyDashboard({ department }: WardBoyDashboardProps) {
                               <span>Phone: {token.phone}</span>
                               <span>•</span>
                               <span className="capitalize">{token.department || 'general'}</span>
-                              {token.doctor_name && (
-                                <>
-                                  <span>•</span>
-                                  <span className="text-violet-600 font-extrabold flex items-center gap-0.5">
-                                    <MapPin className="w-3 h-3" /> Room {token.room_number} ({token.doctor_name})
-                                  </span>
-                                </>
-                              )}
+                              {(() => {
+                                const matchedDoc = doctors.find(d => d.room_number === token.room_number);
+                                const docName = token.doctor_name || matchedDoc?.name;
+                                if (!token.room_number) return null;
+                                return (
+                                  <>
+                                    <span>•</span>
+                                    <span className="text-violet-600 font-extrabold flex items-center gap-0.5">
+                                      <MapPin className="w-3 h-3" /> Room {token.room_number} {docName ? `(${docName})` : ''}
+                                    </span>
+                                  </>
+                                );
+                              })()}
                             </div>
 
                             {/* Symptoms tag previews */}

@@ -982,8 +982,13 @@ export default function AdminDashboard({ currentUser }: Props) {
                               {PRIORITY_LABEL[token.priority]}
                             </span>
                           </td>
-                          <td className="py-3.5 font-bold text-slate-800">{token.room_number || 'Room 3'}</td>
-                          <td className="py-3.5 font-semibold text-slate-600">{token.doctor_name || 'Dr. Abhishek'}</td>
+                          <td className="py-3.5 font-bold text-slate-800">{token.room_number || '—'}</td>
+                          <td className="py-3.5 font-semibold text-slate-600">
+                             {(() => {
+                               const matchedDoc = doctors.find(d => d.room_number === token.room_number);
+                               return matchedDoc ? matchedDoc.name : '—';
+                             })()}
+                          </td>
                           <td className="py-3.5">
                             <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${STATUS_COLOR[token.status]}`}>
                               {token.status}
