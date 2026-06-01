@@ -8,7 +8,7 @@ import {
   MapPin, Phone, Check, RefreshCw, UserPlus, Trash2, Loader2, Info,
   LayoutDashboard, BarChart3, CreditCard, AlertTriangle, Heart, Megaphone,
   CheckCircle2, Download, Send, ShieldCheck, Sparkles,
-  Settings, Bell, Clock, Radio, ChevronDown
+  Settings, Bell, Clock, Radio, ChevronDown, DollarSign
 } from 'lucide-react';
 
 interface Hospital {
@@ -113,7 +113,59 @@ export default function SuperAdminDashboard({ currentUser: _currentUser, onNavig
   // New States for Advanced Admin & Filtering Controls
   const [selectedStaffHospitalFilter, setSelectedStaffHospitalFilter] = useState<string>('all');
   const [hospitalSortBy, setHospitalSortBy] = useState<'name' | 'heavy-use' | 'low-use' | 'doctors'>('name');
-  
+
+  // Dynamic subscription prices config
+  const [basicPrice, setBasicPrice] = useState<number>(() => Number(localStorage.getItem('medqueue_price_basic') || '99'));
+  const [proPrice, setProPrice] = useState<number>(() => Number(localStorage.getItem('medqueue_price_pro') || '299'));
+  const [enterprisePrice, setEnterprisePrice] = useState<number>(() => Number(localStorage.getItem('medqueue_price_enterprise') || '799'));
+
+  const handleSavePrices = (basic: number, pro: number, enterprise: number) => {
+    localStorage.setItem('medqueue_price_basic', String(basic));
+    localStorage.setItem('medqueue_price_pro', String(pro));
+    localStorage.setItem('medqueue_price_enterprise', String(enterprise));
+    setBasicPrice(basic);
+    setProPrice(pro);
+    setEnterprisePrice(enterprise);
+    setSuccess('SaaS subscription tier pricing decisions updated and applied globally!');
+    logActivity(`SaaS subscription tier pricing updated: Basic: $${basic}, Pro: $${pro}, Enterprise: $${enterprise}`, 'billing', 'bg-[#005EB8]');
+  };
+
+  // Helper to compute dynamic subscription details starting from day of joining
+  const getSubscriptionRenewalInfo = (createdAt?: string) => {
+    const joinDate = new Date(createdAt || '2026-05-15');
+    const now = new Date();
+
+    const joinDay = joinDate.getDate();
+    let year = now.getFullYear();
+    let month = now.getMonth();
+
+    // Candidate renewal date in this month
+    let renewal = new Date(year, month, joinDay);
+
+    // Month end roll-over clamping helper
+    if (renewal.getDate() !== joinDay) {
+      renewal = new Date(year, month + 1, 0);
+    }
+
+    // Next renewal date candidate if already passed today
+    if (renewal <= now) {
+      month += 1;
+      renewal = new Date(year, month, joinDay);
+      if (renewal.getDate() !== joinDay) {
+        renewal = new Date(year, month + 1, 0);
+      }
+    }
+
+    const diffTime = renewal.getTime() - now.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    return {
+      joiningDate: joinDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
+      nextBillingDate: renewal.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
+      daysRemaining: diffDays
+    };
+  };
+
   // Hospital specific detail drawer/modal states
   const [selectedHospDetail, setSelectedHospDetail] = useState<Hospital | null>(null);
   const [detailDoctors, setDetailDoctors] = useState<any[]>([]);
@@ -929,13 +981,13 @@ export default function SuperAdminDashboard({ currentUser: _currentUser, onNavig
     setSuccess('SaaS Operations CSV report generated successfully.');
   };
 
-  // Compute MRR
+  // Compute MRR using dynamic price settings
   const totalMRR = hospitals.reduce((acc, h) => {
     const meta = getLocalHospMeta(h.id);
     if (meta.status !== 'ACTIVE') return acc;
-    if (meta.tier === 'Enterprise') return acc + 799;
-    if (meta.tier === 'Pro') return acc + 299;
-    return acc + 99;
+    if (meta.tier === 'Enterprise') return acc + enterprisePrice;
+    if (meta.tier === 'Pro') return acc + proPrice;
+    return acc + basicPrice;
   }, 0);
 
   if (loading) {
@@ -946,6 +998,8 @@ export default function SuperAdminDashboard({ currentUser: _currentUser, onNavig
       </div>
     );
   }
+
+  const themeColor = '#005EB8';
 
   return (
     <div className={`min-h-screen text-slate-800 antialiased font-sans flex flex-col transition-colors duration-300 ${emergencyMode ? 'bg-[#FFF5F5]' : 'bg-[#F4F8FB]'}`}>
@@ -2363,24 +2417,108 @@ export default function SuperAdminDashboard({ currentUser: _currentUser, onNavig
                 {/* Billing count indexes */}
                 <div className="flex gap-4">
                   <div className="bg-[#F8FAFC] px-4 py-3 rounded-2xl border border-slate-100 text-center">
-                    <span className="text-[9px] text-slate-400 font-black uppercase tracking-wider block">Enterprise ($799)</span>
+                    <span className="text-[9px] text-slate-400 font-black uppercase tracking-wider block">Enterprise (${enterprisePrice})</span>
                     <span className="text-lg font-black text-amber-500 mt-1 block">
                       {hospitals.filter(h => getLocalHospMeta(h.id).tier === 'Enterprise').length} Active
                     </span>
                   </div>
                   <div className="bg-[#F8FAFC] px-4 py-3 rounded-2xl border border-slate-100 text-center">
-                    <span className="text-[9px] text-slate-400 font-black uppercase tracking-wider block">Pro ($299)</span>
+                    <span className="text-[9px] text-slate-400 font-black uppercase tracking-wider block">Pro (${proPrice})</span>
                     <span className="text-lg font-black text-[#005EB8] mt-1 block">
                       {hospitals.filter(h => getLocalHospMeta(h.id).tier === 'Pro').length} Active
                     </span>
                   </div>
                   <div className="bg-[#F8FAFC] px-4 py-3 rounded-2xl border border-slate-100 text-center">
-                    <span className="text-[9px] text-slate-400 font-black uppercase tracking-wider block">Basic ($99)</span>
+                    <span className="text-[9px] text-slate-400 font-black uppercase tracking-wider block">Basic (${basicPrice})</span>
                     <span className="text-lg font-black text-[#00A3AD] mt-1 block">
                       {hospitals.filter(h => getLocalHospMeta(h.id).tier === 'Basic').length} Active
                     </span>
                   </div>
                 </div>
+              </div>
+
+              {/* SaaS Tiers Pricing Decider Console */}
+              <div className="bg-white rounded-3xl border border-slate-200/60 p-6 shadow-sm mb-6 relative overflow-hidden group">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-blue-50/20 rounded-full blur-3xl pointer-events-none" />
+                <div className="flex items-center gap-3 border-b border-slate-100 pb-3.5 mb-4">
+                  <div className="w-9 h-9 bg-blue-50 text-[#005EB8] rounded-xl flex items-center justify-center shadow-inner" style={{ color: themeColor, backgroundColor: `${themeColor}10` }}>
+                    <DollarSign className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-xs font-black text-slate-900 uppercase tracking-widest">SaaS Tiers Pricing Console</h3>
+                    <p className="text-[10px] text-slate-400 font-bold mt-0.5">Configure global monthly rates for all clinic subscription packages</p>
+                  </div>
+                </div>
+
+                <form 
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    const fd = new FormData(e.currentTarget);
+                    const basic = Number(fd.get('basic_price') || basicPrice);
+                    const pro = Number(fd.get('pro_price') || proPrice);
+                    const enterprise = Number(fd.get('enterprise_price') || enterprisePrice);
+                    handleSavePrices(basic, pro, enterprise);
+                  }}
+                  className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end"
+                >
+                  <div>
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1.5">Basic Tier (Monthly)</label>
+                    <div className="relative rounded-xl shadow-sm">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <span className="text-slate-400 text-xs font-bold">$</span>
+                      </div>
+                      <input
+                        type="number"
+                        name="basic_price"
+                        defaultValue={basicPrice}
+                        min="1"
+                        className="block w-full pl-7 pr-3 py-2 border border-slate-200 rounded-xl bg-slate-50 text-xs text-slate-800 font-extrabold focus:outline-none focus:ring-1 focus:ring-[#005EB8] focus:border-[#005EB8]"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1.5">Pro Tier (Monthly)</label>
+                    <div className="relative rounded-xl shadow-sm">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <span className="text-slate-400 text-xs font-bold">$</span>
+                      </div>
+                      <input
+                        type="number"
+                        name="pro_price"
+                        defaultValue={proPrice}
+                        min="1"
+                        className="block w-full pl-7 pr-3 py-2 border border-slate-200 rounded-xl bg-slate-50 text-xs text-slate-800 font-extrabold focus:outline-none focus:ring-1 focus:ring-[#005EB8] focus:border-[#005EB8]"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1.5">Enterprise Tier (Monthly)</label>
+                    <div className="relative rounded-xl shadow-sm">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <span className="text-slate-400 text-xs font-bold">$</span>
+                      </div>
+                      <input
+                        type="number"
+                        name="enterprise_price"
+                        defaultValue={enterprisePrice}
+                        min="1"
+                        className="block w-full pl-7 pr-3 py-2 border border-slate-200 rounded-xl bg-slate-50 text-xs text-slate-800 font-extrabold focus:outline-none focus:ring-1 focus:ring-[#005EB8] focus:border-[#005EB8]"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="w-full py-2 bg-slate-900 hover:bg-slate-800 text-white font-black text-[10px] rounded-xl border border-slate-950 transition-all uppercase tracking-wider shadow-sm flex items-center justify-center gap-1.5 min-h-[36px] cursor-pointer"
+                  >
+                    <CheckCircle2 className="w-4 h-4 text-emerald-450" /> Save Pricing Settings
+                  </button>
+                </form>
               </div>
 
               {/* Pricing tier assignments grid */}
@@ -2390,36 +2528,64 @@ export default function SuperAdminDashboard({ currentUser: _currentUser, onNavig
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {hospitals.map(h => {
                   const meta = getLocalHospMeta(h.id);
+                  const renewalInfo = getSubscriptionRenewalInfo(h.created_at);
+                  const dynamicPrice = meta.tier === 'Enterprise' ? enterprisePrice : meta.tier === 'Pro' ? proPrice : basicPrice;
+
                   return (
-                    <div key={h.id} className="bg-white p-6 rounded-3xl border border-slate-200/60 flex flex-col justify-between h-56 shadow-sm">
+                    <div key={h.id} className="bg-white p-6 rounded-3xl border border-slate-200/60 flex flex-col justify-between min-h-[290px] shadow-sm hover:shadow-md transition-all relative overflow-hidden group">
                       <div>
+                        {/* Card top */}
                         <div className="flex justify-between items-start">
-                          <h4 className="font-extrabold text-slate-950 text-sm truncate max-w-[140px]">{h.name}</h4>
-                          <span className={`text-[9px] font-black px-2.5 py-0.5 rounded-full ${
-                            meta.tier === 'Enterprise' ? 'bg-amber-50 border border-amber-200 text-amber-700' :
-                            meta.tier === 'Pro' ? 'bg-blue-50 border border-blue-200 text-[#005EB8]' :
-                            'bg-teal-50 border border-teal-200 text-[#00A3AD]'
-                          }`}>
-                            {meta.tier}
-                          </span>
+                          <div className="min-w-0">
+                            <h4 className="font-extrabold text-slate-950 text-sm truncate max-w-[140px]" title={h.name}>{h.name}</h4>
+                            <span className="text-[9px] text-slate-400 font-bold block mt-0.5">Joined: {renewalInfo.joiningDate}</span>
+                          </div>
+                          <div className="flex flex-col items-end gap-1.5">
+                            <span className={`text-[9px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider ${
+                              meta.tier === 'Enterprise' ? 'bg-amber-50 border border-amber-200 text-amber-700' :
+                              meta.tier === 'Pro' ? 'bg-blue-50 border border-blue-200 text-[#005EB8]' :
+                              'bg-teal-50 border border-teal-200 text-[#00A3AD]'
+                            }`}>
+                              {meta.tier}
+                            </span>
+                            <span className="text-[10px] font-black text-slate-700 bg-slate-50 border border-slate-150 px-2 py-0.5 rounded-md">${dynamicPrice}/mo</span>
+                          </div>
                         </div>
 
-                        {/* Renewal countdown ticker */}
-                        <div className="mt-4 flex items-center gap-2 text-xs text-slate-500 font-bold bg-[#F8FAFC] p-3 rounded-xl border border-slate-100">
-                          <Clock className="w-4 h-4 text-[#00A3AD] animate-spin" />
-                          <span>Renewal context: <strong className="text-slate-900">4 days remaining</strong></span>
+                        {/* Detailed subscription details starting from day of joining */}
+                        <div className="mt-4 space-y-2 bg-[#F8FAFC] border border-slate-100 rounded-2xl p-4 text-xs font-semibold text-slate-600">
+                          <div className="flex justify-between items-center text-[10px] border-b border-slate-100/50 pb-1.5">
+                            <span className="text-slate-400 font-bold uppercase tracking-wider">Billing Start</span>
+                            <span className="text-slate-800 font-extrabold">{renewalInfo.joiningDate}</span>
+                          </div>
+                          <div className="flex justify-between items-center text-[10px] border-b border-slate-100/50 pb-1.5">
+                            <span className="text-slate-400 font-bold uppercase tracking-wider">Next Renewal</span>
+                            <span className="text-slate-800 font-extrabold">{renewalInfo.nextBillingDate}</span>
+                          </div>
+                          <div className="flex justify-between items-center text-[10px] pt-0.5">
+                            <span className="text-slate-400 font-bold uppercase tracking-wider">Remaining Cycle</span>
+                            <span className={`font-black uppercase text-[9px] px-2 py-0.5 rounded-md flex items-center gap-1.5 ${
+                              renewalInfo.daysRemaining <= 5 
+                                ? 'bg-rose-50 border border-rose-100 text-rose-600 animate-pulse' 
+                                : 'bg-emerald-50 border border-emerald-100 text-emerald-600'
+                            }`}>
+                              <Clock className="w-3.5 h-3.5" />
+                              {renewalInfo.daysRemaining} days left
+                            </span>
+                          </div>
                         </div>
                       </div>
 
                       {/* Config buttons */}
-                      <div className="border-t border-slate-100 pt-3.5">
+                      <div className="border-t border-slate-100 pt-3.5 mt-4">
                         <span className="text-[9px] text-slate-400 font-black uppercase tracking-wider block mb-2">Change subscription plan</span>
                         <div className="grid grid-cols-3 gap-1.5">
                           {['Basic', 'Pro', 'Enterprise'].map(plan => (
                             <button
                               key={plan}
+                              type="button"
                               onClick={() => handleChangeHospTier(h.id, h.name, plan)}
-                              className={`py-1.5 rounded-lg text-[9px] font-black border transition-all ${
+                              className={`py-1.5 rounded-lg text-[9px] font-black border transition-all cursor-pointer ${
                                 meta.tier === plan
                                   ? 'bg-[#005EB8] text-white border-blue-600 shadow-sm shadow-blue-100'
                                   : 'bg-white text-slate-400 hover:text-slate-900 border-slate-200 hover:bg-slate-50'
