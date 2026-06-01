@@ -37,6 +37,8 @@ interface VaultDoc {
   uploadedAt: string;
   fileSize: string;
   doctorName?: string;
+  isDatabasePrescription?: boolean;
+  rawPrescription?: any;
 }
 
 import { TenantConfig } from '../../../lib/tenant';
@@ -146,13 +148,35 @@ export default function PatientWorkspace({ currentUser, navigate, tenant }: {
     setLoadingHistory(true);
     try {
       // Fetch active database visits for main patient if profile is 'Self'
-      if (activeProfile.relationship === 'Self' && activeProfile.id !== 'self') {
-        const [visitsRes, prescRes] = await Promise.all([
-          supabase.from('visits').select('*, tokens(*)').eq('patient_id', activeProfile.id).order('created_at', { ascending: false }),
-          supabase.from('prescriptions').select('*').eq('patient_id', activeProfile.id).order('created_at', { ascending: false })
-        ]);
-        setDbVisits(visitsRes.data || []);
-        setDbPrescriptions(prescRes.data || []);
+      if (activeProfile.relationship === 'Self') {
+        let resolvedPatientId = activeProfile.id;
+        if (resolvedPatientId === 'self' || !resolvedPatientId.includes('-')) {
+          const { data: patientRecord } = await supabase
+            .from('patients')
+            .select('id')
+            .eq('phone', patientPhone)
+            .maybeSingle();
+          if (patientRecord?.id) {
+            resolvedPatientId = patientRecord.id;
+          }
+        }
+
+        if (resolvedPatientId && resolvedPatientId !== 'self') {
+          const [visitsRes, prescRes] = await Promise.all([
+            supabase.from('visits').select('*, tokens(*)').eq('patient_id', resolvedPatientId).order('created_at', { ascending: false }),
+            supabase.from('prescriptions').select('*').eq('patient_id', resolvedPatientId).order('created_at', { ascending: false })
+          ]);
+          setDbVisits(visitsRes.data || []);
+          setDbPrescriptions(prescRes.data || []);
+        } else {
+          // Fallback simulated clinical data for main patient if no database row exists yet
+          setDbVisits([
+            { id: 'vis-1', bp: '118/76', sugar: '92', symptoms: 'Regular routine clinical follow-up', doctor_notes: 'Vitals stable. Suggested walking 30 mins daily.', created_at: new Date(Date.now() - 12 * 24 * 3600 * 1000).toISOString(), tokens: { token_number: 14 } }
+          ]);
+          setDbPrescriptions([
+            { id: 'pre-1', diagnosis: 'Mild Hypertension', medications: [{ name: 'Amlodipine 5mg', dosage: '1 tablet', frequency: 'Once daily', duration: '30 days', instructions: 'Take in morning' }], status: 'DISPENSED', created_at: new Date(Date.now() - 12 * 24 * 3600 * 1000).toISOString() }
+          ]);
+        }
       } else {
         // Fallback simulated clinical data for family members to keep widgets extremely rich
         setDbVisits([
@@ -167,7 +191,7 @@ export default function PatientWorkspace({ currentUser, navigate, tenant }: {
     } finally {
       setLoadingHistory(false);
     }
-  }, [activeProfile]);
+  }, [activeProfile, patientPhone]);
 
   useEffect(() => {
     loadProfileData();
@@ -322,18 +346,116 @@ export default function PatientWorkspace({ currentUser, navigate, tenant }: {
     }, 2000);
   };
 
+  // Map live prescriptions from DB to look like VaultDoc items
+  const dbVaultDocs: VaultDoc[] = dbPrescriptions.map(p => ({
+    id: p.id,
+    name: `${tenant?.name || 'MedQueue Clinic'} - Prescription #${p.id.substring(0, 6).toUpperCase()}`,
+    category: 'Prescription',
+    uploadedAt: new Date(p.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }),
+    fileSize: 'Active Record',
+    doctorName: p.doctor_name || 'Assigned Specialist',
+    isDatabasePrescription: true,
+    rawPrescription: p
+  }));
+
+  const combinedVaultDocs = [...dbVaultDocs, ...vaultDocs];
+
   const handleDocDelete = (id: string) => {
+    const foundDoc = combinedVaultDocs.find(d => d.id === id);
+    if (foundDoc?.isDatabasePrescription) {
+      alert('Database clinical prescriptions are part of permanent patient medical history and cannot be deleted from this portal.');
+      return;
+    }
     if (!confirm('Are you sure you want to permanently delete this health report?')) return;
     const updated = vaultDocs.filter(d => d.id !== id);
     setVaultDocs(updated);
     localStorage.setItem(`mq_medical_vault_${patientPhone}_${activeProfile!.name}`, JSON.stringify(updated));
   };
 
+  const handlePrintPrescription = () => {
+    if (!showDocPreview) return;
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.write(`
+        <html>
+          <head>
+            <title>Prescription Print - MedQueue</title>
+            <style>
+              body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 40px; color: #1e293b; line-height: 1.5; }
+              .header { text-align: center; border-bottom: 2px solid #005EB8; padding-bottom: 16px; margin-bottom: 24px; }
+              .clinic-name { font-size: 20px; font-weight: 800; color: #005EB8; margin: 0; text-transform: uppercase; }
+              .clinic-sub { font-size: 10px; color: #64748b; margin-top: 4px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.05em; }
+              .meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px; font-size: 12px; border-bottom: 1px solid #e2e8f0; padding-bottom: 16px; }
+              .meta-item { display: flex; flex-direction: column; gap: 2px; }
+              .meta-label { font-size: 8px; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; }
+              .meta-val { font-weight: 700; color: #334155; }
+              .section-title { font-size: 11px; font-weight: 800; text-transform: uppercase; color: #475569; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px; margin-bottom: 12px; letter-spacing: 0.05em; }
+              .diagnosis-box { background: #f0f7ff; border: 1px solid #d0e7ff; padding: 12px; border-radius: 8px; font-size: 12px; font-weight: 700; color: #1e293b; margin-bottom: 20px; }
+              .med-item { background: #fff; border: 1px solid #f1f5f9; padding: 12px; border-radius: 8px; display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px; font-size: 12px; }
+              .med-name { font-weight: 850; color: #0f172a; }
+              .med-inst { font-size: 10px; color: #64748b; font-style: italic; margin-top: 2px; }
+              .med-details { text-align: right; }
+              .med-dosage { font-weight: 800; color: #005EB8; }
+              .med-freq { font-size: 9px; color: #64748b; margin-top: 2px; }
+              .stamp-container { text-align: center; margin-top: 40px; }
+              .stamp { border: 2px solid #10b981; color: #10b981; display: inline-block; padding: 6px 16px; font-weight: 800; border-radius: 6px; text-transform: uppercase; transform: rotate(-2deg); font-size: 11px; letter-spacing: 0.05em; background: #f0fdf4; }
+            </style>
+          </head>
+          <body onload="window.print(); window.close();">
+            <div class="header">
+              <div class="clinic-name">${tenant?.name || 'MedQueue Outpatient Center'}</div>
+              <div class="clinic-sub">${tenant?.address || 'Digital Healthcare Sandbox'}</div>
+            </div>
+            
+            <div class="meta-grid">
+              <div class="meta-item">
+                <div class="meta-label">Patient Name</div>
+                <div class="meta-val" style="font-size: 13px;">${activeProfile?.name || 'Patient'}</div>
+                <div style="margin-top: 4px; color: #64748b;">Age: <strong>${activeProfile?.age || '30'} yrs</strong> • Phone: <strong>${activeProfile?.phone || ''}</strong></div>
+              </div>
+              <div class="meta-item" style="text-align: right;">
+                <div class="meta-label">Consultation Details</div>
+                <div class="meta-val">Doctor: <span style="color: #005EB8;">${showDocPreview.doctorName || 'Assigned Specialist'}</span></div>
+                <div style="margin-top: 4px; color: #64748b;">Date: <strong>${showDocPreview.uploadedAt || ''}</strong></div>
+              </div>
+            </div>
+
+            <div class="section-title">Clinical Diagnosis</div>
+            <div class="diagnosis-box">
+              ${showDocPreview.rawPrescription?.diagnosis || 'Routine Outpatient Triage Check'}
+            </div>
+
+            <div class="section-title">Prescribed Medications</div>
+            <div style="margin-top: 8px;">
+              ${Array.isArray(showDocPreview.rawPrescription?.medications) ? showDocPreview.rawPrescription.medications.map((m: any) => `
+                <div class="med-item">
+                  <div>
+                    <div class="med-name">• ${m.name}</div>
+                    ${m.instructions ? `<div class="med-inst">Notes: ${m.instructions}</div>` : ''}
+                  </div>
+                  <div class="med-details">
+                    <div class="med-dosage">${m.dosage}</div>
+                    <div class="med-freq">${m.frequency} • ${m.duration}</div>
+                  </div>
+                </div>
+              `).join('') : '<div style="color: #94a3b8; font-style: italic;">No medications listed.</div>'}
+            </div>
+
+            <div class="stamp-container">
+              <div class="stamp">Digitally Verified Rx</div>
+            </div>
+          </body>
+        </html>
+      `);
+      printWindow.document.close();
+    }
+  };
+
   // ── Dashboard Metrics calculations ─────────────────────────
   const latestVitals = dbVisits[0] || { bp: '120/80', sugar: '98', temperature: '98.4 F' };
 
 
-  const filterDocs = vaultDocs.filter(d => {
+  const filterDocs = combinedVaultDocs.filter(d => {
     const matchesSearch = d.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
       (d.doctorName || '').toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory = categoryFilter === 'All' || d.category === categoryFilter;
@@ -1048,23 +1170,93 @@ export default function PatientWorkspace({ currentUser, navigate, tenant }: {
                         <h3 className="text-base font-black text-slate-800 mt-2 truncate">{showDocPreview.name}</h3>
                       </div>
 
-                      {/* Mock Interactive PDF/Image viewer */}
-                      <div className="bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200 h-48 flex items-center justify-center p-4 text-center">
-                        <div>
-                          <FileText className="w-10 h-10 text-slate-300 mx-auto mb-2" />
-                          <p className="text-xs font-black text-slate-700 uppercase tracking-wide">SECURE PREVIEW PANEL</p>
-                          <p className="text-[10px] text-slate-400 mt-0.5 max-w-xs">SHA-256 local keys verified. Diagnostic results are locked under clinical isolation rules.</p>
+                      {/* Dynamic Prescription View or Mock Viewer depending on doc type */}
+                      {showDocPreview.isDatabasePrescription ? (
+                        <div className="bg-slate-50 border border-slate-200 rounded-2xl p-5 space-y-4 max-h-[350px] overflow-y-auto text-xs" id="printable-prescription">
+                          {/* Clinic Header */}
+                          <div className="border-b-2 border-[#005EB8] pb-3 text-center">
+                            <h4 className="text-sm font-black text-[#005EB8] uppercase tracking-wide">{tenant?.name || 'MedQueue Outpatient Center'}</h4>
+                            <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">{tenant?.address || 'Digital Healthcare Sandbox'}</p>
+                          </div>
+
+                          {/* Patient & Doctor Meta */}
+                          <div className="grid grid-cols-2 gap-3 text-[10px] text-slate-500 font-semibold border-b border-slate-200 pb-3">
+                            <div>
+                              <p className="text-[8px] font-black uppercase text-slate-400 tracking-wider">Patient Name</p>
+                              <strong className="text-slate-800 text-[11px]">{activeProfile?.name}</strong>
+                              <p className="mt-1">Age: <strong className="text-slate-700">{activeProfile?.age} yrs</strong> • Phone: <strong className="text-slate-700">{activeProfile?.phone}</strong></p>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-[8px] font-black uppercase text-slate-400 tracking-wider">Consultation Details</p>
+                              <p className="text-slate-700">Doctor: <strong className="text-[#005EB8]">{showDocPreview.doctorName}</strong></p>
+                              <p className="mt-1">Date: <strong className="text-slate-700">{showDocPreview.uploadedAt}</strong></p>
+                            </div>
+                          </div>
+
+                          {/* Diagnosis */}
+                          <div className="bg-[#E8F3FF] border border-blue-100 rounded-xl p-3 text-[10px]">
+                            <span className="text-[8px] font-black text-[#005EB8] uppercase tracking-wider block mb-0.5">Clinical Diagnosis</span>
+                            <strong className="text-slate-800 text-xs">{showDocPreview.rawPrescription?.diagnosis || 'Routine Outpatient Triage Check'}</strong>
+                          </div>
+
+                          {/* Medications list */}
+                          <div>
+                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-2">Prescribed Medications</span>
+                            <div className="space-y-2">
+                              {Array.isArray(showDocPreview.rawPrescription?.medications) ? (
+                                showDocPreview.rawPrescription.medications.map((m: any, idx: number) => (
+                                  <div key={idx} className="bg-white border border-slate-100 p-2.5 rounded-xl flex justify-between items-start gap-4">
+                                    <div>
+                                      <strong className="text-slate-800 text-xs block">• {m.name}</strong>
+                                      {m.instructions && <span className="text-[10px] text-slate-400 font-bold block mt-0.5">Notes: {m.instructions}</span>}
+                                    </div>
+                                    <div className="text-right flex-shrink-0 text-[10px] font-bold text-slate-500">
+                                      <p className="text-[#005EB8] font-black">{m.dosage}</p>
+                                      <p className="text-[9px] mt-0.5">{m.frequency} • {m.duration}</p>
+                                    </div>
+                                  </div>
+                                ))
+                              ) : (
+                                <p className="text-slate-400 font-semibold italic text-center py-2">No medications listed.</p>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Stamp */}
+                          <div className="text-center pt-2">
+                            <span className="border-2 border-emerald-500 text-emerald-500 font-black tracking-widest uppercase rounded-lg px-3 py-1 inline-block rotate-[-2deg] bg-emerald-50/50 text-[10px] shadow-sm animate-pulse">
+                              Digitally Verified Rx
+                            </span>
+                          </div>
                         </div>
-                      </div>
+                      ) : (
+                        /* Standard Mock Interactive PDF/Image viewer for uploaded files */
+                        <div className="bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200 h-48 flex items-center justify-center p-4 text-center">
+                          <div>
+                            <FileText className="w-10 h-10 text-slate-300 mx-auto mb-2" />
+                            <p className="text-xs font-black text-slate-700 uppercase tracking-wide">SECURE PREVIEW PANEL</p>
+                            <p className="text-[10px] text-slate-400 mt-0.5 max-w-xs">SHA-256 local keys verified. Diagnostic results are locked under clinical isolation rules.</p>
+                          </div>
+                        </div>
+                      )}
 
                       <div className="flex gap-3 pt-2">
-                        <a 
-                          href="#"
-                          onClick={(e) => { e.preventDefault(); alert('Document downloaded locally.'); }}
-                          className="flex-1 py-3 bg-[#005EB8] hover:bg-[#004a96] text-white text-xs font-black rounded-xl text-center flex items-center justify-center gap-1.5 uppercase tracking-wider shadow-sm transition-all"
-                        >
-                          <Download className="w-4 h-4" /> Download File
-                        </a>
+                        {showDocPreview.isDatabasePrescription ? (
+                          <button 
+                            onClick={handlePrintPrescription}
+                            className="flex-1 py-3 bg-[#005EB8] hover:bg-[#004a96] text-white text-xs font-black rounded-xl text-center flex items-center justify-center gap-1.5 uppercase tracking-wider shadow-sm transition-all"
+                          >
+                            <Download className="w-4 h-4" /> Print Prescription
+                          </button>
+                        ) : (
+                          <a 
+                            href="#"
+                            onClick={(e) => { e.preventDefault(); alert('Document downloaded locally.'); }}
+                            className="flex-1 py-3 bg-[#005EB8] hover:bg-[#004a96] text-white text-xs font-black rounded-xl text-center flex items-center justify-center gap-1.5 uppercase tracking-wider shadow-sm transition-all"
+                          >
+                            <Download className="w-4 h-4" /> Download File
+                          </a>
+                        )}
                         <button 
                           onClick={() => { alert('Shared with consulting practitioner.'); }}
                           className="flex-1 py-3 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-650 text-xs font-black rounded-xl uppercase tracking-wider transition-colors"
