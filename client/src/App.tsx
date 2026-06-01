@@ -735,7 +735,7 @@ export default function App() {
       <div className="min-h-screen bg-[#F4F8FB]">
         <UniversalHeader page={page} navigate={navigate} currentUser={user} handleLogout={handleLogout} />
         <main key={page} className="animate-fade-in">
-          <PharmacyDashboard />
+          <PharmacyDashboard currentUser={user} />
         </main>
       </div>
     );

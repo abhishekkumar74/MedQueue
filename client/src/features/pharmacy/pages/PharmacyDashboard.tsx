@@ -1,11 +1,16 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../../../lib/supabase';
+import { AuthUser } from '../../../lib/auth';
 import { PrescriptionStatus, PRESCRIPTION_STATUS_COLOR, PRESCRIPTION_STATUS_LABEL } from '../../../types';
 import { 
   Pill, CheckCircle2, Loader2, AlertCircle,
   RefreshCw, PlusCircle, Edit3, ShieldAlert, 
   TrendingUp, Sparkle, Database, FileSpreadsheet, X, Search
 } from 'lucide-react';
+
+interface Props {
+  currentUser?: AuthUser | null;
+}
 
 interface MedicineRow {
   id: string;
@@ -22,8 +27,8 @@ interface MedicineRow {
   created_at: string;
 }
 
-export default function PharmacyDashboard() {
-  const hospitalId = 'd290f1ee-6c54-4b01-90e6-d701748f0851'; // Tenant isolation
+export default function PharmacyDashboard({ currentUser }: Props) {
+  const hospitalId = (currentUser?.role === 'SUPER_ADMIN' ? (localStorage.getItem('mq_selected_hospital_id') || currentUser?.hospital_id) : currentUser?.hospital_id) || 'd290f1ee-6c54-4b01-90e6-d701748f0851'; // Tenant isolation
 
   // ── Navigation Tabs ───────────────────────────────────────
   const [activeTab, setActiveTab] = useState<'prescriptions' | 'inventory' | 'suppliers' | 'analytics'>('prescriptions');
