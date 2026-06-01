@@ -63,6 +63,14 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
     }
   }, [initialTab]);
 
+  useEffect(() => {
+    if (activeTab === 'vault') {
+      setTimelineCategory('Lab Reports');
+    } else if (activeTab === 'timeline') {
+      setTimelineCategory('All');
+    }
+  }, [activeTab]);
+
   // ── Family Profiles State ──────────────────────────────────
   const [familyProfiles, setFamilyProfiles] = useState<FamilyProfile[]>([]);
   const [activeProfile, setActiveProfile] = useState<FamilyProfile | null>(null);
@@ -91,7 +99,7 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
   // ── Lab Document Vault State ────────────────────────────────
   const [vaultDocs, setVaultDocs] = useState<VaultDoc[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState<string>('All');
+
   const [uploadingDoc, setUploadingDoc] = useState(false);
   const [showDocPreview, setShowDocPreview] = useState<VaultDoc | null>(null);
   const [activePrescriptionModal, setActivePrescriptionModal] = useState<{ vis: any; presc: any } | null>(null);
@@ -100,8 +108,30 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
   // ── Database Records state ─────────────────────────────────
   const [dbVisits, setDbVisits] = useState<any[]>([]);
   const [dbPrescriptions, setDbPrescriptions] = useState<any[]>([]);
+  const [dbAppointments, setDbAppointments] = useState<any[]>([]);
+  const [hospitals, setHospitals] = useState<Record<string, string>>({});
+  const [timelineCategory, setTimelineCategory] = useState<string>('All');
+  const [selectedHospitalFilter, setSelectedHospitalFilter] = useState<string>('All');
   const [loadingHistory, setLoadingHistory] = useState(false);
   const [timelineFilter, setTimelineFilter] = useState<'all' | '30' | '180' | '365'>('all');
+
+  useEffect(() => {
+    async function fetchHospitals() {
+      try {
+        const { data } = await supabase.from('hospitals').select('id, name');
+        if (data) {
+          const map: Record<string, string> = {};
+          data.forEach(h => {
+            map[h.id] = h.name;
+          });
+          setHospitals(map);
+        }
+      } catch (e) {
+        console.warn('Failed to load hospitals list:', e);
+      }
+    }
+    fetchHospitals();
+  }, []);
 
   // ── Active Live Token Tracker ──────────────────────────────
   const [activeToken, setActiveToken] = useState<Token | null>(null);
@@ -211,12 +241,14 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
         }
 
         if (resolvedPatientId && resolvedPatientId !== 'self') {
-          const [visitsRes, prescRes] = await Promise.all([
+          const [visitsRes, prescRes, apptsRes] = await Promise.all([
             supabase.from('visits').select('*, tokens(*)').eq('patient_id', resolvedPatientId).order('created_at', { ascending: false }),
-            supabase.from('prescriptions').select('*').eq('patient_id', resolvedPatientId).order('created_at', { ascending: false })
+            supabase.from('prescriptions').select('*').eq('patient_id', resolvedPatientId).order('created_at', { ascending: false }),
+            supabase.from('appointments').select('*').eq('patient_id', resolvedPatientId).order('created_at', { ascending: false })
           ]);
           setDbVisits(visitsRes.data || []);
           setDbPrescriptions(prescRes.data || []);
+          setDbAppointments(apptsRes.data || []);
         } else {
           // Fallback simulated clinical data for main patient if no database row exists yet
           setDbVisits([
@@ -224,6 +256,9 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
           ]);
           setDbPrescriptions([
             { id: 'pre-1', diagnosis: 'Mild Hypertension', medications: [{ name: 'Amlodipine 5mg', dosage: '1 tablet', frequency: 'Once daily', duration: '30 days', instructions: 'Take in morning' }], status: 'DISPENSED', created_at: new Date(Date.now() - 12 * 24 * 3600 * 1000).toISOString() }
+          ]);
+          setDbAppointments([
+            { id: 'appt-1', patient_name: activeProfile?.name || 'Patient', department: 'cardiology', appointment_date: new Date(Date.now() + 2 * 24 * 3600 * 1000).toISOString().split('T')[0], time_slot: '10:00-10:30', status: 'SCHEDULED', consultation_fee: 500, created_at: new Date(Date.now() - 1 * 24 * 3600 * 1000).toISOString() }
           ]);
         }
       } else {
@@ -233,6 +268,9 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
         ]);
         setDbPrescriptions([
           { id: 'pre-1', diagnosis: 'Mild Hypertension', medications: [{ name: 'Amlodipine 5mg', dosage: '1 tablet', frequency: 'Once daily', duration: '30 days', instructions: 'Take in morning' }], status: 'DISPENSED', created_at: new Date(Date.now() - 12 * 24 * 3600 * 1000).toISOString() }
+        ]);
+        setDbAppointments([
+          { id: 'appt-1', patient_name: activeProfile?.name || 'Patient', department: 'cardiology', appointment_date: new Date(Date.now() + 2 * 24 * 3600 * 1000).toISOString().split('T')[0], time_slot: '10:00-10:30', status: 'SCHEDULED', consultation_fee: 500, created_at: new Date(Date.now() - 1 * 24 * 3600 * 1000).toISOString() }
         ]);
       }
     } catch (e) {
@@ -618,12 +656,131 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
   // const latestVitals = dbVisits[0] || { bp: '120/80', sugar: '98', temperature: '98.4 F' };
 
 
-  const filterDocs = combinedVaultDocs.filter(d => {
-    const matchesSearch = d.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-      (d.doctorName || '').toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = categoryFilter === 'All' || d.category === categoryFilter;
-    return matchesSearch && matchesCategory;
+  // ── Unified Timeline Records Consolidation ───────────────────
+  const visits = dbVisits.map(vis => {
+    const matchedDoc = hospDoctors.find((d: any) => d.room_number === vis.tokens?.room_number || d.room_number === vis.room_number);
+    const docName = matchedDoc ? matchedDoc.name : (vis.tokens?.doctor_name || vis.doctor_name || 'Dr. Muskan Kumari');
+    const docDept = matchedDoc ? matchedDoc.department : 'General Medicine';
+    return {
+      id: vis.id || `vis-${vis.created_at}`,
+      date: vis.created_at,
+      type: 'Visit' as const,
+      title: 'Clinical Consultation',
+      subtitle: `Specialty: ${docDept}`,
+      hospitalId: vis.hospital_id,
+      doctorName: docName,
+      status: vis.tokens?.status || 'COMPLETED',
+      details: vis
+    };
   });
+
+  const prescriptions = dbPrescriptions.map(p => {
+    const matchingVisit = dbVisits.find(v => v.id === p.visit_id || (p.token_id && v.token_id === p.token_id));
+    const matchedDoc = matchingVisit ? hospDoctors.find((d: any) => d.room_number === matchingVisit.tokens?.room_number || d.room_number === matchingVisit.room_number) : null;
+    const docName = p.doctor_name || (matchedDoc ? matchedDoc.name : 'Consulting Specialist');
+    return {
+      id: p.id || `pre-${p.created_at}`,
+      date: p.created_at,
+      type: 'Prescription' as const,
+      title: 'Digital Rx Prescription',
+      subtitle: `Diagnosis: ${p.diagnosis || 'General Treatment'}`,
+      hospitalId: p.hospital_id,
+      doctorName: docName,
+      status: p.status || 'DISPENSED',
+      details: p
+    };
+  });
+
+  const appointments = dbAppointments.map(a => {
+    return {
+      id: a.id || `appt-${a.created_at}`,
+      date: a.appointment_date ? (a.appointment_date + 'T' + (a.time_slot ? a.time_slot.split('-')[0] : '09:00') + ':00') : a.created_at,
+      type: 'Appointment' as const,
+      title: 'Confirmed Appointment',
+      subtitle: `Time: ${a.time_slot || 'Morning Slot'} • Fee: ₹${a.consultation_fee || 0}`,
+      hospitalId: a.hospital_id,
+      doctorName: a.doctor_name || 'Specialist Doctor',
+      status: a.status || 'SCHEDULED',
+      details: a
+    };
+  });
+
+  const uploadedDocs = vaultDocs.map(d => {
+    let dateStr = d.uploadedAt;
+    let isoDate = new Date().toISOString();
+    try {
+      const parts = dateStr.split('/');
+      if (parts.length === 3) {
+        isoDate = new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0])).toISOString();
+      } else {
+        const parsed = new Date(dateStr);
+        if (!isNaN(parsed.getTime())) {
+          isoDate = parsed.toISOString();
+        }
+      }
+    } catch (err) {}
+
+    return {
+      id: d.id,
+      date: isoDate,
+      type: 'Report' as const,
+      title: d.name,
+      subtitle: `${d.category} • ${d.fileSize}`,
+      hospitalId: undefined,
+      doctorName: d.doctorName || 'Self Uploaded',
+      status: 'UPLOADED',
+      details: d
+    };
+  });
+
+  const allTimelineEvents = [...visits, ...prescriptions, ...appointments, ...uploadedDocs];
+
+  const filteredTimelineEvents = allTimelineEvents.filter(e => {
+    const searchLower = searchQuery.toLowerCase();
+    const matchesSearch = 
+      e.title.toLowerCase().includes(searchLower) || 
+      e.subtitle.toLowerCase().includes(searchLower) || 
+      (e.doctorName || '').toLowerCase().includes(searchLower);
+
+    if (!matchesSearch) return false;
+
+    if (timelineCategory !== 'All') {
+      if (timelineCategory === 'Prescriptions' && e.type !== 'Prescription') return false;
+      if (timelineCategory === 'Visits' && e.type !== 'Visit') return false;
+      if (timelineCategory === 'Appointments' && e.type !== 'Appointment') return false;
+      if (timelineCategory === 'Lab Reports' && e.type !== 'Report') return false;
+    }
+
+    if (selectedHospitalFilter !== 'All') {
+      if (e.hospitalId && e.hospitalId !== selectedHospitalFilter) return false;
+    }
+
+    if (timelineFilter !== 'all') {
+      const days = timelineFilter === '30' ? 30 : 180;
+      const cutoffDate = new Date();
+      cutoffDate.setDate(cutoffDate.getDate() - days);
+      if (new Date(e.date).getTime() < cutoffDate.getTime()) return false;
+    }
+
+    return true;
+  });
+
+  filteredTimelineEvents.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+  const groupedEvents: { [key: string]: typeof filteredTimelineEvents } = {};
+  filteredTimelineEvents.forEach(e => {
+    const formattedDate = new Date(e.date).toLocaleDateString('en-IN', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric'
+    });
+    if (!groupedEvents[formattedDate]) {
+      groupedEvents[formattedDate] = [];
+    }
+    groupedEvents[formattedDate].push(e);
+  });
+
+
 
   return (
     <div className="min-h-screen bg-[#F4F8FB] font-sans pb-24 lg:pb-16 relative overflow-x-hidden w-full max-w-full">
@@ -960,144 +1117,22 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
               </div>
             )}
 
-            {/* ── TAB 3: PERSONAL MEDICAL TIMELINE ── */}
-            {activeTab === 'timeline' && (
+            {/* ── TAB 3 & 4: UNIFIED PERSONAL MEDICAL TIMELINE & VAULT ── */}
+            {(activeTab === 'timeline' || activeTab === 'vault') && (
               <div className="space-y-6">
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                {/* Unified Title & Scan/Upload Action */}
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-200/50 pb-4">
                   <div>
                     <h2 className="text-lg font-black text-slate-800 tracking-tight flex items-center gap-2">
-                      <Clock className="w-5 h-5 text-indigo-500" />
-                      Personal Medical History Timeline
+                      <Clock className="w-5 h-5 text-[#005EB8]" />
+                      Unified Medical Vault & Timeline
                     </h2>
-                    <p className="text-xs text-slate-400 font-semibold mt-0.5">Chronological record of clinic consultations, prescriptions, and vitals.</p>
+                    <p className="text-xs text-slate-400 font-semibold mt-0.5">
+                      Chronological record of clinic consultations, prescriptions, lab results, scans, and appointments.
+                    </p>
                   </div>
                   
-                  {/* Timeline Filters */}
-                  <div className="flex gap-1.5 bg-white p-1 rounded-xl border border-slate-150 shadow-sm">
-                    {[
-                      { id: 'all', label: 'All History' },
-                      { id: '30', label: 'Last 30 Days' },
-                      { id: '180', label: '6 Months' }
-                    ].map(f => (
-                      <button
-                        key={f.id}
-                        onClick={() => setTimelineFilter(f.id as any)}
-                        className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all ${
-                          timelineFilter === f.id ? 'bg-[#005EB8]/10 text-[#005EB8]' : 'text-slate-400 hover:text-slate-700'
-                        }`}
-                      >
-                        {f.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Vertical Timeline */}
-                {loadingHistory ? (
-                  <div className="bg-white rounded-3xl border border-slate-100 p-8 text-center text-slate-400">
-                    Loading medical history records...
-                  </div>
-                ) : dbVisits.length === 0 ? (
-                  <div className="bg-white rounded-3xl border border-slate-100 p-8 text-center text-slate-400">
-                    No clinical visit history recorded yet.
-                  </div>
-                ) : (
-                  <div className="relative border-l-2 border-slate-200 pl-5 sm:pl-6 ml-1 sm:ml-4 space-y-6">
-                    {dbVisits.map((vis, visIdx) => {
-                      const presc = dbPrescriptions.find(p => p.token_id === vis.token_id || p.visit_id === vis.id);
-                      const matchedDoc = hospDoctors.find((d: any) => d.room_number === vis.tokens?.room_number || d.room_number === vis.room_number);
-                      const docName = matchedDoc ? matchedDoc.name : (vis.tokens?.doctor_name || 'Dr. Muskan Kumari');
-                      const docDept = matchedDoc ? matchedDoc.department : 'General Medicine';
-                      const roomNo = matchedDoc ? matchedDoc.room_number : (vis.tokens?.room_number || '102');
-
-                      return (
-                        <div key={vis.id || visIdx} className="relative group text-left">
-                          
-                          {/* Timeline bullet */}
-                          <span className="absolute -left-[30px] sm:-left-[31px] top-1.5 w-4.5 h-4.5 bg-white border-2 border-[#005EB8] rounded-full flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform duration-300">
-                            <span className="w-1.5 h-1.5 bg-[#005EB8] rounded-full" />
-                          </span>
-
-                          <div className="bg-white border border-slate-100 hover:border-slate-200 rounded-3xl p-4 sm:p-5 shadow-sm hover:shadow-md transition-all duration-300 space-y-4 relative overflow-hidden">
-                            {/* Top small accent line */}
-                            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#005EB8] to-[#00A3AD] opacity-70" />
-
-                            <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-50">
-                              <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-650">
-                                  <Stethoscope className="w-5 h-5" />
-                                </div>
-                                <div>
-                                  <span className="text-[9px] font-black uppercase text-slate-400 tracking-wider">Clinical Consult</span>
-                                  <h4 className="font-extrabold text-slate-800 text-xs mt-0.5">Consultation Report</h4>
-                                </div>
-                              </div>
-                              <span className="text-[10px] text-slate-400 font-bold bg-slate-50 border border-slate-100 px-2 py-0.5 rounded-lg">
-                                {new Date(vis.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
-                              </span>
-                            </div>
-
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs font-semibold text-slate-500 leading-tight">
-                              <div>
-                                <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest block mb-1">Attending Specialist</span>
-                                <div className="font-extrabold text-slate-800">{docName}</div>
-                                <div className="text-[10px] text-slate-450 mt-0.5 capitalize">{docDept} • Room {roomNo}</div>
-                              </div>
-                              <div>
-                                <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest block mb-1">Triage Node Intake</span>
-                                <div className="text-slate-750">BP: <strong className="text-slate-800">{vis.bp || '120/80'}</strong> • Sugar: <strong className="text-slate-800">{vis.sugar || '98'}</strong></div>
-                                <div className="text-[10px] text-slate-450 mt-0.5">Temp: {vis.tokens?.patient_intake?.[0]?.temperature || vis.temperature || '98.6'} °F</div>
-                              </div>
-                            </div>
-
-                            <div className="bg-slate-50/50 border border-slate-100 rounded-2xl p-3 sm:p-4 text-xs space-y-2">
-                              <div>
-                                <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest block mb-0.5">Reported Symptoms</span>
-                                <p className="text-slate-700 italic">{vis.symptoms || 'General routine followup checkup'}</p>
-                              </div>
-                              {presc?.diagnosis && (
-                                <div className="pt-2 border-t border-slate-150/40">
-                                  <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest block mb-0.5">Clinical Diagnosis</span>
-                                  <p className="text-slate-850 font-black">{presc.diagnosis}</p>
-                                </div>
-                              )}
-                            </div>
-
-                            <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
-                              <span className="text-[9px] font-black uppercase text-slate-400 tracking-wider">
-                                Fulfillment: <strong className={presc ? "text-emerald-600" : "text-amber-500"}>{presc ? (presc.status || 'DISPENSED') : 'VISIT ONLY'}</strong>
-                              </span>
-                              
-                              <button
-                                onClick={() => handlePrintTimelinePrescription(vis, presc)}
-                                className="flex items-center gap-1.5 px-4 py-2 bg-[#005EB8] hover:bg-[#004a96] text-white text-[10px] font-black rounded-xl uppercase tracking-wider transition-all shadow-sm active:scale-[0.98]"
-                              >
-                                <FileText className="w-3.5 h-3.5" />
-                                <span>View & Print Prescription</span>
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* ── TAB 4: MEDICAL DRIVE DOCUMENT VAULT ── */}
-            {activeTab === 'vault' && (
-              <div className="space-y-6">
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-50 pb-4">
-                  <div>
-                    <h2 className="text-lg font-black text-slate-800 tracking-tight flex items-center gap-2">
-                      <FileText className="w-5 h-5 text-indigo-500" />
-                      Medical Documents Vault
-                    </h2>
-                    <p className="text-xs text-slate-400 font-semibold mt-0.5">A secure drive repository for prescriptions, clinical lab results, and health records.</p>
-                  </div>
-                  
-                  {/* Upload document trigger */}
+                  {/* Scan/Upload document trigger */}
                   <button 
                     onClick={triggerFileUpload}
                     className="flex items-center gap-1.5 bg-[#005EB8] hover:bg-[#004a96] text-white text-xs font-black px-4 py-2.5 rounded-xl shadow-md uppercase tracking-wider transition-all"
@@ -1114,37 +1149,82 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
                   />
                 </div>
 
-                {/* Filter and Search Bar */}
-                <div className="flex flex-col sm:flex-row gap-3">
-                  <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                    <input 
-                      type="text" 
-                      value={searchQuery}
-                      onChange={e => setSearchQuery(e.target.value)}
-                      placeholder="Search reports or doctor consults..."
-                      className="w-full pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-2xl text-xs font-semibold focus:outline-none focus:border-[#005EB8]"
-                    />
-                  </div>
-                  
-                  <div className="flex gap-1.5 overflow-x-auto pb-1 sm:pb-0">
-                    {['All', 'Prescription', 'Lab Report', 'ID Document'].map(cat => (
-                      <button
-                        key={cat}
-                        onClick={() => setCategoryFilter(cat)}
-                        className={`px-3 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all whitespace-nowrap ${
-                          categoryFilter === cat 
-                            ? 'bg-[#005EB8] text-white shadow-sm' 
-                            : 'bg-white hover:bg-slate-50 text-slate-500 border border-slate-200'
-                        }`}
+                {/* Consolidated Filters and Search Bar */}
+                <div className="bg-white border border-slate-100 rounded-3xl p-4 sm:p-5 shadow-sm space-y-4">
+                  <div className="flex flex-col md:flex-row gap-4">
+                    {/* Search Input */}
+                    <div className="relative flex-1">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                      <input 
+                        type="text" 
+                        value={searchQuery}
+                        onChange={e => setSearchQuery(e.target.value)}
+                        placeholder="Search records, diagnoses, doctors, or hospitals..."
+                        className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-semibold focus:outline-none focus:border-[#005EB8] focus:bg-white transition-all text-slate-800"
+                      />
+                    </div>
+                    
+                    {/* Hospital Dropdown Selector */}
+                    <div className="w-full md:w-64">
+                      <select
+                        value={selectedHospitalFilter}
+                        onChange={e => setSelectedHospitalFilter(e.target.value)}
+                        className="w-full border border-slate-200 bg-slate-50 rounded-2xl px-3.5 py-2.5 text-xs font-black text-slate-700 focus:outline-none focus:border-[#005EB8] focus:bg-white transition-all"
                       >
-                        {cat}
-                      </button>
-                    ))}
+                        <option value="All">All Hospital Nodes (Global Vault)</option>
+                        {Object.entries(hospitals).map(([id, name]) => (
+                          <option key={id} value={id}>{name}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 pt-2 border-t border-slate-100">
+                    {/* Category tabs */}
+                    <div className="flex gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-none w-full sm:w-auto">
+                      {[
+                        { id: 'All', label: 'All Records' },
+                        { id: 'Visits', label: 'Visits' },
+                        { id: 'Prescriptions', label: 'Prescriptions' },
+                        { id: 'Lab Reports', label: 'Lab Reports / Vault' },
+                        { id: 'Appointments', label: 'Appointments' }
+                      ].map(cat => (
+                        <button
+                          key={cat.id}
+                          onClick={() => setTimelineCategory(cat.id)}
+                          className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all whitespace-nowrap border ${
+                            timelineCategory === cat.id 
+                              ? 'bg-[#005EB8] text-white border-transparent shadow-sm' 
+                              : 'bg-white hover:bg-slate-50 text-slate-500 border-slate-200'
+                          }`}
+                        >
+                          {cat.label}
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* Date period filters */}
+                    <div className="flex gap-1.5 bg-slate-50 p-1 rounded-xl border border-slate-150">
+                      {[
+                        { id: 'all', label: 'All Time' },
+                        { id: '30', label: 'Last 30 Days' },
+                        { id: '180', label: '6 Months' }
+                      ].map(f => (
+                        <button
+                          key={f.id}
+                          onClick={() => setTimelineFilter(f.id as any)}
+                          className={`px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all ${
+                            timelineFilter === f.id ? 'bg-white text-[#005EB8] shadow-sm font-extrabold' : 'text-slate-400 hover:text-slate-700'
+                          }`}
+                        >
+                          {f.label}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 </div>
 
-                {/* Document list */}
+                {/* Upload loading indicator */}
                 {uploadingDoc && (
                   <div className="bg-blue-50 border border-blue-200/50 rounded-2xl p-4 text-center space-y-2 animate-pulse">
                     <Loader2 className="w-6 h-6 animate-spin text-[#005EB8] mx-auto" />
@@ -1152,51 +1232,258 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
                   </div>
                 )}
 
-                {filterDocs.length === 0 ? (
+                {/* Timeline display */}
+                {loadingHistory ? (
                   <div className="bg-white rounded-3xl border border-slate-100 p-8 text-center text-slate-400">
-                    No documents found matching the search or categories.
+                    Loading consolidated vault records...
+                  </div>
+                ) : filteredTimelineEvents.length === 0 ? (
+                  <div className="bg-white rounded-3xl border border-slate-100 p-12 text-center text-slate-450 space-y-3">
+                    <Clock className="w-8 h-8 text-slate-350 mx-auto" />
+                    <h3 className="font-extrabold text-sm uppercase text-slate-750">No matching medical records found</h3>
+                    <p className="text-xs text-slate-400 max-w-sm mx-auto leading-relaxed">
+                      Try clearing search parameters, switching category tags, or choosing another hospital context.
+                    </p>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    {filterDocs.map(doc => (
-                      <div key={doc.id} className="bg-white border border-slate-100 rounded-3xl p-4 shadow-sm flex flex-col justify-between min-h-[140px] hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 relative group">
-                        
-                        <div>
-                          <div className="flex items-center justify-between mb-2">
-                            <span className="text-[9px] font-black uppercase bg-[#005EB8]/10 text-[#005EB8] px-2 py-0.5 rounded border border-[#005EB8]/10">
-                              {doc.category}
-                            </span>
-                            <button 
-                              onClick={() => handleDocDelete(doc.id)}
-                              className="opacity-0 group-hover:opacity-100 text-rose-500 hover:text-rose-700 transition-opacity p-1"
-                              title="Delete Report"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
+                  <div className="space-y-8 relative">
+                    {/* Vertical guideline */}
+                    <div className="absolute left-[15px] sm:left-[21px] top-4 bottom-4 w-0.5 bg-slate-200/80" />
+
+                    {Object.entries(groupedEvents).map(([dateKey, events]) => (
+                      <div key={dateKey} className="space-y-4">
+                        {/* High-contrast Date header block */}
+                        <div className="relative z-10 flex items-center gap-3">
+                          <div className="bg-indigo-50 border border-indigo-100/60 rounded-xl px-3 py-1.5 text-xs font-black text-indigo-700 uppercase tracking-widest shadow-sm">
+                            {dateKey}
                           </div>
-                          
-                          <h4 className="font-extrabold text-slate-800 text-xs truncate" title={doc.name}>
-                            {doc.name}
-                          </h4>
-                          {doc.doctorName && (
-                            <p className="text-[9px] text-slate-400 mt-1 font-bold">Consult: {doc.doctorName}</p>
-                          )}
+                          <div className="h-px flex-1 bg-gradient-to-r from-slate-200 to-transparent" />
                         </div>
 
-                        <div className="flex items-center justify-between border-t border-slate-50 pt-3 mt-3 text-[9px] text-slate-400 font-extrabold">
-                          <span>{doc.uploadedAt} • {doc.fileSize}</span>
-                          <button 
-                            onClick={() => setShowDocPreview(doc)}
-                            className="text-[#005EB8] hover:underline"
-                          >
-                            Preview
-                          </button>
+                        {/* Events list under this date */}
+                        <div className="space-y-4 pl-8 sm:pl-11">
+                          {events.map((e, idx) => {
+                            const isVisit = e.type === 'Visit';
+                            const isPresc = e.type === 'Prescription';
+                            const isAppt = e.type === 'Appointment';
+                            const isReport = e.type === 'Report';
+
+                            // Determine type styling
+                            let iconColor = 'text-indigo-650 bg-indigo-50 border-indigo-100';
+                            let IconComponent = Stethoscope;
+                            let cardColor = 'border-slate-100';
+                            let leftAccent = 'bg-indigo-500';
+
+                            if (isPresc) {
+                              iconColor = 'text-emerald-650 bg-emerald-50 border-emerald-100';
+                              IconComponent = FileText;
+                              leftAccent = 'bg-emerald-500';
+                            } else if (isAppt) {
+                              iconColor = 'text-amber-650 bg-amber-50 border-amber-100';
+                              IconComponent = Clock;
+                              leftAccent = 'bg-amber-500';
+                            } else if (isReport) {
+                              iconColor = 'text-blue-650 bg-blue-50 border-blue-100';
+                              IconComponent = FileText;
+                              leftAccent = 'bg-blue-500';
+                            }
+
+                            // Dynamic hospital badge name
+                            const hospName = e.hospitalId ? (hospitals[e.hospitalId] || 'Associated Clinic') : 'Global Vault';
+
+                            return (
+                              <div key={e.id || idx} className="relative group text-left">
+                                {/* Bullet on guideline */}
+                                <span className="absolute -left-[30px] sm:-left-[31px] top-4 w-4 h-4 bg-white border-2 border-slate-350 rounded-full flex items-center justify-center shadow-sm group-hover:border-[#005EB8] group-hover:scale-110 transition-all duration-300">
+                                  <span className="w-1.5 h-1.5 bg-slate-350 rounded-full group-hover:bg-[#005EB8]" />
+                                </span>
+
+                                <div className={`bg-white border ${cardColor} hover:border-slate-200 rounded-3xl p-4 sm:p-5 shadow-sm hover:shadow-md transition-all duration-300 space-y-4 relative overflow-hidden`}>
+                                  {/* Left accent column indicator */}
+                                  <div className={`absolute top-0 bottom-0 left-0 w-1.5 ${leftAccent}`} />
+
+                                  {/* Event Card Header */}
+                                  <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-50">
+                                    <div className="flex items-center gap-3">
+                                      <div className={`w-9 h-9 rounded-xl border flex items-center justify-center ${iconColor}`}>
+                                        <IconComponent className="w-4.5 h-4.5" />
+                                      </div>
+                                      <div>
+                                        <span className="text-[9px] font-black uppercase text-slate-400 tracking-wider">
+                                          {e.type}
+                                        </span>
+                                        <h4 className="font-extrabold text-slate-800 text-xs mt-0.5">
+                                          {e.title}
+                                        </h4>
+                                      </div>
+                                    </div>
+                                    
+                                    {/* Hospital node badge */}
+                                    <span className="text-[9px] font-black text-slate-500 bg-slate-100 border border-slate-200/60 px-2.5 py-1 rounded-full uppercase tracking-wider">
+                                      {hospName}
+                                    </span>
+                                  </div>
+
+                                  {/* Event specific details card layout */}
+                                  {isVisit && (
+                                    <div className="space-y-4">
+                                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs font-semibold text-slate-500 leading-tight">
+                                        <div>
+                                          <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest block mb-1">Attending Specialist</span>
+                                          <div className="font-extrabold text-slate-800">{e.doctorName}</div>
+                                          <div className="text-[10px] text-slate-400 mt-0.5 capitalize">{e.subtitle}</div>
+                                        </div>
+                                        <div>
+                                          <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest block mb-1">Triage Vital Info</span>
+                                          <div className="text-slate-700">BP: <strong className="text-slate-800">{e.details.bp || '120/80'}</strong> • Sugar: <strong className="text-slate-800">{e.details.sugar || '98'}</strong></div>
+                                          <div className="text-[10px] text-slate-450 mt-0.5">Temp: {e.details.tokens?.patient_intake?.[0]?.temperature || e.details.temperature || '98.6'} °F</div>
+                                        </div>
+                                      </div>
+
+                                      <div className="bg-slate-50/50 border border-slate-100 rounded-2xl p-3 sm:p-4 text-xs space-y-2">
+                                        <div>
+                                          <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest block mb-0.5">Reported Symptoms</span>
+                                          <p className="text-slate-700 italic">{e.details.symptoms || 'General routine followup checkup'}</p>
+                                        </div>
+                                        {e.details.doctor_notes && (
+                                          <div className="pt-2 border-t border-slate-150/40">
+                                            <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest block mb-0.5">Consultation Notes</span>
+                                            <p className="text-slate-700 font-medium">{e.details.doctor_notes}</p>
+                                          </div>
+                                        )}
+                                      </div>
+
+                                      <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
+                                        <span className="text-[9px] font-black uppercase text-slate-400 tracking-wider">
+                                          Status: <strong className="text-indigo-600">{e.status}</strong>
+                                        </span>
+                                        
+                                        <button
+                                          onClick={() => handlePrintTimelinePrescription(e.details, dbPrescriptions.find(p => p.visit_id === e.details.id || (e.details.token_id && p.token_id === e.details.token_id)))}
+                                          className="flex items-center gap-1.5 px-4 py-2 bg-[#005EB8] hover:bg-[#004a96] text-white text-[10px] font-black rounded-xl uppercase tracking-wider transition-all shadow-sm active:scale-[0.98]"
+                                        >
+                                          <FileText className="w-3.5 h-3.5" />
+                                          <span>View Prescription</span>
+                                        </button>
+                                      </div>
+                                    </div>
+                                  )}
+
+                                  {isPresc && (
+                                    <div className="space-y-4">
+                                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs font-semibold text-slate-500 leading-tight">
+                                        <div>
+                                          <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest block mb-1">Prescribed By</span>
+                                          <div className="font-extrabold text-slate-800">{e.doctorName}</div>
+                                          <div className="text-[10px] text-slate-400 mt-0.5">{e.subtitle}</div>
+                                        </div>
+                                        <div>
+                                          <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest block mb-1">Rx Meds Count</span>
+                                          <div className="text-slate-700 font-extrabold">
+                                            {Array.isArray(e.details.medications) ? `${e.details.medications.length} Prescribed Medications` : 'No meds list'}
+                                          </div>
+                                        </div>
+                                      </div>
+
+                                      {/* Medications List */}
+                                      <div className="space-y-2">
+                                        {Array.isArray(e.details.medications) && e.details.medications.map((med: any, mIdx: number) => (
+                                          <div key={mIdx} className="bg-slate-50/50 border border-slate-100 p-2.5 rounded-xl flex justify-between items-start gap-4 text-xs">
+                                            <div>
+                                              <strong className="text-slate-800 text-xs block">• {med.name}</strong>
+                                              {med.instructions && <span className="text-[10px] text-slate-400 font-bold block mt-0.5">Notes: {med.instructions}</span>}
+                                            </div>
+                                            <div className="text-right flex-shrink-0 text-[10px] font-bold text-slate-500">
+                                              <p className="text-[#005EB8] font-black">{med.dosage}</p>
+                                              <p className="text-[9px] mt-0.5">{med.frequency} • {med.duration}</p>
+                                            </div>
+                                          </div>
+                                        ))}
+                                      </div>
+
+                                      <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
+                                        <span className="text-[9px] font-black uppercase text-slate-400 tracking-wider">
+                                          Fulfillment: <strong className="text-emerald-600">{e.status}</strong>
+                                        </span>
+                                        
+                                        <button
+                                          onClick={() => handlePrintTimelinePrescription(dbVisits.find(v => v.id === e.details.visit_id || (e.details.token_id && v.token_id === e.details.token_id)) || { created_at: e.date, tokens: {} }, e.details)}
+                                          className="flex items-center gap-1.5 px-4 py-2 bg-[#005EB8] hover:bg-[#004a96] text-white text-[10px] font-black rounded-xl uppercase tracking-wider transition-all shadow-sm active:scale-[0.98]"
+                                        >
+                                          <Printer className="w-3.5 h-3.5" />
+                                          <span>Print Rx Sheet</span>
+                                        </button>
+                                      </div>
+                                    </div>
+                                  )}
+
+                                  {isAppt && (
+                                    <div className="space-y-3 text-xs">
+                                      <div className="grid grid-cols-2 gap-4 font-semibold text-slate-500 leading-tight">
+                                        <div>
+                                          <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest block mb-1">Consultant Specialist</span>
+                                          <div className="font-extrabold text-slate-800">{e.doctorName}</div>
+                                          <div className="text-[10px] text-slate-400 mt-0.5">{e.subtitle}</div>
+                                        </div>
+                                        <div>
+                                          <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest block mb-1">Appointment Slot</span>
+                                          <div className="text-slate-800 font-extrabold">
+                                            {new Date(e.details.appointment_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })} • {e.details.time_slot}
+                                          </div>
+                                        </div>
+                                      </div>
+
+                                      <div className="flex items-center justify-between pt-2 border-t border-slate-50">
+                                        <span className="text-[9px] font-black uppercase text-slate-400 tracking-wider">
+                                          Status: <strong className="text-amber-600">{e.status}</strong>
+                                        </span>
+                                        
+                                        <span className="text-[10px] text-slate-450 font-extrabold uppercase">
+                                          Fee: ₹{e.details.consultation_fee || 0}
+                                        </span>
+                                      </div>
+                                    </div>
+                                  )}
+
+                                  {isReport && (
+                                    <div className="space-y-3 text-xs flex flex-col justify-between min-h-[100px]">
+                                      <div>
+                                        <div className="text-slate-450 font-bold mb-1 uppercase tracking-wider text-[9px]">{e.subtitle}</div>
+                                        <p className="text-slate-800 font-bold truncate max-w-lg">{e.title}</p>
+                                        <p className="text-[9px] text-slate-400 mt-1 font-bold">Uploaded by: {e.doctorName}</p>
+                                      </div>
+
+                                      <div className="flex items-center justify-between border-t border-slate-50 pt-3 mt-3 text-[9px] text-slate-400 font-extrabold">
+                                        <span>Uploaded: {new Date(e.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
+                                        
+                                        <div className="flex items-center gap-3">
+                                          <button 
+                                            onClick={() => handleDocDelete(e.id)}
+                                            className="text-rose-500 hover:text-rose-700 transition-colors p-1"
+                                            title="Delete Document"
+                                          >
+                                            <Trash2 className="w-4 h-4" />
+                                          </button>
+                                          <button 
+                                            onClick={() => setShowDocPreview(e.details)}
+                                            className="text-[#005EB8] hover:underline"
+                                          >
+                                            Preview
+                                          </button>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })}
                         </div>
                       </div>
                     ))}
                   </div>
                 )}
-
+                
                 {/* Preview Document Modal */}
                 {showDocPreview && (
                   <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
@@ -1217,7 +1504,7 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
 
                       {/* Dynamic Prescription View or Mock Viewer depending on doc type */}
                       {showDocPreview.isDatabasePrescription ? (
-                        <div className="bg-slate-50 border border-slate-200 rounded-2xl p-5 space-y-4 max-h-[350px] overflow-y-auto text-xs" id="printable-prescription">
+                        <div className="bg-slate-50 border border-slate-200 rounded-2xl p-5 space-y-4 max-h-[350px] overflow-y-auto text-xs animate-fade-in text-left" id="printable-prescription">
                           {/* Clinic Header */}
                           <div className="border-b-2 border-[#005EB8] pb-3 text-center">
                             <h4 className="text-sm font-black text-[#005EB8] uppercase tracking-wide">{tenant?.name || 'MedQueue Outpatient Center'}</h4>
@@ -1312,11 +1599,9 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
                     </div>
                   </div>
                 )}
-
               </div>
             )}
 
-            {/* ── TAB 5: FAMILY PROFILES SETTINGS ── */}
             {activeTab === 'family' && (
               <div className="space-y-6">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">

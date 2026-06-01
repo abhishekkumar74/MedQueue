@@ -118,18 +118,17 @@ router.post('/patient/verify-otp', async (req: Request, res: Response) => {
 
     const hospitalId = (req.headers['x-hospital-id'] as string) || req.body.hospital_id || 'd290f1ee-6c54-4b01-90e6-d701748f0851';
 
-    // Get or create patient
+    // Get or create patient (globally by unique phone number identity)
     let { data: patient } = await db
       .from('patients')
       .select('*')
       .eq('phone', phone)
-      .eq('hospital_id', hospitalId)
       .maybeSingle();
 
     if (!patient) {
       const { data: created, error } = await db
         .from('patients')
-        .insert({ phone, name: '', age: 0, address: '', hospital_id: hospitalId })
+        .insert({ phone, name: '', age: 0, address: '' })
         .select()
         .single();
       if (error) return res.status(500).json({ error: error.message });

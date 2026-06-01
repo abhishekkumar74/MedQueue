@@ -331,27 +331,19 @@ export async function verifyOtp(phone: string, code: string): Promise<AuthUser> 
 
   await supabase.from('otps').update({ used: true }).eq('id', otp.id);
 
-  const slug = getTenantSlug();
-  let hospitalId = localStorage.getItem('mq_selected_hospital_id') || 'd290f1ee-6c54-4b01-90e6-d701748f0851';
-  if (slug) {
-    const tenant = await resolveTenantConfig(slug);
-    if (tenant) {
-      hospitalId = tenant.id;
-    }
-  }
 
-  // Get or create patient
+
+  // Get or create patient (globally by unique phone number identity)
   let { data: patient } = await supabase
     .from('patients')
     .select('*')
     .eq('phone', phone)
-    .eq('hospital_id', hospitalId)
     .maybeSingle();
 
   if (!patient) {
     const { data: created, error: ce } = await supabase
       .from('patients')
-      .insert({ phone, name: '', age: 0, address: '', hospital_id: hospitalId })
+      .insert({ phone, name: '', age: 0, address: '' })
       .select()
       .single();
     if (ce) throw new Error(ce.message);

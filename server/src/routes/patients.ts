@@ -21,7 +21,6 @@ router.get('/history/:phone', async (req: Request, res: Response) => {
       .select('*')
       .eq('phone', decodeURIComponent(phone));
     
-    patientQuery = filterTenant(patientQuery, req.user);
     const { data: patient } = await patientQuery.maybeSingle();
 
     if (!patient) return res.json({ patient: null, visits: [] });
@@ -68,7 +67,6 @@ router.get('/lookup/:phone', async (req: Request, res: Response) => {
       .select('id, name, phone, age, address')
       .eq('phone', decodeURIComponent(phone));
     
-    patientQuery = filterTenant(patientQuery, req.user);
     const { data: patient } = await patientQuery.maybeSingle();
 
     // Also get their QR token if exists
@@ -107,14 +105,6 @@ router.put('/:id', async (req: Request, res: Response) => {
   }
 
   try {
-    // Staff user: ensure the patient belongs to their hospital context
-    if (userType === 'staff') {
-      let checkQuery = db.from('patients').select('hospital_id').eq('id', id);
-      checkQuery = filterTenant(checkQuery, req.user);
-      const { data: check } = await checkQuery.maybeSingle();
-      if (!check) return res.status(403).json({ error: 'Patient not found in your hospital context' });
-    }
-
     const { data, error } = await db
       .from('patients')
       .update({ name, age, address })

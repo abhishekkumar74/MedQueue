@@ -11,7 +11,6 @@ import { OfflineIndicator } from './components';
 import { SetupBanner, UniversalHeader } from './layouts';
 import { supabase, isMissingConfig } from './lib/supabase';
 import { AuthUser, getCachedUser, fetchMe, logout, getAccessToken } from './lib/auth';
-import { getTokenStatus } from './lib/api';
 import { LogOut, Clock, FileText, Home, AlertTriangle, ShieldAlert, Mail, Phone } from 'lucide-react';
 import { getTenantSlug, resolveTenantConfig, TenantConfig, getHomeRoute } from './lib/tenant';
 
@@ -189,19 +188,8 @@ export default function App() {
         setUser(cached);
         fetchMe().then(fresh => { if (fresh) setUser(fresh); });
 
-        if (cached.type === 'patient' && cached.phone) {
-          try {
-            const { token: activeToken } = await getTokenStatus(cached.phone);
-            if (activeToken && (activeToken.status === 'WAITING' || activeToken.status === 'SERVING')) {
-              setPage('tracker');
-              setPageState({ tokenNumber: activeToken.token_number, phone: activeToken.phone });
-            } else {
-              // Returning patient → register page (quick token booking)
-              setPage('register');
-            }
-          } catch {
-            setPage('register');
-          }
+        if (cached.type === 'patient') {
+          setPage('register');
         } else if (cached.type === 'staff') {
           if (cached.role === 'SUPER_ADMIN') {
             setPage('super-admin');
@@ -348,17 +336,6 @@ export default function App() {
   // ── Patient login handler ─────────────────────────────
   async function handlePatientLogin(u: AuthUser) {
     setUser(u);
-    if (u.phone) {
-      try {
-        const { token: activeToken } = await getTokenStatus(u.phone);
-        if (activeToken && (activeToken.status === 'WAITING' || activeToken.status === 'SERVING')) {
-          setPage('tracker');
-          setPageState({ tokenNumber: activeToken.token_number, phone: activeToken.phone });
-          return;
-        }
-      } catch { /* silent */ }
-    }
-    // New or returning patient → register page
     setPage('register');
   }
 

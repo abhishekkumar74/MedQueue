@@ -51,7 +51,6 @@ export async function registerToken(params: {
       .from('patients')
       .select('id')
       .eq('phone', phone)
-      .eq('hospital_id', hospitalId)
       .maybeSingle();
 
     if (existing) {
@@ -62,7 +61,7 @@ export async function registerToken(params: {
     } else {
       const { data: created, error } = await supabase
         .from('patients')
-        .insert({ phone, name, age: age ?? 0, address: address ?? '', hospital_id: hospitalId })
+        .insert({ phone, name, age: age ?? 0, address: address ?? '' })
         .select('id').single();
       if (error) throw new Error(error.message);
       patientId = created.id;
@@ -420,7 +419,6 @@ export async function bookAppointment(params: {
     .from('patients')
     .select('id')
     .eq('phone', phone)
-    .eq('hospital_id', hospitalId)
     .maybeSingle();
 
   const { data, error } = await supabase
@@ -480,10 +478,6 @@ export async function getPatientHistory(phone: string) {
 
   let patientQuery = supabase
     .from('patients').select('*').eq('phone', phone);
-
-  if (hospitalFilter) {
-    patientQuery = patientQuery.eq('hospital_id', hospitalFilter);
-  }
 
   const { data: patient } = await patientQuery.maybeSingle();
 

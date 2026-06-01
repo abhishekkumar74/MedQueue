@@ -13,13 +13,12 @@ router.post('/register', async (req: Request, res: Response) => {
   const hospitalId = getTenantHospitalId(req.user, req.body.hospital_id);
 
   try {
-    // Upsert patient
+    // Upsert patient globally
     let patientId: string | null = null;
     if (name) {
       const { data: existing } = await db.from('patients')
         .select('id')
         .eq('phone', phone)
-        .eq('hospital_id', hospitalId)
         .maybeSingle();
 
       if (existing) {
@@ -30,7 +29,7 @@ router.post('/register', async (req: Request, res: Response) => {
       } else {
         const { data: created, error } = await db
           .from('patients')
-          .insert({ phone, name, age: age ?? 0, address: address ?? '', hospital_id: hospitalId })
+          .insert({ phone, name, age: age ?? 0, address: address ?? '' })
           .select('id')
           .single();
         if (error) return res.status(400).json({ error: error.message });

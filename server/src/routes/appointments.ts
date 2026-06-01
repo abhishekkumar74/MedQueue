@@ -33,7 +33,6 @@ router.post('/', async (req: Request, res: Response) => {
       .from('patients')
       .select('id')
       .eq('phone', phone)
-      .eq('hospital_id', hospitalId)
       .maybeSingle();
 
     const { data, error } = await db

@@ -304,18 +304,22 @@ export default function UniversalHeader({ page, navigate, currentUser, handleLog
                     >
                       <Building2 className="w-3.5 h-3.5 text-[#005EB8]" /> Patient Workspace
                     </button>
-                    <button 
-                      onClick={() => { navigate('appointment'); setShowQuickActions(false); }} 
-                      className="w-full text-left px-4 py-2.5 text-xs font-bold text-slate-600 hover:bg-slate-50 flex items-center gap-2 transition-colors"
-                    >
-                      <Calendar className="w-3.5 h-3.5 text-[#00A3AD]" /> Book Appointment
-                    </button>
-                    <button 
-                      onClick={() => { navigate('history'); setShowQuickActions(false); }} 
-                      className="w-full text-left px-4 py-2.5 text-xs font-bold text-slate-600 hover:bg-slate-50 flex items-center gap-2 transition-colors"
-                    >
-                      <FileText className="w-3.5 h-3.5 text-violet-500" /> Medical Records
-                    </button>
+                    {currentUser?.type !== 'patient' && (
+                      <>
+                        <button 
+                          onClick={() => { navigate('appointment'); setShowQuickActions(false); }} 
+                          className="w-full text-left px-4 py-2.5 text-xs font-bold text-slate-600 hover:bg-slate-50 flex items-center gap-2 transition-colors"
+                        >
+                          <Calendar className="w-3.5 h-3.5 text-[#00A3AD]" /> Book Appointment
+                        </button>
+                        <button 
+                          onClick={() => { navigate('history'); setShowQuickActions(false); }} 
+                          className="w-full text-left px-4 py-2.5 text-xs font-bold text-slate-600 hover:bg-slate-50 flex items-center gap-2 transition-colors"
+                        >
+                          <FileText className="w-3.5 h-3.5 text-violet-500" /> Medical Records
+                        </button>
+                      </>
+                    )}
                   </div>
                 </>
               )}
@@ -557,27 +561,6 @@ export default function UniversalHeader({ page, navigate, currentUser, handleLog
                     >
                       <Building2 className="w-4.5 h-4.5" />
                       Patient Workspace
-                    </button>
-                    <button 
-                      onClick={() => { navigate('tracker'); setShowMobileDrawer(false); }}
-                      className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl text-sm font-bold transition-all ${page === 'tracker' ? 'bg-[#00A3AD]/10 text-[#00A3AD]' : 'text-slate-600 hover:bg-slate-50'}`}
-                    >
-                      <Activity className="w-4.5 h-4.5" />
-                      Live Queue Tracker
-                    </button>
-                    <button 
-                      onClick={() => { navigate('appointment'); setShowMobileDrawer(false); }}
-                      className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl text-sm font-bold transition-all ${page === 'appointment' ? 'bg-[#005EB8]/10 text-[#005EB8]' : 'text-slate-600 hover:bg-slate-50'}`}
-                    >
-                      <Calendar className="w-4.5 h-4.5" />
-                      Book Appointment
-                    </button>
-                    <button 
-                      onClick={() => { navigate('history'); setShowMobileDrawer(false); }}
-                      className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl text-sm font-bold transition-all ${page === 'history' ? 'bg-violet-50 text-violet-600' : 'text-slate-600 hover:bg-slate-50'}`}
-                    >
-                      <FileText className="w-4.5 h-4.5" />
-                      Medical Records
                     </button>
                   </>
                 ) : (
