@@ -70,6 +70,7 @@ export default function PatientWorkspace({ currentUser, navigate, tenant }: {
   const [categoryFilter, setCategoryFilter] = useState<string>('All');
   const [uploadingDoc, setUploadingDoc] = useState(false);
   const [showDocPreview, setShowDocPreview] = useState<VaultDoc | null>(null);
+  const [activePrescriptionModal, setActivePrescriptionModal] = useState<{ vis: any; presc: any } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // ── Database Records state ─────────────────────────────────
@@ -375,133 +376,7 @@ export default function PatientWorkspace({ currentUser, navigate, tenant }: {
   };
 
   const handlePrintTimelinePrescription = (vis: any, presc: any) => {
-    const printWindow = window.open('', '_blank');
-    if (!printWindow) return;
-    
-    // Resolve doctor details
-    const matchedDoc = hospDoctors.find((d: any) => d.room_number === vis.tokens?.room_number || d.room_number === vis.room_number);
-    const docName = matchedDoc ? matchedDoc.name : 'Attending Practitioner';
-    const docDept = matchedDoc ? matchedDoc.department : 'General Medicine';
-    const roomNo = matchedDoc ? matchedDoc.room_number : '102';
-
-    const medicationsList = Array.isArray(presc?.medications) ? presc.medications : [];
-    const medRows = medicationsList.map((m: any) => `
-      <tr>
-        <td style="padding: 10px; border-bottom: 1px solid #eee; font-weight: bold; font-size: 13px;">${m.name}</td>
-        <td style="padding: 10px; border-bottom: 1px solid #eee; font-size: 13px;">${m.dosage || '—'}</td>
-        <td style="padding: 10px; border-bottom: 1px solid #eee; font-size: 13px;">${m.frequency || '—'}</td>
-        <td style="padding: 10px; border-bottom: 1px solid #eee; font-size: 13px;">${m.duration || '—'}</td>
-        <td style="padding: 10px; border-bottom: 1px solid #eee; font-size: 12px; color: #555;">${m.instructions || '—'}</td>
-      </tr>
-    `).join('');
-
-    printWindow.document.write(`
-      <html>
-        <head>
-          <title>Prescription Pad - MedQueue Node</title>
-          <style>
-            body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #333; margin: 40px; line-height: 1.5; }
-            .header { border-bottom: 3px solid #005EB8; padding-bottom: 20px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; }
-            .logo-text { font-size: 24px; font-weight: 900; color: #005EB8; }
-            .meta-text { text-align: right; font-size: 11px; color: #777; }
-            .hospital-title { font-size: 18px; font-weight: 800; color: #444; margin-top: 5px; }
-            .patient-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 15px; margin-bottom: 30px; font-size: 13px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-            .section-title { font-size: 14px; font-weight: bold; text-transform: uppercase; color: #005EB8; border-bottom: 1px solid #e2e8f0; padding-bottom: 5px; margin-bottom: 15px; }
-            .vitals-box { display: flex; gap: 15px; margin-bottom: 20px; font-size: 12px; }
-            .vital-pill { background: #e0f2fe; color: #0369a1; padding: 6px 12px; border-radius: 8px; font-weight: bold; }
-            .rx-symbol { font-size: 32px; font-weight: bold; color: #005EB8; margin-bottom: 10px; }
-            .meds-table { width: 100%; border-collapse: collapse; margin-top: 10px; margin-bottom: 40px; }
-            .meds-table th { background: #f1f5f9; padding: 10px; text-align: left; font-size: 11px; font-weight: bold; text-transform: uppercase; color: #475569; }
-            .footer { margin-top: 80px; display: flex; justify-content: space-between; align-items: flex-end; }
-            .signature-line { border-top: 2px solid #ccc; width: 200px; text-align: center; font-size: 12px; padding-top: 5px; margin-top: 40px; font-weight: bold; }
-            @media print {
-              body { margin: 20px; }
-              button { display: none; }
-            }
-          </style>
-        </head>
-        <body>
-          <div class="header">
-            <div>
-              <div class="logo-text">MedQueue Portal</div>
-              <div class="hospital-title">${tenant?.name || 'Apollo Clinical Workspace'}</div>
-            </div>
-            <div class="meta-text">
-              <div>Date: ${new Date(vis.created_at).toLocaleDateString('en-US', { dateStyle: 'long' })}</div>
-              <div>Hospital Node ID: ${(vis.hospital_id || tenant?.id || 'mq').substring(0, 8)}...</div>
-              <div>Visit ID: ${vis.id.substring(0, 8)}...</div>
-            </div>
-          </div>
-
-          <div class="section-title">Prescribing Clinician</div>
-          <div style="background: #f0fdf4; border: 1px solid #dcfce7; border-radius: 12px; padding: 15px; margin-bottom: 25px; font-size: 13px;">
-            <strong>${docName}</strong><br/>
-            <span style="color: #666; font-size: 11px;">${docDept} Department • Room ${roomNo}</span>
-          </div>
-
-          <div class="section-title">Patient Medical Summary</div>
-          <div class="patient-box">
-            <div><strong>Patient Name:</strong> ${activeProfile?.name || '—'}</div>
-            <div><strong>Mobile:</strong> ${activeProfile?.phone || patientPhone || '—'}</div>
-            <div><strong>Age:</strong> ${activeProfile?.age || '—'} Years</div>
-            <div><strong>Residence:</strong> ${activeProfile?.address || 'Delhi Outpatient Center'}</div>
-          </div>
-
-          <div class="section-title">Clinical Triage Vitals</div>
-          <div class="vitals-box">
-            <div class="vital-pill">BP: ${vis.bp || '120/80 mmHg'}</div>
-            <div class="vital-pill">Sugar: ${vis.sugar || 'Normal'}</div>
-            <div class="vital-pill">Temperature: ${vis.tokens?.patient_intake?.[0]?.temperature || vis.temperature || '98.6 °F'}</div>
-          </div>
-
-          <div style="margin-bottom: 25px;">
-            <strong>Chief Complaints:</strong>
-            <div style="background: #fffbeb; border: 1px solid #fef3c7; border-radius: 8px; padding: 10px; margin-top: 5px; font-size: 13px; color: #b45309;">
-              ${vis.symptoms || 'General Consultations & Clinical Checkup'}
-            </div>
-          </div>
-
-          <div style="margin-bottom: 30px;">
-            <strong>Clinical Diagnosis & Attendant Doctor Notes:</strong>
-            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px; margin-top: 5px; font-size: 13px; color: #334155;">
-              ${vis.doctor_notes || 'Patient evaluated for standard clinical indications. Soft diagnostics completed.'}
-            </div>
-          </div>
-
-          <div class="rx-symbol">R<sub>x</sub></div>
-          <table class="meds-table">
-            <thead>
-              <tr>
-                <th>Medicine Name</th>
-                <th>Dosage</th>
-                <th>Frequency</th>
-                <th>Duration</th>
-                <th>Instructions</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${medRows || `<tr><td colspan="5" style="text-align: center; padding: 15px; color: #888;">No prescriptive medications loaded.</td></tr>`}
-            </tbody>
-          </table>
-
-          <div class="footer">
-            <div style="font-size: 11px; color: #999;">
-              This is a securely authenticated MedQueue SaaS digital prescription node.
-            </div>
-            <div>
-              <div class="signature-line">Authorized Attendant Sign</div>
-            </div>
-          </div>
-
-          <script>
-            window.onload = function() {
-              window.print();
-            };
-          </script>
-        </body>
-      </html>
-    `);
-    printWindow.document.close();
+    setActivePrescriptionModal({ vis, presc });
   };
 
   const handlePrintPrescription = () => {
@@ -986,157 +861,64 @@ export default function PatientWorkspace({ currentUser, navigate, tenant }: {
                             <span className="w-1.5 h-1.5 bg-[#005EB8] rounded-full" />
                           </span>
 
-                          <div className="bg-white border border-slate-200/60 rounded-[32px] p-6 shadow-md hover:shadow-lg transition-all duration-300 space-y-6 relative overflow-hidden select-none">
-                            {/* Accent indicator line */}
-                            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#005EB8] to-[#00A3AD]" />
+                          <div className="bg-white border border-slate-100 hover:border-slate-200 rounded-3xl p-5 shadow-sm hover:shadow-md transition-all duration-300 space-y-4 relative overflow-hidden">
+                            {/* Top small accent line */}
+                            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#005EB8] to-[#00A3AD] opacity-70" />
 
-                            {/* Header row */}
-                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4 mt-1">
+                            <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-50">
                               <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-[#005EB8]">
-                                  <FileText className="w-5 h-5" />
+                                <div className="w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-650">
+                                  <Stethoscope className="w-5 h-5" />
                                 </div>
                                 <div>
-                                  <span className="text-[9px] font-black uppercase text-[#005EB8] tracking-widest">Prescription Record</span>
-                                  <h3 className="font-extrabold text-slate-800 text-sm mt-0.5">
-                                    Clinical Consultation Report
-                                  </h3>
+                                  <span className="text-[9px] font-black uppercase text-slate-400 tracking-wider">Clinical Consult</span>
+                                  <h4 className="font-extrabold text-slate-800 text-xs mt-0.5">Consultation Report</h4>
                                 </div>
                               </div>
+                              <span className="text-[10px] text-slate-400 font-bold bg-slate-50 border border-slate-100 px-2 py-0.5 rounded-lg">
+                                {new Date(vis.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                              </span>
+                            </div>
 
-                              <div className="flex items-center gap-2">
-                                <span className="text-[10px] text-slate-400 font-bold bg-slate-50 border border-slate-100 px-3 py-1 rounded-lg">
-                                  {new Date(vis.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
-                                </span>
-                                <button
-                                  onClick={() => handlePrintTimelinePrescription(vis, presc)}
-                                  className="flex items-center gap-1.5 px-3.5 py-1.5 bg-[#005EB8] hover:bg-[#004a96] text-white text-[10px] font-black rounded-xl uppercase tracking-wider transition-all shadow-sm active:scale-[0.98]"
-                                >
-                                  <Printer className="w-3.5 h-3.5" />
-                                  <span>Print</span>
-                                </button>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs font-semibold text-slate-500 leading-tight">
+                              <div>
+                                <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest block mb-1">Attending Specialist</span>
+                                <div className="font-extrabold text-slate-800">{docName}</div>
+                                <div className="text-[10px] text-slate-450 mt-0.5 capitalize">{docDept} • Room {roomNo}</div>
+                              </div>
+                              <div>
+                                <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest block mb-1">Triage Node Intake</span>
+                                <div className="text-slate-700">BP: <strong className="text-slate-800">{vis.bp || '120/80'}</strong> • Sugar: <strong className="text-slate-800">{vis.sugar || '98'}</strong></div>
+                                <div className="text-[10px] text-slate-450 mt-0.5">Temp: {vis.tokens?.patient_intake?.[0]?.temperature || vis.temperature || '98.6'} °F</div>
                               </div>
                             </div>
 
-                            {/* Clinic Roster Block */}
-                            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-slate-50/50 border border-slate-100 rounded-2xl p-4">
-                              <div className="flex items-center gap-2">
-                                <Building2 className="w-5 h-5 text-[#005EB8]" />
-                                <div>
-                                  <div className="font-black text-slate-700 text-xs uppercase tracking-wide">{tenant?.name || 'Apollo Clinic'}</div>
-                                  <div className="text-[9px] text-slate-400 font-semibold uppercase tracking-wider">MedQueue SecureHR Cloud Integration</div>
+                            <div className="bg-slate-50/50 border border-slate-100 rounded-2xl p-4 text-xs space-y-2">
+                              <div>
+                                <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest block mb-0.5">Reported Symptoms</span>
+                                <p className="text-slate-700 italic">{vis.symptoms || 'General routine followup checkup'}</p>
+                              </div>
+                              {presc?.diagnosis && (
+                                <div className="pt-2 border-t border-slate-150/40">
+                                  <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest block mb-0.5">Clinical Diagnosis</span>
+                                  <p className="text-slate-800 font-extrabold">{presc.diagnosis}</p>
                                 </div>
-                              </div>
-                              <div className="text-left sm:text-right">
-                                <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Triage Node</div>
-                                <div className="text-xs font-black text-[#00A3AD]">TOKEN #{vis.tokens?.token_number || 'TBA'}</div>
-                              </div>
+                              )}
                             </div>
 
-                            {/* Doctor & Patient Info Details */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-b border-slate-100 pb-4">
-                              <div className="space-y-1">
-                                <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Prescribed By Doctor</div>
-                                <div className="font-extrabold text-slate-800 text-xs">{docName}</div>
-                                <div className="text-[10px] text-slate-400 font-semibold capitalize">{docDept} • Room {roomNo}</div>
-                              </div>
-                              <div className="space-y-1">
-                                <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Patient Details</div>
-                                <div className="font-extrabold text-slate-800 text-xs">{activeProfile?.name || 'Patient'}</div>
-                                <div className="text-[10px] text-slate-400 font-semibold">
-                                  Age: {activeProfile?.age || '—'} yrs • Phone: {activeProfile?.phone || patientPhone}
-                                </div>
-                              </div>
+                            <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
+                              <span className="text-[9px] font-black uppercase text-slate-400 tracking-wider">
+                                Fulfillment: <strong className={presc ? "text-emerald-600" : "text-amber-500"}>{presc ? (presc.status || 'DISPENSED') : 'VISIT ONLY'}</strong>
+                              </span>
+                              
+                              <button
+                                onClick={() => handlePrintTimelinePrescription(vis, presc)}
+                                className="flex items-center gap-1.5 px-4 py-2 bg-[#005EB8] hover:bg-[#004a96] text-white text-[10px] font-black rounded-xl uppercase tracking-wider transition-all shadow-sm active:scale-[0.98]"
+                              >
+                                <FileText className="w-3.5 h-3.5" />
+                                <span>View & Print Prescription</span>
+                              </button>
                             </div>
-
-                            {/* Patient Vitals Grid */}
-                            <div className="space-y-2">
-                              <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Patient Vitals Snapshot</div>
-                              <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-                                {[
-                                  { label: 'BP', val: vis.bp || '120/80', unit: 'mmHg' },
-                                  { label: 'Sugar', val: vis.sugar || '110', unit: 'mg/dL' },
-                                  { label: 'Temp', val: vis.tokens?.patient_intake?.[0]?.temperature || vis.temperature || '96', unit: '°F' },
-                                  { label: 'Pulse', val: vis.tokens?.patient_intake?.[0]?.pulse || vis.pulse || '69', unit: 'BPM' },
-                                  { label: 'Oxygen', val: vis.tokens?.patient_intake?.[0]?.oxygen || vis.oxygen || '98', unit: '%' },
-                                ].map((vt, i) => (
-                                  <div key={i} className="bg-slate-50 border border-slate-100 rounded-xl p-3 text-center flex flex-col justify-center">
-                                    <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">{vt.label}</span>
-                                    <span className="text-slate-850 font-black text-sm mt-1">{vt.val}</span>
-                                    <span className="text-[8px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">{vt.unit}</span>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-
-                            {/* Chief Symptoms */}
-                            <div className="space-y-1.5">
-                              <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Chief Triage Symptoms</div>
-                              <div className="bg-[#FFFCEB] border border-amber-100 rounded-xl p-3.5 text-xs text-amber-800 font-bold">
-                                {vis.symptoms || 'Routine clinic out-patient follow-up consultation'}
-                              </div>
-                            </div>
-
-                            {/* Doctor Notes & Diagnosis */}
-                            <div className="space-y-1.5">
-                              <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Doctor Diagnosis & Notes</div>
-                              <div className="bg-[#F3F6FA] border border-slate-200/50 rounded-xl p-3.5 text-xs text-slate-700 font-bold leading-relaxed">
-                                {presc?.diagnosis && (
-                                  <div className="mb-2">
-                                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-0.5">Primary Diagnosis</span>
-                                    <div className="text-slate-800 font-black text-sm">{presc.diagnosis}</div>
-                                  </div>
-                                )}
-                                <div>
-                                  {presc?.diagnosis && <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-0.5">Consultation Notes</span>}
-                                  {vis.doctor_notes || 'Patient evaluated for normal vitals and symptoms check. Clinical findings stable.'}
-                                </div>
-                              </div>
-                            </div>
-
-                            {/* Prescribed Medications Table */}
-                            {presc && (
-                              <div className="space-y-2.5">
-                                <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Prescribed Medications Rx</div>
-                                <div className="border border-slate-100 rounded-2xl overflow-hidden bg-white">
-                                  <table className="w-full text-xs text-left border-collapse">
-                                    <thead>
-                                      <tr className="bg-slate-50 border-b border-slate-100">
-                                        <th className="p-3 text-[9px] font-black text-slate-400 uppercase tracking-wider">Medicine Details</th>
-                                        <th className="p-3 text-[9px] font-black text-slate-400 uppercase tracking-wider">Dosage Size</th>
-                                        <th className="p-3 text-[9px] font-black text-slate-400 uppercase tracking-wider text-right">Frequency</th>
-                                      </tr>
-                                    </thead>
-                                    <tbody>
-                                      {Array.isArray(presc.medications) && presc.medications.length > 0 ? (
-                                        presc.medications.map((m: any, mIdx: number) => (
-                                          <tr key={mIdx} className="border-b border-slate-50 hover:bg-slate-50/40 transition-colors last:border-b-0">
-                                            <td className="p-3">
-                                              <div className="font-extrabold text-slate-800">{m.name}</div>
-                                              {m.instructions && (
-                                                <div className="text-[9px] text-slate-400 font-medium italic mt-0.5">Instructions: {m.instructions}</div>
-                                              )}
-                                            </td>
-                                            <td className="p-3 font-semibold text-slate-650">{m.dosage || '1 tablet'}</td>
-                                            <td className="p-3 font-extrabold text-[#005EB8] text-right">{m.frequency || '1-0-1 (Morning & Night)'}</td>
-                                          </tr>
-                                        ))
-                                      ) : (
-                                        <tr>
-                                          <td colSpan={3} className="p-4 text-center text-slate-400 font-semibold italic">
-                                            No prescription medications loaded.
-                                          </td>
-                                        </tr>
-                                      )}
-                                    </tbody>
-                                  </table>
-                                </div>
-                                <div className="flex justify-between items-center text-[9px] font-black uppercase text-slate-400 tracking-wider pt-1">
-                                  <span>Fulfillment Status: <strong className="text-emerald-600 bg-emerald-50 border border-emerald-150 px-2 py-0.5 rounded">{presc.status || 'DISPENSED'}</strong></span>
-                                  <span className="text-[8px] text-slate-400">Authenticated MedQueue secure node</span>
-                                </div>
-                              </div>
-                            )}
                           </div>
                         </div>
                       );
@@ -1685,6 +1467,206 @@ export default function PatientWorkspace({ currentUser, navigate, tenant }: {
         })}
       </div>
 
+      {/* ── PRESCRIPTION PRINT/PDF PREVIEW OVERLAY MODAL ── */}
+      {activePrescriptionModal && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[80] flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white rounded-3xl max-w-2xl w-full shadow-2xl overflow-hidden border border-slate-150 max-h-[90vh] flex flex-col animate-fade-in text-left">
+            {/* Modal Header Actions */}
+            <div className="px-4 sm:px-5 py-3 sm:py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50 flex-shrink-0 gap-2">
+              <span className="text-xs font-black text-slate-700 uppercase tracking-widest truncate min-w-0">
+                <span>Prescription Record</span>
+              </span>
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <button
+                  onClick={() => window.print()}
+                  className="flex items-center gap-1.5 px-3.5 py-1.5 bg-[#005EB8] hover:bg-[#004a96] text-white text-[10px] font-black uppercase tracking-wider rounded-xl flex-shrink-0 shadow-sm"
+                >
+                  <Printer className="w-3.5 h-3.5" />
+                  <span>Print</span>
+                </button>
+                <button
+                  onClick={() => setActivePrescriptionModal(null)}
+                  className="w-7 h-7 bg-slate-200 text-slate-500 hover:bg-slate-300 hover:text-slate-800 flex items-center justify-center rounded-xl transition-all flex-shrink-0"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            {/* Modal Scroll Content (Printable Branded Sheet) */}
+            <div className="p-4 xs:p-6 sm:p-8 overflow-y-auto flex-1 font-sans print-sheet" id="printable-prescription-container">
+              
+              {/* Branded Hospital Header */}
+              <div className="border-b-4 border-[#005EB8] pb-5 flex justify-between items-start gap-4">
+                <div>
+                  <h2 className="text-base sm:text-lg font-black text-slate-800 tracking-tight flex items-center gap-1.5 uppercase">
+                    <Building2 className="w-4 h-4 sm:w-5 sm:h-5 text-[#005EB8]" />
+                    {tenant?.name || 'Apollo Clinic'}
+                  </h2>
+                  <span className="text-[9px] sm:text-[10px] text-slate-400 font-extrabold uppercase tracking-widest block mt-1">
+                    MedQueue SecurEHR Cloud Integration
+                  </span>
+                </div>
+                <div className="text-right flex-shrink-0">
+                  <div className="text-[10px] sm:text-xs font-black text-slate-700 uppercase tracking-wider">Triage Node</div>
+                  <div className="text-[9px] sm:text-[10px] text-[#00A3AD] font-bold mt-0.5">
+                    TOKEN #{activePrescriptionModal.vis.tokens?.token_number || 'TBA'}
+                  </div>
+                  <div className="text-[8px] sm:text-[9px] text-slate-400 mt-0.5">
+                    {new Date(activePrescriptionModal.vis.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                  </div>
+                </div>
+              </div>
+
+              {/* Doctors & Patient details split */}
+              <div className="grid grid-cols-2 gap-4 sm:gap-6 py-5 border-b border-slate-100 text-xs">
+                <div className="min-w-0">
+                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Prescribing Doctor</span>
+                  <div className="font-extrabold text-slate-800 truncate">
+                    {(() => {
+                      const matched = hospDoctors.find((d: any) => d.room_number === activePrescriptionModal.vis.tokens?.room_number || d.room_number === activePrescriptionModal.vis.room_number);
+                      return matched ? matched.name : (activePrescriptionModal.vis.tokens?.doctor_name || 'Dr. Muskan Kumari');
+                    })()}
+                  </div>
+                  <div className="text-slate-400 font-semibold mt-0.5 uppercase tracking-wide truncate">
+                    {(() => {
+                      const matched = hospDoctors.find((d: any) => d.room_number === activePrescriptionModal.vis.tokens?.room_number || d.room_number === activePrescriptionModal.vis.room_number);
+                      const dept = matched ? matched.department : 'General Medicine';
+                      const rm = matched ? matched.room_number : (activePrescriptionModal.vis.tokens?.room_number || '102');
+                      return `${dept} • Room ${rm}`;
+                    })()}
+                  </div>
+                </div>
+
+                <div className="min-w-0">
+                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Patient Details</span>
+                  <div className="font-extrabold text-slate-800 truncate">{activeProfile?.name || 'Patient'}</div>
+                  <div className="text-slate-400 font-semibold mt-0.5 truncate">
+                    Age: {activeProfile?.age || '—'} yrs • Phone: {activeProfile?.phone || patientPhone}
+                  </div>
+                </div>
+              </div>
+
+              {/* Vitals summary block */}
+              <div className="py-4 border-b border-slate-100">
+                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-2">Patient Vitals Snapshot</span>
+                <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 sm:gap-2.5">
+                  {[
+                    { label: 'BP', val: activePrescriptionModal.vis.bp || '120/80' },
+                    { label: 'Sugar', val: (activePrescriptionModal.vis.sugar || '110') + ' mg/dL' },
+                    { label: 'Temp', val: (activePrescriptionModal.vis.tokens?.patient_intake?.[0]?.temperature || activePrescriptionModal.vis.temperature || '96') + ' °F' },
+                    { label: 'Pulse', val: (activePrescriptionModal.vis.tokens?.patient_intake?.[0]?.pulse || activePrescriptionModal.vis.pulse || '69') + ' BPM' },
+                    { label: 'Oxygen', val: (activePrescriptionModal.vis.tokens?.patient_intake?.[0]?.oxygen || activePrescriptionModal.vis.oxygen || '98') + ' %' },
+                  ].map((v, i) => (
+                    <div key={i} className="bg-slate-50 rounded-xl p-2 border border-slate-150/60 text-center">
+                      <div className="text-[8px] font-black text-slate-400 uppercase tracking-wider">{v.label}</div>
+                      <div className="text-[10px] sm:text-xs font-black text-slate-800 mt-1 truncate">{v.val}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Chief symptoms & Diagnosis split */}
+              <div className="py-4 border-b border-slate-100 grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 text-xs font-semibold">
+                <div>
+                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Chief Triage Symptoms</span>
+                  <div className="text-slate-700 bg-slate-50/50 rounded-xl p-2.5 border border-slate-100/50 sm:p-0 sm:border-none sm:bg-transparent">
+                    {activePrescriptionModal.vis.symptoms || 'None reported'}
+                  </div>
+                </div>
+                <div>
+                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Doctor Diagnosis</span>
+                  <div className="text-slate-700 font-bold bg-slate-50/50 rounded-xl p-2.5 border border-slate-100/50 sm:p-0 sm:border-none sm:bg-transparent">
+                    {activePrescriptionModal.presc?.diagnosis || 'General Consultation Findings'}
+                  </div>
+                </div>
+              </div>
+
+              {/* Attendant Doctor Notes */}
+              {activePrescriptionModal.vis.doctor_notes && (
+                <div className="py-4 border-b border-slate-100 text-xs font-semibold">
+                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Clinical Diagnosis & Attendant Doctor Notes</span>
+                  <div className="text-slate-700 bg-slate-50/50 rounded-xl p-2.5 border border-slate-100/50 sm:p-0 sm:border-none sm:bg-transparent">
+                    {activePrescriptionModal.vis.doctor_notes}
+                  </div>
+                </div>
+              )}
+
+              {/* Medications grid list */}
+              <div className="py-5">
+                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-3">Prescribed Medications Rx</span>
+                
+                <div className="overflow-x-auto w-full border border-slate-100 rounded-2xl p-3 bg-slate-50/30 sm:border-none sm:p-0 sm:bg-transparent scrollbar-thin">
+                  <table className="w-full text-xs min-w-[550px] sm:min-w-0 table-layout-fixed font-semibold">
+                    <thead>
+                      <tr className="border-b border-slate-200 text-slate-400 font-black text-[9px] uppercase tracking-wider text-left pb-2">
+                        <th className="pb-2 w-[40%]">Medicine Name</th>
+                        <th className="pb-2 w-[20%]">Dosage</th>
+                        <th className="pb-2 w-[20%]">Frequency</th>
+                        <th className="pb-2 w-[20%]">Duration</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {activePrescriptionModal.presc && Array.isArray(activePrescriptionModal.presc.medications) && activePrescriptionModal.presc.medications.length > 0 ? (
+                        activePrescriptionModal.presc.medications.map((m: any, i: number) => (
+                          <tr key={i} className="border-b border-slate-100 text-slate-750">
+                            <td className="py-3 font-extrabold text-slate-900">
+                              <div>• {m.name}</div>
+                              {m.instructions && (
+                                <div className="text-[10px] text-slate-400 font-medium italic mt-0.5">Note: {m.instructions}</div>
+                              )}
+                            </td>
+                            <td className="py-3 font-semibold">{m.dosage || '—'}</td>
+                            <td className="py-3 font-extrabold text-[#005EB8]">{m.frequency || '—'}</td>
+                            <td className="py-3 font-semibold">{m.duration || '—'}</td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr className="text-slate-700">
+                          <td colSpan={4} className="py-4 text-center text-slate-400 font-semibold italic">
+                            No prescriptive medications loaded.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <div className="mt-8 flex justify-between items-end border-t border-slate-100 pt-6">
+                <div className="text-[10px] text-slate-400 font-semibold">
+                  This is a securely authenticated MedQueue SaaS digital prescription node.
+                </div>
+                <div className="text-center">
+                  <div className="border-t border-slate-300 w-44 pt-1.5 font-bold text-slate-650 text-xs">
+                    Authorized Attendant Sign
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Global Print Layout CSS Injection */}
+      <style>{`
+        @media print {
+          body * {
+            visibility: hidden;
+          }
+          #printable-prescription-container, #printable-prescription-container * {
+            visibility: visible;
+          }
+          #printable-prescription-container {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            padding: 20px;
+          }
+        }
+      `}</style>
     </div>
   );
 }
