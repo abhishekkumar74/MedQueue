@@ -485,7 +485,7 @@ export default function AdminDashboard({ currentUser }: Props) {
             });
 
           if (docErr && !docErr.message.toLowerCase().includes('duplicate')) {
-            console.warn('Could not auto-onboard matching doctor profile:', docErr.message);
+            throw docErr;
           }
         }
       }
@@ -2310,6 +2310,7 @@ export default function AdminDashboard({ currentUser }: Props) {
                   <label className="block text-[10px] font-black text-slate-400 uppercase mb-1">Role</label>
                   <select value={staffForm.role} onChange={e => setStaffForm({...staffForm, role: e.target.value})} className="w-full text-xs p-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none">
                     <option value="WARD_BOY">Ward Boy</option>
+                    <option value="DOCTOR">Doctor</option>
                     <option value="PHARMACY">Pharmacy Staff</option>
                     <option value="ADMIN">Admin Assistant</option>
                   </select>

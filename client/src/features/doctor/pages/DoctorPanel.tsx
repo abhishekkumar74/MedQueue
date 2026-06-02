@@ -71,7 +71,7 @@ const PRESCRIPTION_TEMPLATES: Record<string, Omit<Medication, 'quantity'>[]> = {
 // Diagnosis Predefined Chips
 const DIAGNOSIS_CHIPS = ['Acute Fever', 'Viral Infection', 'Gastroenteritis', 'Migraine', 'Hypertension', 'Type 2 Diabetes', 'General Weakness'];
 
-export default function DoctorPanel({ doctorDepartment = 'general', doctorName = 'Doctor', roomNumber = '101' }: DoctorPanelProps = {}) {
+export default function DoctorPanel({ doctorDepartment = 'general', doctorName = 'Doctor', roomNumber = '' }: DoctorPanelProps = {}) {
   const [queue, setQueue] = useState<QueueData>({ waiting: [], serving: null });
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState('');
@@ -124,7 +124,7 @@ export default function DoctorPanel({ doctorDepartment = 'general', doctorName =
 
       // Filter by room_number if doctor has one (most reliable — set by WardBoy)
       // Fallback to department if no room_number
-      if (roomNumber && roomNumber !== '101') {
+      if (roomNumber && roomNumber.trim() !== '') {
         waitingQuery = waitingQuery.eq('room_number', roomNumber);
       } else {
         waitingQuery = waitingQuery.eq('department', doctorDepartment?.toLowerCase());
@@ -141,7 +141,7 @@ export default function DoctorPanel({ doctorDepartment = 'general', doctorName =
         .order('created_at', { ascending: false })
         .limit(1);
 
-      if (roomNumber && roomNumber !== '101') {
+      if (roomNumber && roomNumber.trim() !== '') {
         servingQuery = servingQuery.eq('room_number', roomNumber);
       } else {
         servingQuery = servingQuery.eq('department', doctorDepartment?.toLowerCase());
@@ -177,7 +177,7 @@ export default function DoctorPanel({ doctorDepartment = 'general', doctorName =
         .eq('status', 'SERVING')
         .eq('hospital_id', hospitalId);
 
-      if (roomNumber && roomNumber !== '101') {
+      if (roomNumber && roomNumber.trim() !== '') {
         currentQuery = currentQuery.eq('room_number', roomNumber);
       } else {
         currentQuery = currentQuery.eq('department', doctorDepartment);
@@ -201,7 +201,7 @@ export default function DoctorPanel({ doctorDepartment = 'general', doctorName =
         .order('created_at', { ascending: true })
         .limit(1);
 
-      if (roomNumber && roomNumber !== '101') {
+      if (roomNumber && roomNumber.trim() !== '') {
         nextQuery = nextQuery.eq('room_number', roomNumber);
       } else {
         nextQuery = nextQuery.eq('department', doctorDepartment);

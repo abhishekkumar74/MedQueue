@@ -115,8 +115,15 @@ router.get('/status/:phone', async (req: Request, res: Response) => {
   const targetHospital = req.query.hospital_id as string | undefined;
 
   try {
+    const hospitalId = (req.headers['x-hospital-id'] as string) || targetHospital;
     let tokenQuery = db.from('tokens').select('*').eq('phone', decodeURIComponent(phone)).gte('created_at', `${today}T00:00:00`);
-    tokenQuery = filterTenant(tokenQuery, req.user, targetHospital);
+    if (req.user) {
+      tokenQuery = filterTenant(tokenQuery, req.user, targetHospital);
+    } else if (hospitalId) {
+      tokenQuery = tokenQuery.eq('hospital_id', hospitalId);
+    } else {
+      tokenQuery = tokenQuery.eq('hospital_id', 'd290f1ee-6c54-4b01-90e6-d701748f0851');
+    }
     const { data: token } = await tokenQuery
       .order('created_at', { ascending: false })
       .limit(1)
