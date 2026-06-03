@@ -140,6 +140,7 @@ export default function AdminDashboard({ currentUser }: Props) {
   const [allPatients, setAllPatients] = useState<any[]>([]);
   const [allTimeTokens, setAllTimeTokens] = useState<any[]>([]);
   const [expandedLedgerDate, setExpandedLedgerDate] = useState<string | null>(null);
+  const [ledgerDateFilter, setLedgerDateFilter] = useState<string>('');
 
   // ── Dynamic Modals ────────────────────────────────────────
   const [showAddDoctor, setShowAddDoctor] = useState(false);
@@ -1662,12 +1663,31 @@ export default function AdminDashboard({ currentUser }: Props) {
                   ) : (
                     /* Default Chronological collapsible ledger logs grouped by date */
                     <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-6 space-y-6">
-                      <div className="border-b border-slate-100 pb-4">
-                        <h3 className="text-sm font-black text-slate-700 flex items-center gap-1.5 uppercase tracking-wide">
-                          <Calendar className="w-4.5 h-4.5 text-[#005EB8]" />
-                          Historical Daily Visit Ledger
-                        </h3>
-                        <p className="text-xs text-slate-400 mt-1">Review chronologically grouped lists of visitor intakes, and jump directly to dynamic queues.</p>
+                      <div className="border-b border-slate-100 pb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div>
+                          <h3 className="text-sm font-black text-slate-700 flex items-center gap-1.5 uppercase tracking-wide">
+                            <Calendar className="w-4.5 h-4.5 text-[#005EB8]" />
+                            Historical Daily Visit Ledger
+                          </h3>
+                          <p className="text-xs text-slate-400 mt-1">Review chronologically grouped lists of visitor intakes, and jump directly to dynamic queues.</p>
+                        </div>
+                        <div className="flex items-center gap-2 self-start sm:self-auto">
+                          <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Search Date:</span>
+                          <input 
+                            type="date"
+                            value={ledgerDateFilter}
+                            onChange={e => setLedgerDateFilter(e.target.value)}
+                            className="px-2.5 py-1.5 text-xs font-bold bg-slate-50 text-slate-700 rounded-xl outline-none border border-slate-200 focus:border-[#005EB8]"
+                          />
+                          {ledgerDateFilter && (
+                            <button 
+                              onClick={() => setLedgerDateFilter('')}
+                              className="text-[10px] bg-slate-100 hover:bg-slate-200 text-slate-600 px-2 py-1.5 rounded-lg font-bold transition-all"
+                            >
+                              Clear
+                            </button>
+                          )}
+                        </div>
                       </div>
 
                       <div className="space-y-4">
@@ -1680,10 +1700,13 @@ export default function AdminDashboard({ currentUser }: Props) {
                             grouped[dateStr].push(t);
                           });
 
-                          const sorted = Object.keys(grouped).sort((a, b) => b.localeCompare(a));
+                          let sorted = Object.keys(grouped).sort((a, b) => b.localeCompare(a));
+                          if (ledgerDateFilter) {
+                            sorted = sorted.filter(d => d === ledgerDateFilter);
+                          }
 
                           if (sorted.length === 0) {
-                            return <p className="text-slate-400 text-xs py-8 text-center">No token history loaded on this hospital node.</p>;
+                            return <p className="text-slate-400 text-xs py-8 text-center">No token history matching this date.</p>;
                           }
 
                           return sorted.map(dateStr => {
