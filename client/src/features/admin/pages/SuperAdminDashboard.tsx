@@ -176,8 +176,8 @@ export default function SuperAdminDashboard({ currentUser: _currentUser, onNavig
 
   // Simulated live telemetry & SaaS states
   const [simulatedFailure, setSimulatedFailure] = useState(false);
-  const [dbLatency, setDbLatency] = useState(8);
-  const [apiLatency, setApiLatency] = useState(24);
+  const [dbLatency, setDbLatency] = useState<number | null>(8);
+  const [apiLatency, setApiLatency] = useState<number | null>(24);
   const [broadcasts, setBroadcasts] = useState<Broadcast[]>([]);
   const [newBroadcastText, setNewBroadcastText] = useState('');
   const [broadcastScope, setBroadcastScope] = useState<'all' | 'staff' | 'patients'>('all');
@@ -206,7 +206,7 @@ export default function SuperAdminDashboard({ currentUser: _currentUser, onNavig
     const rows = hospitals.map(h => {
       const itemStats = stats[h.id] || { doctorsCount: 0, patientsCount: 0, tokensCount: 0 };
       const meta = getLocalHospMeta(h.id);
-      return `"${h.name}","${h.slug}","${meta.tier}","${meta.status}",${itemStats.doctorsCount},${staffList.filter(s => s.hospital_id === h.id).length},${itemStats.tokensCount},${apiLatency}ms,${dbLatency}ms,"${new Date().toISOString()}"`;
+      return `"${h.name}","${h.slug}","${meta.tier}","${meta.status}",${itemStats.doctorsCount},${staffList.filter(s => s.hospital_id === h.id).length},${itemStats.tokensCount},${apiLatency !== null ? `${apiLatency}ms` : 'Offline'},${dbLatency !== null ? `${dbLatency}ms` : 'Offline'},"${new Date().toISOString()}"`;
     }).join('\n');
     
     const blob = new Blob([header + rows], { type: 'text/csv' });
@@ -240,13 +240,22 @@ export default function SuperAdminDashboard({ currentUser: _currentUser, onNavig
         await supabase.from('hospitals').select('id', { count: 'estimated', head: true });
         const dbMs = Math.round(performance.now() - startDb);
         setDbLatency(dbMs > 0 ? dbMs : 8);
-        
-        const startApi = performance.now();
-        await fetch('http://localhost:3001/health').catch(() => {});
-        const apiMs = Math.round(performance.now() - startApi);
-        setApiLatency(apiMs > 0 ? apiMs : 14);
       } catch {
-        // Fallback to normal values if server or supabase is temporarily loading
+        setDbLatency(null);
+      }
+
+      try {
+        const startApi = performance.now();
+        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+        const res = await fetch(`${apiUrl}/health`);
+        if (res.ok) {
+          const apiMs = Math.round(performance.now() - startApi);
+          setApiLatency(apiMs > 0 ? apiMs : 14);
+        } else {
+          setApiLatency(null);
+        }
+      } catch {
+        setApiLatency(null);
       }
     };
 
@@ -1398,7 +1407,7 @@ export default function SuperAdminDashboard({ currentUser: _currentUser, onNavig
                   { label: 'Live Queue Size', value: Object.values(stats).reduce((acc, curr) => acc + curr.tokensCount, 0), color: 'text-amber-600 bg-amber-50/50 border-amber-100', subtitle: 'Active tokens', icon: <RefreshCw className="w-4 h-4 text-amber-500" />, tab: 'dashboard' },
                   { label: 'Avg Wait Time', value: '18 mins', color: 'text-indigo-600 bg-indigo-50/50 border-indigo-100', subtitle: 'Target: 20 mins', icon: <Clock className="w-4 h-4 text-indigo-500" />, tab: 'analytics' },
                   { label: 'Monthly MRR', value: `$${totalMRR.toLocaleString()}`, color: 'text-emerald-700 bg-emerald-50/50 border-emerald-100', subtitle: '↑ 14% growth', icon: <CreditCard className="w-4 h-4 text-emerald-600" />, tab: 'billing' },
-                  { label: 'Gateway Ping', value: `${apiLatency}ms`, color: 'text-slate-600 bg-slate-50 border-slate-200', subtitle: simulatedFailure ? 'Anomaly alert' : 'Network Healthy', icon: <ShieldCheck className="w-4 h-4 text-slate-500" />, tab: 'health' }
+                  { label: 'Gateway Ping', value: apiLatency !== null ? `${apiLatency}ms` : 'Offline', color: 'text-slate-600 bg-slate-50 border-slate-200', subtitle: simulatedFailure || apiLatency === null ? 'Anomaly alert' : 'Network Healthy', icon: <ShieldCheck className="w-4 h-4 text-slate-500" />, tab: 'health' }
                 ].map((m, i) => (
                   <button 
                     key={i} 
@@ -1431,8 +1440,8 @@ export default function SuperAdminDashboard({ currentUser: _currentUser, onNavig
                     </h3>
                     <div className="space-y-3">
                       {[
-                        { name: 'Core API Gateway', latency: `${apiLatency}ms`, status: simulatedFailure ? 'Degraded Performance' : 'Operational', color: simulatedFailure ? 'bg-amber-500 animate-pulse' : 'bg-emerald-500' },
-                        { name: 'PostgreSQL Database', latency: `${dbLatency}ms`, status: 'Operational', color: 'bg-emerald-500' },
+                        { name: 'Core API Gateway', latency: apiLatency !== null ? `${apiLatency}ms` : 'Offline', status: simulatedFailure || apiLatency === null ? 'Degraded Performance' : 'Operational', color: simulatedFailure || apiLatency === null ? 'bg-amber-500 animate-pulse' : 'bg-emerald-500' },
+                        { name: 'PostgreSQL Database', latency: dbLatency !== null ? `${dbLatency}ms` : 'Offline', status: dbLatency !== null ? 'Operational' : 'Offline', color: dbLatency !== null ? 'bg-emerald-500' : 'bg-red-500' },
                         { name: 'SMS OTP Engine', status: simulatedFailure ? 'Fallback Simulated' : 'Operational', color: simulatedFailure ? 'bg-amber-500 animate-pulse' : 'bg-emerald-500' },
                         { name: 'Dynamic Queue Router', status: 'Operational', color: 'bg-emerald-500' },
                         { name: 'Auth Session Broker', status: 'Healthy', color: 'bg-emerald-500' }
@@ -2759,17 +2768,17 @@ export default function SuperAdminDashboard({ currentUser: _currentUser, onNavig
                 {[
                   { 
                     label: 'API Router Ping', 
-                    value: `${apiLatency}ms`, 
+                    value: apiLatency !== null ? `${apiLatency}ms` : 'Offline', 
                     desc: 'Express middleware network status', 
-                    status: simulatedFailure ? 'Interrupted' : 'Excellent',
-                    stateColor: simulatedFailure ? 'text-red-700 bg-red-50 border-red-200' : 'text-emerald-700 bg-emerald-50 border-emerald-200'
+                    status: simulatedFailure || apiLatency === null ? 'Interrupted' : 'Excellent',
+                    stateColor: simulatedFailure || apiLatency === null ? 'text-red-700 bg-red-50 border-red-200' : 'text-emerald-700 bg-emerald-50 border-emerald-200'
                   },
                   { 
                     label: 'Database ping latency', 
-                    value: `${dbLatency}ms`, 
+                    value: dbLatency !== null ? `${dbLatency}ms` : 'Offline', 
                     desc: 'Supabase catalog database response',
-                    status: simulatedFailure ? 'Database busy' : 'Excellent',
-                    stateColor: simulatedFailure ? 'text-amber-700 bg-amber-50 border-amber-200' : 'text-emerald-700 bg-emerald-50 border-emerald-200'
+                    status: simulatedFailure || dbLatency === null ? 'Database busy' : 'Excellent',
+                    stateColor: simulatedFailure || dbLatency === null ? 'text-amber-700 bg-amber-50 border-amber-200' : 'text-emerald-700 bg-emerald-50 border-emerald-200'
                   },
                   { 
                     label: 'Websocket cluster', 

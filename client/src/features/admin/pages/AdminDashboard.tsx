@@ -108,6 +108,7 @@ export default function AdminDashboard({ currentUser }: Props) {
   const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
   // selectedDate drives queue date filter UI
   const [selectedDate, setSelectedDate] = useState(todayStr);
+  const [dateMode, setDateMode] = useState<'specific' | 'all'>('specific');
 
   // ── Dashboard States ──────────────────────────────────────
   const [stats, setStats] = useState<Stats>({
@@ -168,8 +169,13 @@ export default function AdminDashboard({ currentUser }: Props) {
 
     const startApi = Date.now();
     try {
-      const res = await fetch('http://localhost:3001/health');
-      if (res.ok) setApiLatency(Date.now() - startApi);
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+      const res = await fetch(`${apiUrl}/health`);
+      if (res.ok) {
+        setApiLatency(Date.now() - startApi);
+      } else {
+        setApiLatency(null);
+      }
     } catch {
       setApiLatency(null);
     }
@@ -214,7 +220,9 @@ export default function AdminDashboard({ currentUser }: Props) {
         patientsRes,
         allTimeTokensRes
       ] = await Promise.all([
-        supabase.from('tokens').select('*, patients(id, name, age, address)').eq('hospital_id', hospitalId).gte('created_at', startIST).lte('created_at', endIST).order('created_at', { ascending: false }),
+        dateMode === 'specific'
+          ? supabase.from('tokens').select('*, patients(id, name, age, address)').eq('hospital_id', hospitalId).gte('created_at', startIST).lte('created_at', endIST).order('created_at', { ascending: false })
+          : supabase.from('tokens').select('*, patients(id, name, age, address)').eq('hospital_id', hospitalId).order('created_at', { ascending: false }),
         supabase.from('prescriptions').select('*', { count: 'exact', head: true }).eq('hospital_id', hospitalId).in('status', ['PENDING', 'IN_PROGRESS']),
         supabase.from('doctors').select('*').eq('hospital_id', hospitalId).order('name'),
         supabase.from('staff_users').select('*').eq('hospital_id', hospitalId).neq('is_deleted', true).order('name'),
@@ -270,7 +278,7 @@ export default function AdminDashboard({ currentUser }: Props) {
     } finally {
       setRefreshing(false);
     }
-  }, [selectedDate, hospitalId]);
+  }, [selectedDate, hospitalId, dateMode]);
 
   useEffect(() => {
     fetchData();
@@ -759,6 +767,13 @@ export default function AdminDashboard({ currentUser }: Props) {
   const noOnlineDoctors = doctors.filter(d => d.is_available).length === 0;
   const waitTimeSpike = stats.waiting > 8;
 
+  // Queue pipeline breakdown counts
+  const wardBoyCount = tokens.filter(t => t.status === 'WAITING' && t.intake_status === 'ARRIVED').length;
+  const doctorQueueCount = tokens.filter(t => t.status === 'WAITING' && t.intake_status === 'READY_FOR_DOCTOR').length;
+  const inConsultationCount = tokens.filter(t => t.status === 'SERVING' && t.intake_status === 'WITH_DOCTOR').length;
+  const completedCount = tokens.filter(t => t.status === 'DONE').length;
+  const noShowCount = tokens.filter(t => t.status === 'NO_SHOW').length;
+
   return (
     <div className="min-h-screen bg-[#F4F8FB] font-sans pb-12">
       {/* ── Top Header Control Center ── */}
@@ -911,6 +926,45 @@ export default function AdminDashboard({ currentUser }: Props) {
             </div>
           )}
 
+          {/* ── Global Date Control Center ── */}
+          {(activeTab === 'dashboard' || activeTab === 'queue' || activeTab === 'appointments' || activeTab === 'analytics') && (
+            <div className="bg-white rounded-3xl border border-slate-100 p-4 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="flex items-center gap-2.5">
+                <Calendar className="w-5 h-5 text-[#005EB8]" />
+                <div>
+                  <span className="text-xs font-black text-slate-700 uppercase tracking-wider block">Operational Timeline Scope</span>
+                  <span className="text-[10px] text-slate-400 font-bold block mt-0.5">
+                    {dateMode === 'all' ? 'Displaying aggregated all-time SaaS records' : `Displaying queue records for ${selectedDate}`}
+                  </span>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                <div className="flex bg-slate-100 p-0.5 rounded-xl border border-slate-200">
+                  <button 
+                    onClick={() => setDateMode('specific')}
+                    className={`px-3 py-1 text-[11px] font-bold rounded-lg transition-all ${dateMode === 'specific' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                  >
+                    Specific Day
+                  </button>
+                  <button 
+                    onClick={() => setDateMode('all')}
+                    className={`px-3 py-1 text-[11px] font-bold rounded-lg transition-all ${dateMode === 'all' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                  >
+                    All Days
+                  </button>
+                </div>
+                {dateMode === 'specific' && (
+                  <input 
+                    type="date"
+                    value={selectedDate}
+                    onChange={e => setSelectedDate(e.target.value)}
+                    className="px-3 py-1.5 text-xs font-bold bg-slate-50 text-slate-700 rounded-xl outline-none border border-slate-200 focus:border-[#005EB8]"
+                  />
+                )}
+              </div>
+            </div>
+          )}
+
           {/* ─────────────────────────────────────────────────────────────────
               1. TAB: Operations Overview
           ───────────────────────────────────────────────────────────────── */}
@@ -919,11 +973,11 @@ export default function AdminDashboard({ currentUser }: Props) {
               {/* Status Bar Grid */}
               <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
                 {[
-                  { label: 'Total Intake', value: stats.totalToday, icon: TrendingUp, desc: "Total patient tickets", color: 'bg-white border-slate-100 text-slate-800' },
-                  { label: 'Waiting', value: stats.waiting, icon: Clock, desc: "Pending doctor call", color: 'bg-white border-slate-100 text-yellow-600' },
-                  { label: 'Active Serving', value: stats.serving, icon: Activity, desc: "Consultation in room", color: 'bg-white border-slate-100 text-emerald-600 font-bold' },
-                  { label: 'Consulted', value: stats.done, icon: CheckCircle2, desc: "Completed today", color: 'bg-white border-slate-100 text-slate-500' },
-                  { label: 'No-Shows', value: stats.noShow, icon: AlertCircle, desc: "Missed tickets", color: 'bg-white border-slate-100 text-red-600' },
+                  { label: 'Total Intake', value: stats.totalToday, icon: TrendingUp, desc: dateMode === 'all' ? "Total overall tickets" : "Total patient tickets", color: 'bg-white border-slate-100 text-slate-800' },
+                  { label: 'Waiting', value: stats.waiting, icon: Clock, desc: dateMode === 'all' ? "Pending overall doctor calls" : "Pending doctor call", color: 'bg-white border-slate-100 text-yellow-600' },
+                  { label: 'Active Serving', value: stats.serving, icon: Activity, desc: dateMode === 'all' ? "Active consultations overall" : "Consultation in room", color: 'bg-white border-slate-100 text-emerald-600 font-bold' },
+                  { label: 'Consulted', value: stats.done, icon: CheckCircle2, desc: dateMode === 'all' ? "Completed overall" : "Completed today", color: 'bg-white border-slate-100 text-slate-500' },
+                  { label: 'No-Shows', value: stats.noShow, icon: AlertCircle, desc: dateMode === 'all' ? "Missed tickets overall" : "Missed tickets", color: 'bg-white border-slate-100 text-red-600' },
                 ].map(metric => {
                   const Icon = metric.icon;
                   return (
@@ -939,6 +993,70 @@ export default function AdminDashboard({ currentUser }: Props) {
                 })}
               </div>
 
+              {/* 📊 LIVE QUEUE PIPELINE FLOW */}
+              <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-6">
+                <div className="mb-4">
+                  <h3 className="text-sm font-black text-slate-700 flex items-center gap-1.5 uppercase tracking-wide">
+                    <Activity className="w-4 h-4 text-[#005EB8]" />
+                    Live Queue Pipeline Flow
+                  </h3>
+                  <p className="text-xs text-slate-400 mt-0.5">Real-time status breakdown of patient tokens across clinical desks.</p>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                  {[
+                    { 
+                      label: '1. Registered / Arrival', 
+                      value: wardBoyCount, 
+                      desc: 'Awaiting Vitals', 
+                      color: 'border-blue-100 bg-blue-50/20 text-blue-700',
+                      badge: 'Ward Boy Queue'
+                    },
+                    { 
+                      label: '2. Vitals Checked', 
+                      value: doctorQueueCount, 
+                      desc: 'Ready for Doctor', 
+                      color: 'border-purple-100 bg-purple-50/20 text-purple-700',
+                      badge: 'Doctor Queue'
+                    },
+                    { 
+                      label: '3. In Consultation', 
+                      value: inConsultationCount, 
+                      desc: 'With Practitioner', 
+                      color: 'border-teal-100 bg-teal-50/20 text-teal-700',
+                      badge: 'Serving'
+                    },
+                    { 
+                      label: '4. Completed', 
+                      value: completedCount, 
+                      desc: 'Consultation Done', 
+                      color: 'border-emerald-100 bg-emerald-50/20 text-emerald-700',
+                      badge: 'Discharged'
+                    },
+                    { 
+                      label: '5. Absent / No-Show', 
+                      value: noShowCount, 
+                      desc: 'Missed Call', 
+                      color: 'border-red-100 bg-red-50/20 text-red-700',
+                      badge: 'No-Show'
+                    }
+                  ].map((step, idx) => (
+                    <div key={idx} className={`rounded-2xl border p-4 flex flex-col justify-between h-32 relative overflow-hidden transition-all hover:shadow-sm ${step.color}`}>
+                      <div className="absolute right-0 top-0 text-7xl font-bold opacity-[0.03] select-none pointer-events-none -mt-4 -mr-2">
+                        {idx + 1}
+                      </div>
+                      <div>
+                        <span className="text-[10px] font-black uppercase tracking-wider block">{step.label}</span>
+                        <span className="text-3xl font-black mt-2 block tracking-tight">{step.value}</span>
+                      </div>
+                      <div className="mt-2 pt-2 border-t border-current/10 flex items-center justify-between text-[9px] font-bold uppercase tracking-wide">
+                        <span>{step.desc}</span>
+                        <span className="px-1.5 py-0.5 rounded-full bg-white/70 shadow-xs text-[8px]">{step.badge}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
 
               {/* Dynamic Doctor Panel */}
               <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-6">
@@ -1067,12 +1185,6 @@ export default function AdminDashboard({ currentUser }: Props) {
                 </div>
 
                  <div className="flex flex-wrap items-center gap-2">
-                  <input 
-                    type="date"
-                    value={selectedDate}
-                    onChange={e => setSelectedDate(e.target.value)}
-                    className="px-3 py-1.5 text-xs font-bold bg-slate-100 text-slate-700 rounded-xl outline-none border border-slate-200 focus:border-[#005EB8]"
-                  />
                   <select 
                     value={statusFilter} 
                     onChange={e => setStatusFilter(e.target.value)} 

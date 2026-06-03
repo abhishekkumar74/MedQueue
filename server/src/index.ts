@@ -52,6 +52,8 @@ app.use(
       // Allow non-browser / server-to-server calls (no Origin header)
       if (!origin) return callback(null, true);
       if (ALLOWED_ORIGINS.includes(origin)) return callback(null, true);
+      // Relaxed in development to support arbitrary localhost ports and local IPs
+      if (!IS_PROD) return callback(null, true);
       callback(new Error(`CORS: origin '${origin}' not allowed`));
     },
     credentials: true,
@@ -87,8 +89,8 @@ const authLimiter = rateLimit({
 app.use(globalLimiter);
 
 // ── Health check (unauthenticated, rate-limited by global) ─
-app.get('/health', (_req: Request, res: Response) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+app.get(['/health', '/api/health', '/', '/api'], (_req: Request, res: Response) => {
+  res.json({ status: 'ok', message: 'MedQueue Express API Core', timestamp: new Date().toISOString() });
 });
 
 // ── Public routes ─────────────────────────────────────────
