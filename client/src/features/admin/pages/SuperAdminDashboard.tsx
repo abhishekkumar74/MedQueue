@@ -1110,7 +1110,7 @@ export default function SuperAdminDashboard({ currentUser: _currentUser, onNavig
 
             {/* Sidebar navigation list */}
             <nav className="p-3 mt-3 space-y-1">
-              [
+              {[
                 { id: 'dashboard', label: 'Operations Center', icon: <LayoutDashboard className="w-4 h-4" />, badge: undefined, badgeDot: false },
                 { id: 'hospitals', label: 'Clinic Directory', icon: <Building2 className="w-4 h-4" />, badge: hospitals.length, badgeDot: false },
                 { id: 'staff', label: 'Staff Directory', icon: <Users className="w-4 h-4" />, badge: undefined, badgeDot: false },
