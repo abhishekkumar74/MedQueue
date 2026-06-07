@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import { supabase } from '../../../lib/supabase';
 import { AuthUser } from '../../../lib/auth';
 import { setSelectedHospitalId } from '../../../lib/api';
+import { SystemDiagnostics } from '../../../pages/superadmin/SystemDiagnostics';
 import { 
   Building2, Users, Shield, Plus, ArrowRight, Activity, 
   MapPin, Phone, Check, RefreshCw, UserPlus, Trash2, Loader2, Info,
@@ -61,7 +62,7 @@ interface ActivityEvent {
 }
 
 export default function SuperAdminDashboard({ currentUser: _currentUser, onNavigate }: Props) {
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'hospitals' | 'staff' | 'analytics' | 'billing' | 'alerts' | 'health' | 'settings'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'hospitals' | 'staff' | 'analytics' | 'billing' | 'alerts' | 'health' | 'settings' | 'diagnostics'>('dashboard');
   const [hospitals, setHospitals] = useState<Hospital[]>([]);
   const [stats, setStats] = useState<Record<string, HospitalStats>>({});
   const [loading, setLoading] = useState(true);
@@ -1109,15 +1110,16 @@ export default function SuperAdminDashboard({ currentUser: _currentUser, onNavig
 
             {/* Sidebar navigation list */}
             <nav className="p-3 mt-3 space-y-1">
-              {[
-                { id: 'dashboard', label: 'Operations Center', icon: <LayoutDashboard className="w-4 h-4" /> },
-                { id: 'hospitals', label: 'Clinic Directory', icon: <Building2 className="w-4 h-4" />, badge: hospitals.length },
-                { id: 'staff', label: 'Staff Directory', icon: <Users className="w-4 h-4" /> },
-                { id: 'analytics', label: 'Platform Analytics', icon: <BarChart3 className="w-4 h-4" /> },
-                { id: 'billing', label: 'SaaS Tiers & Billing', icon: <CreditCard className="w-4 h-4" /> },
-                { id: 'alerts', label: 'Incident Console', icon: <Shield className="w-4 h-4" />, badge: securityLogs.filter(l => !l.acknowledged).length },
-                { id: 'health', label: 'Node Telemetry', icon: <Heart className="w-4 h-4" /> },
-                { id: 'settings', label: 'Global Broadcasts', icon: <Megaphone className="w-4 h-4" /> },
+              [
+                { id: 'dashboard', label: 'Operations Center', icon: <LayoutDashboard className="w-4 h-4" />, badge: undefined, badgeDot: false },
+                { id: 'hospitals', label: 'Clinic Directory', icon: <Building2 className="w-4 h-4" />, badge: hospitals.length, badgeDot: false },
+                { id: 'staff', label: 'Staff Directory', icon: <Users className="w-4 h-4" />, badge: undefined, badgeDot: false },
+                { id: 'analytics', label: 'Platform Analytics', icon: <BarChart3 className="w-4 h-4" />, badge: undefined, badgeDot: false },
+                { id: 'billing', label: 'SaaS Tiers & Billing', icon: <CreditCard className="w-4 h-4" />, badge: undefined, badgeDot: false },
+                { id: 'alerts', label: 'Incident Console', icon: <Shield className="w-4 h-4" />, badge: securityLogs.filter(l => !l.acknowledged).length, badgeDot: false },
+                { id: 'health', label: 'Node Telemetry', icon: <Heart className="w-4 h-4" />, badge: undefined, badgeDot: false },
+                { id: 'diagnostics', label: 'System Diagnostics', icon: <span className="text-sm">🩺</span>, badge: undefined, badgeDot: simulatedFailure },
+                { id: 'settings', label: 'Global Broadcasts', icon: <Megaphone className="w-4 h-4" />, badge: undefined, badgeDot: false },
               ].map(item => {
                 const isActive = activeTab === item.id;
                 return (
@@ -1139,6 +1141,9 @@ export default function SuperAdminDashboard({ currentUser: _currentUser, onNavig
                       <span className={`text-[9px] font-black px-2 py-0.5 rounded-full ${isActive ? 'bg-[#005EB8] text-white' : 'bg-slate-100 text-slate-500'}`}>
                         {item.badge}
                       </span>
+                    )}
+                    {!sidebarCollapsed && item.badgeDot && (
+                      <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse ml-2" />
                     )}
                   </button>
                 );
@@ -2902,6 +2907,10 @@ export default function SuperAdminDashboard({ currentUser: _currentUser, onNavig
               )}
 
             </div>
+          )}
+
+          {activeTab === 'diagnostics' && (
+            <SystemDiagnostics />
           )}
 
         </main>
