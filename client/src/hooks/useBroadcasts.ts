@@ -192,8 +192,9 @@ export function useBroadcasts() {
   useEffect(() => {
     fetchBroadcasts()
 
+    const channelId = `broadcasts-realtime-${Math.random().toString(36).substring(7)}`
     const channel = supabase
-      .channel('broadcasts-realtime')
+      .channel(channelId)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'broadcasts' },
         () => fetchBroadcasts()
       )

@@ -182,8 +182,9 @@ export function useAlerts() {
   useEffect(() => {
     fetchAlerts()
 
+    const channelId = `incidents-realtime-${Math.random().toString(36).substring(7)}`
     const channel = supabase
-      .channel('incidents-realtime')
+      .channel(channelId)
       .on('postgres_changes', {
         event: '*',
         schema: 'public',
