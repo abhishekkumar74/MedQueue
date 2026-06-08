@@ -1290,6 +1290,7 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
                     </div>
                   </div>
 
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 pt-2 border-t border-slate-100">
                     {/* Category tabs */}
                     <div className="flex gap-1.5 overflow-x-auto pb-1.5 sm:pb-0 scrollbar-none w-full sm:w-auto [-webkit-overflow-scrolling:touch]">
                       {[
