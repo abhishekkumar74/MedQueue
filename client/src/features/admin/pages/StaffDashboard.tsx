@@ -430,6 +430,10 @@ function WardBoyDashboard({ department }: WardBoyDashboardProps) {
                               )}
                             </div>
                             
+                            {token.mqid && (
+                              <div className="text-[10px] font-mono font-bold text-indigo-600/70 mt-0.5">MQID: {token.mqid}</div>
+                            )}
+                            
                             <div className="text-[10px] text-slate-400 font-semibold mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5">
                               <span>Phone: {token.phone}</span>
                               <span>•</span>

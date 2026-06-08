@@ -1236,6 +1236,9 @@ export default function AdminDashboard({ currentUser }: Props) {
                             <button onClick={() => token.patients?.id && handleOpenPatientHistory(token.patients.id)} className="font-bold text-slate-800 hover:text-[#005EB8] hover:underline text-left">
                               {token.patients?.name || '—'}
                             </button>
+                            {token.mqid && (
+                              <div className="text-[9px] font-mono font-bold text-indigo-600/70 mt-0.5">MQID: {token.mqid}</div>
+                            )}
                             <div className="text-[10px] text-slate-400 mt-0.5">{token.phone} {token.patients?.age ? `• Age ${token.patients.age}` : ''}</div>
                           </td>
                           <td className="py-3.5 capitalize font-medium text-slate-500">{token.department || 'general'}</td>

@@ -3,6 +3,10 @@ import { registerToken, getSelectedHospitalId } from '../../../lib/api';
 import { Token, Priority, Department, DEPARTMENT_LABEL } from '../../../types';
 import { AuthUser } from '../../../lib/auth';
 import { supabase } from '../../../lib/supabase';
+import { useMQIDAuth } from '../../../hooks/useMQIDAuth';
+import { MQIDCard } from '../../../components/patient/MQIDCard';
+import { MQIDRegistrationForm } from '../../../components/patient/MQIDRegistrationForm';
+import { HealthVaultView } from '../../../components/patient/HealthVaultView';
 import { 
   User, Building2, Ticket, ChevronDown, CheckCircle, Loader2, AlertCircle, MapPin,
   Clock, FileText, Shield, Award, Plus, Upload, Search, Download, Trash2, Stethoscope, Activity, X, Printer, RefreshCw
@@ -53,6 +57,42 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
   if (false && navigate) navigate?.('');
   const patientPhone = currentUser?.phone || '';
   const currentHospitalId = getSelectedHospitalId();
+  const hospitalName = tenant?.name || 'Apollo Clinic';
+  const localPrefix = tenant?.slug?.substring(0, 3).toUpperCase() || 'APL';
+
+  const {
+    step, patient, mqid, error, isNewPatient, pendingPhone,
+    sendOTP, verifyOTP, completeRegistration, signOut
+  } = useMQIDAuth(
+    currentHospitalId,
+    hospitalName,
+    localPrefix
+  );
+
+  const [hospitalProfile, setHospitalProfile] = useState<any | null>(null);
+
+  useEffect(() => {
+    if (!mqid || !currentHospitalId) return;
+    const fetchHospitalProfile = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('hospital_patients')
+          .select('*')
+          .eq('mqid', mqid)
+          .eq('hospital_id', currentHospitalId)
+          .maybeSingle();
+        if (data) {
+          setHospitalProfile({
+            localPatientNo: data.local_patient_no,
+            ...data
+          });
+        }
+      } catch (e) {
+        console.warn('Failed to fetch hospital patient profile:', e);
+      }
+    };
+    fetchHospitalProfile();
+  }, [mqid, currentHospitalId]);
 
   // ── Tab State ──────────────────────────────────────────────
   const [activeTab, setActiveTab] = useState<'workspace' | 'doctors' | 'timeline' | 'vault' | 'family' | 'wallet' | 'guide' | 'profile'>('workspace');
@@ -229,27 +269,38 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
       // Fetch active database visits for main patient if profile is 'Self'
       if (activeProfile.relationship === 'Self') {
         let resolvedPatientId = activeProfile.id;
-        if (resolvedPatientId === 'self' || !resolvedPatientId.includes('-')) {
-          const { data: patientRecord } = await supabase
-            .from('patients')
-            .select('id')
-            .eq('phone', patientPhone)
-            .maybeSingle();
-          if (patientRecord?.id) {
-            resolvedPatientId = patientRecord.id;
-          }
-        }
-
-        if (resolvedPatientId && resolvedPatientId !== 'self') {
+        
+        if (mqid) {
           const [visitsRes, prescRes, apptsRes] = await Promise.all([
-            supabase.from('visits').select('*, tokens(*)').eq('patient_id', resolvedPatientId).eq('hospital_id', currentHospitalId).order('created_at', { ascending: false }),
-            supabase.from('prescriptions').select('*').eq('patient_id', resolvedPatientId).eq('hospital_id', currentHospitalId).order('created_at', { ascending: false }),
-            supabase.from('appointments').select('*').eq('patient_id', resolvedPatientId).eq('hospital_id', currentHospitalId).order('created_at', { ascending: false })
+            supabase.from('visits').select('*, tokens(*)').or(`mqid.eq.${mqid},patient_id.eq.${resolvedPatientId}`).eq('hospital_id', currentHospitalId).order('created_at', { ascending: false }),
+            supabase.from('prescriptions').select('*').or(`mqid.eq.${mqid},patient_id.eq.${resolvedPatientId}`).eq('hospital_id', currentHospitalId).order('created_at', { ascending: false }),
+            supabase.from('appointments').select('*').or(`mqid.eq.${mqid},patient_id.eq.${resolvedPatientId}`).eq('hospital_id', currentHospitalId).order('created_at', { ascending: false })
           ]);
           setDbVisits(visitsRes.data || []);
           setDbPrescriptions(prescRes.data || []);
           setDbAppointments(apptsRes.data || []);
         } else {
+          if (resolvedPatientId === 'self' || !resolvedPatientId.includes('-')) {
+            const { data: patientRecord } = await supabase
+              .from('patients')
+              .select('id')
+              .eq('phone', patientPhone)
+              .maybeSingle();
+            if (patientRecord?.id) {
+              resolvedPatientId = patientRecord.id;
+            }
+          }
+
+          if (resolvedPatientId && resolvedPatientId !== 'self') {
+            const [visitsRes, prescRes, apptsRes] = await Promise.all([
+              supabase.from('visits').select('*, tokens(*)').eq('patient_id', resolvedPatientId).eq('hospital_id', currentHospitalId).order('created_at', { ascending: false }),
+              supabase.from('prescriptions').select('*').eq('patient_id', resolvedPatientId).eq('hospital_id', currentHospitalId).order('created_at', { ascending: false }),
+              supabase.from('appointments').select('*').eq('patient_id', resolvedPatientId).eq('hospital_id', currentHospitalId).order('created_at', { ascending: false })
+            ]);
+            setDbVisits(visitsRes.data || []);
+            setDbPrescriptions(prescRes.data || []);
+            setDbAppointments(apptsRes.data || []);
+          } else {
           // Fallback simulated clinical data for main patient if no database row exists yet
           setDbVisits([
             { id: 'vis-1', bp: '118/76', sugar: '92', symptoms: 'Regular routine clinical follow-up', doctor_notes: 'Vitals stable. Suggested walking 30 mins daily.', created_at: new Date(Date.now() - 12 * 24 * 3600 * 1000).toISOString(), tokens: { token_number: 14 } }
@@ -783,6 +834,19 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
 
 
 
+  if (step === 'needs_registration' || step === 'creating_profile') {
+    return (
+      <div className="min-h-screen bg-[#F4F8FB] font-sans flex items-center justify-center p-4">
+        <MQIDRegistrationForm
+          phone={pendingPhone}
+          onSubmit={completeRegistration}
+          loading={step === 'creating_profile'}
+          error={error}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#F4F8FB] font-sans pb-24 lg:pb-16 relative overflow-x-hidden w-full max-w-full">
       
@@ -872,6 +936,17 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
                   <Shield className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
                   Isolated Encrypted Node
                 </div>
+              </div>
+            )}
+
+            {step === 'authenticated' && patient && (
+              <div className="mt-4 animate-fadeIn">
+                <MQIDCard
+                  patient={patient}
+                  hospitalName={tenant?.name}
+                  localPatientNo={hospitalProfile?.local_patient_no || hospitalProfile?.localPatientNo}
+                  localPrefix={localPrefix}
+                />
               </div>
             )}
           </div>
@@ -1118,8 +1193,8 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
               </div>
             )}
 
-            {/* ── TAB 3 & 4: UNIFIED PERSONAL MEDICAL TIMELINE & VAULT ── */}
-            {(activeTab === 'timeline' || activeTab === 'vault') && (
+            {/* ── TAB 3: UNIFIED PERSONAL MEDICAL TIMELINE ── */}
+            {activeTab === 'timeline' && (
               <div className="space-y-6">
                 {/* Unified Title & Scan/Upload Action */}
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-200/50 pb-4">
@@ -1598,6 +1673,21 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
                         </button>
                       </div>
                     </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* ── TAB 4: CROSS-CLINIC HEALTH VAULT ── */}
+            {activeTab === 'vault' && (
+              <div className="bg-white border border-slate-100 rounded-[32px] p-6 shadow-sm">
+                {mqid ? (
+                  <HealthVaultView mqid={mqid} />
+                ) : (
+                  <div className="text-center py-12">
+                    <p className="text-4xl mb-3">🔒</p>
+                    <h3 className="text-lg font-black text-slate-800 uppercase tracking-tight">Access Locked</h3>
+                    <p className="text-xs text-slate-400 font-semibold mt-1">Please authenticate with your mobile number to load your clinical records.</p>
                   </div>
                 )}
               </div>
@@ -2098,56 +2188,64 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
 
                 <div className="flex flex-col items-center justify-center py-6">
                   
-                  {/* Apple Wallet Style Card rendering */}
-                  <div className="bg-gradient-to-tr from-[#005EB8] via-[#0081d5] to-[#00A3AD] text-white rounded-[32px] p-6 shadow-2xl max-w-sm w-full space-y-6 relative overflow-hidden select-none select-none">
-                    <div className="absolute top-[-30%] right-[-10%] w-36 h-36 bg-white/10 rounded-full blur-2xl pointer-events-none" />
-                    
-                    <div className="flex items-center justify-between border-b border-white/20 pb-4">
-                      <div className="flex items-center gap-2">
-                        <Activity className="w-5 h-5 text-white animate-pulse" />
-                        <span className="font-black text-white text-sm uppercase tracking-wider">MedQueue</span>
+                  {step === 'authenticated' && patient ? (
+                    <MQIDCard
+                      patient={patient}
+                      hospitalName={tenant?.name || hospitalName}
+                      localPatientNo={hospitalProfile?.local_patient_no || hospitalProfile?.localPatientNo}
+                      localPrefix={localPrefix}
+                    />
+                  ) : (
+                    <div className="bg-gradient-to-tr from-[#005EB8] via-[#0081d5] to-[#00A3AD] text-white rounded-[32px] p-6 shadow-2xl max-w-sm w-full space-y-6 relative overflow-hidden select-none select-none">
+                      <div className="absolute top-[-30%] right-[-10%] w-36 h-36 bg-white/10 rounded-full blur-2xl pointer-events-none" />
+                      
+                      <div className="flex items-center justify-between border-b border-white/20 pb-4">
+                        <div className="flex items-center gap-2">
+                          <Activity className="w-5 h-5 text-white animate-pulse" />
+                          <span className="font-black text-white text-sm uppercase tracking-wider">MedQueue</span>
+                        </div>
+                        <span className="text-[8px] font-black uppercase bg-white/20 px-2 py-0.5 rounded">SaaS Node Identity</span>
                       </div>
-                      <span className="text-[8px] font-black uppercase bg-white/20 px-2 py-0.5 rounded">SaaS Node Identity</span>
-                    </div>
 
-                    <div className="flex justify-between gap-4 items-center pt-2">
-                      <div className="space-y-3.5 text-left">
+                      <div className="flex justify-between gap-4 items-center pt-2">
+                        <div className="space-y-3.5 text-left">
+                          <div>
+                            <span className="text-[8px] font-bold uppercase tracking-widest text-slate-200">Patient Name</span>
+                            <h4 className="font-extrabold text-sm text-white mt-0.5 truncate max-w-[150px]">{activeProfile.name}</h4>
+                          </div>
+                          <div>
+                            <span className="text-[8px] font-bold uppercase tracking-widest text-slate-200">Patient ID Ticker</span>
+                            <p className="font-mono text-xs text-white font-black mt-0.5">MQ-{activeProfile.name.slice(0, 3).toUpperCase()}-{activeProfile.age}93</p>
+                          </div>
+                        </div>
+
+                        {/* Custom Simulated QR Code */}
+                        <div className="bg-white p-2 rounded-2xl shadow-md shadow-[#005EB8]/20 flex items-center justify-center flex-shrink-0">
+                          <svg viewBox="0 0 100 100" className="w-16 h-16 text-slate-900 fill-current">
+                            {/* Outer frame */}
+                            <path d="M0,0 h100 v100 h-100 z M20,20 v60 h60 v-60 z" />
+                            {/* Dynamic dots patterns */}
+                            <rect x="30" y="30" width="10" height="10" />
+                            <rect x="50" y="30" width="20" height="10" />
+                            <rect x="30" y="50" width="10" height="20" />
+                            <rect x="60" y="60" width="10" height="10" />
+                            <rect x="50" y="50" width="10" height="10" />
+                          </svg>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4 border-t border-white/20 pt-4 text-xs font-bold text-slate-200">
                         <div>
-                          <span className="text-[8px] font-bold uppercase tracking-widest text-slate-200">Patient Name</span>
-                          <h4 className="font-extrabold text-sm text-white mt-0.5 truncate max-w-[150px]">{activeProfile.name}</h4>
+                          <span className="text-[8px] font-bold uppercase tracking-widest text-slate-350 block mb-0.5">Blood Group</span>
+                          <span className="text-white">{activeProfile.bloodGroup}</span>
                         </div>
                         <div>
-                          <span className="text-[8px] font-bold uppercase tracking-widest text-slate-200">Patient ID Ticker</span>
-                          <p className="font-mono text-xs text-white font-black mt-0.5">MQ-{activeProfile.name.slice(0, 3).toUpperCase()}-{activeProfile.age}93</p>
+                          <span className="text-[8px] font-bold uppercase tracking-widest text-slate-350 block mb-0.5">Allergen Class</span>
+                          <span className="text-rose-300 font-extrabold truncate block max-w-[100px]">{activeProfile.allergies}</span>
                         </div>
                       </div>
-
-                      {/* Custom Simulated QR Code */}
-                      <div className="bg-white p-2 rounded-2xl shadow-md shadow-[#005EB8]/20 flex items-center justify-center flex-shrink-0">
-                        <svg viewBox="0 0 100 100" className="w-16 h-16 text-slate-900 fill-current">
-                          {/* Outer frame */}
-                          <path d="M0,0 h100 v100 h-100 z M20,20 v60 h60 v-60 z" />
-                          {/* Dynamic dots patterns */}
-                          <rect x="30" y="30" width="10" height="10" />
-                          <rect x="50" y="30" width="20" height="10" />
-                          <rect x="30" y="50" width="10" height="20" />
-                          <rect x="60" y="60" width="10" height="10" />
-                          <rect x="50" y="50" width="10" height="10" />
-                        </svg>
-                      </div>
                     </div>
-
-                    <div className="grid grid-cols-2 gap-4 border-t border-white/20 pt-4 text-xs font-bold text-slate-200">
-                      <div>
-                        <span className="text-[8px] font-bold uppercase tracking-widest text-slate-350 block mb-0.5">Blood Group</span>
-                        <span className="text-white">{activeProfile.bloodGroup}</span>
-                      </div>
-                      <div>
-                        <span className="text-[8px] font-bold uppercase tracking-widest text-slate-350 block mb-0.5">Allergen Class</span>
-                        <span className="text-rose-300 font-extrabold truncate block max-w-[100px]">{activeProfile.allergies}</span>
-                      </div>
-                    </div>
-                  </div>
+                  )}
 
                   <div className="flex gap-3 mt-8 w-full max-w-sm">
                     <button 

@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
+import { isValidMQID } from '../lib/mqid'
 
 export type SearchResultType = 'patient' | 'staff' | 'clinic' | 'token' | 'alert'
 
@@ -26,22 +27,42 @@ export function useGlobalSearch() {
       const searchResults: SearchResult[] = []
 
       // Search patients
-      const { data: patients } = await supabase
-        .from('patients')
-        .select('id, name, phone')
-        .or(`name.ilike.%${q}%,phone.ilike.%${q}%`)
-        .limit(5)
+      if (isValidMQID(q.trim().toUpperCase())) {
+        const { data: mqPatient } = await supabase
+          .from('mq_patients')
+          .select('*, hospital_patients(hospital_name, total_visits)')
+          .eq('mqid', q.trim().toUpperCase())
+          .maybeSingle()
 
-      patients?.forEach(p => {
-        searchResults.push({
-          id: p.id,
-          type: 'patient',
-          title: p.name ?? 'Unknown Patient',
-          subtitle: `Phone: ${p.phone ?? '—'}`,
-          meta: 'Patient',
-          navigateTo: 'staff', // Patients are displayed in the Staff tab/directory view
+        if (mqPatient) {
+          searchResults.push({
+            id:         mqPatient.id,
+            type:       'patient',
+            title:      mqPatient.full_name ?? 'Unknown Patient',
+            subtitle:   `MQID: ${mqPatient.mqid} · Phone: ${mqPatient.phone}`,
+            meta:       'Patient',
+            navigateTo: 'staff',
+          })
+        }
+      } else {
+        // Search by name or phone
+        const { data: patients } = await supabase
+          .from('mq_patients')
+          .select('*')
+          .or(`full_name.ilike.%${q}%,phone.ilike.%${q}%,mqid.ilike.%${q}%`)
+          .limit(5)
+
+        patients?.forEach((p: any) => {
+          searchResults.push({
+            id:         p.id,
+            type:       'patient',
+            title:      p.full_name ?? 'Unknown Patient',
+            subtitle:   `MQID: ${p.mqid} · ${p.phone ?? '—'}`,
+            meta:       'Patient',
+            navigateTo: 'staff',
+          })
         })
-      })
+      }
 
       // Search staff (using staff_users)
       const { data: staff } = await supabase

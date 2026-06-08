@@ -9,6 +9,12 @@
 import { supabase } from './supabase';
 import { todayStartUTC } from './dateUtils';
 import { getCachedUser } from './auth';
+import {
+  lookupPatientByPhone,
+  registerNewPatient,
+  getOrCreateHospitalProfile,
+} from './mqid';
+import type { PatientRegistrationForm } from '../types/mqid';
 
 // ─── TENANT ROUTING ──────────────────────────────────────────────────────────
 
@@ -34,73 +40,148 @@ function getHospitalFilter() {
   return getSelectedHospitalId();
 }
 
-// ─── TOKEN REGISTRATION ──────────────────────────────────────────────────────
-
 export async function registerToken(params: {
   phone: string;
   name?: string;
   age?: number;
   address?: string;
-  priority?: number;
+  hospitalId?: string;
+  hospitalName?: string;
+  localPrefix?: string;
   department?: string;
+  priority?: 'normal' | 'senior' | 'emergency' | number;
 }) {
-  const { phone, name, age, address, priority = 2, department } = params;
-  const hospitalId = getSelectedHospitalId();
+  const {
+    phone,
+    name,
+    age,
+    address,
+    hospitalId,
+    hospitalName,
+    localPrefix,
+    department,
+    priority = 2
+  } = params;
 
-  // Upsert patient linked to the hospital
-  let patientId: string | null = null;
-  if (name) {
-    const { data: existing } = await supabase
-      .from('patients')
-      .select('id')
-      .eq('phone', phone)
-      .maybeSingle();
+  // 1. Resolve Hospital Info
+  const resolvedHospitalId = hospitalId || getSelectedHospitalId();
+  let resolvedHospitalName = hospitalName;
+  let resolvedLocalPrefix = localPrefix;
 
-    if (existing) {
-      patientId = existing.id;
-      await supabase.from('patients')
-        .update({ name, age: age ?? 0, address: address ?? '' })
-        .eq('id', patientId);
-    } else {
-      const { data: created, error } = await supabase
-        .from('patients')
-        .insert({ phone, name, age: age ?? 0, address: address ?? '' })
-        .select('id').single();
-      if (error) throw new Error(error.message);
-      patientId = created.id;
+  if (!resolvedHospitalName || !resolvedLocalPrefix) {
+    try {
+      const { data: hosp } = await supabase
+        .from('hospitals')
+        .select('name, slug')
+        .eq('id', resolvedHospitalId)
+        .maybeSingle();
+
+      resolvedHospitalName = resolvedHospitalName || hosp?.name || 'MedQueue Clinic';
+      resolvedLocalPrefix = resolvedLocalPrefix || hosp?.slug?.substring(0, 3).toUpperCase() || 'MQC';
+    } catch (_) {
+      resolvedHospitalName = resolvedHospitalName || 'MedQueue Clinic';
+      resolvedLocalPrefix = resolvedLocalPrefix || 'MQC';
     }
   }
 
-  // Get today's max token number for this hospital and department (composite key daily sequencer)
+  // 2. Resolve Patient Identity (normalized phone)
+  const normalizedPhone = phone.startsWith('+')
+    ? phone
+    : `+91${phone.replace(/\D/g, '')}`;
+
+  let patient = await lookupPatientByPhone(normalizedPhone)
+    ?? await lookupPatientByPhone(phone);
+
+  if (!patient) {
+    // Walk-in fallback registration
+    const form: PatientRegistrationForm = {
+      fullName:         name || 'Walk-in Patient',
+      phone:            normalizedPhone,
+      dob:              '',
+      gender:           null,
+      bloodGroup:       null,
+      address:          address ?? '',
+      city:             '',
+      emergencyContact: '',
+      allergies:        [],
+    };
+
+    let userSessionId = '';
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      userSessionId = user?.id ?? '';
+    } catch (_) {}
+
+    const result = await registerNewPatient(form, userSessionId);
+    patient = result.patient;
+  }
+
+  // 3. Ensure Hospital Profile Exists
+  try {
+    await getOrCreateHospitalProfile(
+      patient.mqid,
+      resolvedHospitalId,
+      resolvedHospitalName!,
+      resolvedLocalPrefix!,
+      {
+        fullName: name || patient.fullName,
+        phone: normalizedPhone,
+        address: address || '',
+        city: ''
+      }
+    );
+  } catch (err) {
+    console.warn('Failed to ensure hospital patient profile exists:', err);
+  }
+
+  // 4. Sequence Token Number
   const todayStart = todayStartUTC();
-  const { data: lastToken } = await supabase
-    .from('tokens')
-    .select('token_number')
-    .eq('hospital_id', hospitalId)
-    .eq('department', department ?? '')
-    .gte('created_at', todayStart)
-    .order('token_number', { ascending: false })
-    .limit(1)
-    .maybeSingle();
+  let tokenNumber = 1;
+  try {
+    const { data: lastToken } = await supabase
+      .from('tokens')
+      .select('token_number')
+      .eq('hospital_id', resolvedHospitalId)
+      .eq('department', department ?? '')
+      .gte('created_at', todayStart)
+      .order('token_number', { ascending: false })
+      .limit(1)
+      .maybeSingle();
 
-  const tokenNumber = (lastToken?.token_number ?? 0) + 1;
+    tokenNumber = (lastToken?.token_number ?? 0) + 1;
+  } catch (_) {}
 
+  // 5. Map Priority Parameter
+  let numericPriority: 0 | 1 | 2 = 2;
+  if (typeof priority === 'number') {
+    numericPriority = (priority === 0 || priority === 1 || priority === 2) ? priority : 2;
+  } else if (priority === 'emergency') {
+    numericPriority = 0;
+  } else if (priority === 'senior') {
+    numericPriority = 1;
+  } else {
+    numericPriority = 2;
+  }
+
+  // 6. Insert Token Scoped to Hospital + MQID
   const { data: token, error: te } = await supabase
     .from('tokens')
     .insert({
-      phone,
-      patient_id: patientId,
-      status: 'WAITING',
-      priority,
-      token_number: tokenNumber,
+      phone:         normalizedPhone,
+      patient_id:    patient.id,
+      mqid:          patient.mqid,
+      status:        'WAITING',
+      priority:      numericPriority,
+      token_number:  tokenNumber,
       intake_status: 'ARRIVED',
-      department: department ?? null,
-      hospital_id: hospitalId,
+      department:    department ?? null,
+      hospital_id:   resolvedHospitalId,
     })
-    .select('*, patients(*)').single();
+    .select('*, patients(*)')
+    .single();
 
   if (te) throw new Error(te.message);
-  return { success: true, token };
+  return { success: true, token, mqid: patient.mqid, patientId: patient.id };
 }
 
 // ─── QUEUE ───────────────────────────────────────────────────────────────────
