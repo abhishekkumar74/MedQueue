@@ -312,8 +312,9 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
             { id: 'appt-1', patient_name: activeProfile?.name || 'Patient', department: 'cardiology', appointment_date: new Date(Date.now() + 2 * 24 * 3600 * 1000).toISOString().split('T')[0], time_slot: '10:00-10:30', status: 'SCHEDULED', consultation_fee: 500, created_at: new Date(Date.now() - 1 * 24 * 3600 * 1000).toISOString() }
           ]);
         }
-      } else {
-        // Fallback simulated clinical data for family members to keep widgets extremely rich
+      }
+    } else {
+      // Fallback simulated clinical data for family members to keep widgets extremely rich
         setDbVisits([
           { id: 'vis-1', bp: '118/76', sugar: '92', symptoms: 'Regular routine clinical follow-up', doctor_notes: 'Vitals stable. Suggested walking 30 mins daily.', created_at: new Date(Date.now() - 12 * 24 * 3600 * 1000).toISOString(), tokens: { token_number: 14 } }
         ]);
