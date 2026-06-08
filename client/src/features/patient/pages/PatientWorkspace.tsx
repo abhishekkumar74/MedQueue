@@ -1290,9 +1290,8 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
                     </div>
                   </div>
 
-                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 pt-2 border-t border-slate-100">
                     {/* Category tabs */}
-                    <div className="flex gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-none w-full sm:w-auto">
+                    <div className="flex gap-1.5 overflow-x-auto pb-1.5 sm:pb-0 scrollbar-none w-full sm:w-auto [-webkit-overflow-scrolling:touch]">
                       {[
                         { id: 'All', label: 'All Records' },
                         { id: 'Visits', label: 'Visits' },
@@ -1303,7 +1302,7 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
                         <button
                           key={cat.id}
                           onClick={() => setTimelineCategory(cat.id)}
-                          className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all whitespace-nowrap border ${
+                          className={`flex-shrink-0 px-3.5 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all whitespace-nowrap border ${
                             timelineCategory === cat.id 
                               ? 'bg-[#005EB8] text-white border-transparent shadow-sm' 
                               : 'bg-white hover:bg-slate-50 text-slate-500 border-slate-200'
@@ -1557,14 +1556,22 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
                                   )}
 
                                   {isReport && (
-                                    <div className="space-y-3 text-xs flex flex-col justify-between min-h-[100px]">
-                                      <div>
-                                        <div className="text-slate-450 font-bold mb-1 uppercase tracking-wider text-[9px]">{e.subtitle}</div>
-                                        <p className="text-slate-800 font-bold truncate max-w-lg">{e.title}</p>
-                                        <p className="text-[9px] text-slate-400 mt-1 font-bold">Uploaded by: {e.doctorName}</p>
+                                    <div className="space-y-3 text-xs flex flex-col justify-between">
+                                      <div className="bg-slate-50 border border-slate-200/60 rounded-xl p-3 flex items-center justify-between gap-4">
+                                        <div className="flex items-center gap-2.5">
+                                          <FileText className="w-5 h-5 text-indigo-500 flex-shrink-0" />
+                                          <div className="text-left">
+                                            <span className="text-[10px] text-slate-700 font-extrabold block uppercase tracking-wide">
+                                              {e.subtitle}
+                                            </span>
+                                            <span className="text-[9px] text-slate-400 font-bold block mt-0.5">
+                                              Attendant: {e.doctorName}
+                                            </span>
+                                          </div>
+                                        </div>
                                       </div>
-
-                                      <div className="flex items-center justify-between border-t border-slate-50 pt-3 mt-3 text-[9px] text-slate-400 font-extrabold">
+                                      
+                                      <div className="flex items-center justify-between border-t border-slate-50 pt-2 text-[9px] text-slate-400 font-extrabold">
                                         <span>Uploaded: {new Date(e.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
                                         
                                         <div className="flex items-center gap-3">
@@ -1577,7 +1584,7 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
                                           </button>
                                           <button 
                                             onClick={() => setShowDocPreview(e.details)}
-                                            className="text-[#005EB8] hover:underline"
+                                            className="text-[#005EB8] hover:underline font-black uppercase tracking-wider"
                                           >
                                             Preview
                                           </button>
@@ -2231,53 +2238,90 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
                       localPrefix={localPrefix}
                     />
                   ) : (
-                    <div className="bg-gradient-to-tr from-[#005EB8] via-[#0081d5] to-[#00A3AD] text-white rounded-[32px] p-6 shadow-2xl max-w-sm w-full space-y-6 relative overflow-hidden select-none select-none">
-                      <div className="absolute top-[-30%] right-[-10%] w-36 h-36 bg-white/10 rounded-full blur-2xl pointer-events-none" />
+                    <div className="relative bg-gradient-to-br from-[#0F172A] via-[#1E293B] to-[#0F172A] border border-slate-700/50 rounded-[28px] p-6 text-white shadow-2xl max-w-sm w-full mx-auto overflow-hidden text-left">
+                      <div className="absolute top-[-20%] right-[-10%] w-48 h-48 bg-[#005EB8]/20 rounded-full blur-3xl pointer-events-none" />
+                      <div className="absolute bottom-[-10%] left-[-10%] w-40 h-40 bg-[#00A3AD]/10 rounded-full blur-2xl pointer-events-none" />
                       
-                      <div className="flex items-center justify-between border-b border-white/20 pb-4">
+                      <svg className="absolute right-0 top-1/3 w-32 h-16 text-slate-800/10 fill-none stroke-current stroke-[1.5] pointer-events-none" viewBox="0 0 100 50">
+                        <path d="M0,25 L30,25 L35,10 L40,40 L45,20 L50,30 L55,25 L100,25" />
+                      </svg>
+
+                      <div className="flex items-center justify-between border-b border-slate-800 pb-4 mb-5">
                         <div className="flex items-center gap-2">
                           <Activity className="w-5 h-5 text-white animate-pulse" />
-                          <span className="font-black text-white text-sm uppercase tracking-wider">MedQueue</span>
+                          <div>
+                            <p className="text-[10px] font-black tracking-widest text-[#00A3AD] uppercase leading-none">MedQueue Identity</p>
+                            <p className="text-[9px] text-slate-400 font-bold mt-1 leading-none">{tenant?.name || 'MedQueue Sandbox'}</p>
+                          </div>
                         </div>
-                        <span className="text-[8px] font-black uppercase bg-white/20 px-2 py-0.5 rounded">SaaS Node Identity</span>
+                        <span className="text-[8px] font-extrabold uppercase bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded-md flex items-center gap-1">
+                          <span className="w-1.5 h-1.5 bg-amber-400 rounded-full animate-ping" />
+                          DEMO NODE
+                        </span>
                       </div>
 
-                      <div className="flex justify-between gap-4 items-center pt-2">
-                        <div className="space-y-3.5 text-left">
-                          <div>
-                            <span className="text-[8px] font-bold uppercase tracking-widest text-slate-200">Patient Name</span>
-                            <h4 className="font-extrabold text-sm text-white mt-0.5 truncate max-w-[150px]">{activeProfile.name}</h4>
+                      <div className="flex justify-between items-start gap-4 mb-5">
+                        <div className="space-y-4 flex-1">
+                          <div className="w-8 h-6 rounded-md bg-gradient-to-tr from-yellow-400 via-amber-300 to-yellow-500 border border-yellow-200/50 shadow-inner flex flex-col justify-between p-1 opacity-90">
+                            <div className="h-px bg-amber-700/30 w-full" />
+                            <div className="h-px bg-amber-700/30 w-full" />
+                            <div className="h-px bg-amber-700/30 w-full" />
                           </div>
+
                           <div>
-                            <span className="text-[8px] font-bold uppercase tracking-widest text-slate-200">Patient ID Ticker</span>
-                            <p className="font-mono text-xs text-white font-black mt-0.5">MQ-{activeProfile.name.slice(0, 3).toUpperCase()}-{activeProfile.age}93</p>
+                            <p className="text-[8px] font-black text-[#00A3AD] uppercase tracking-widest leading-none">Patient Name</p>
+                            <h4 className="font-black text-base text-white mt-1.5 truncate max-w-[170px] tracking-tight">{activeProfile.name}</h4>
                           </div>
                         </div>
 
-                        {/* Custom Simulated QR Code */}
-                        <div className="bg-white p-2 rounded-2xl shadow-md shadow-[#005EB8]/20 flex items-center justify-center flex-shrink-0">
-                          <svg viewBox="0 0 100 100" className="w-16 h-16 text-slate-900 fill-current">
-                            {/* Outer frame */}
-                            <path d="M0,0 h100 v100 h-100 z M20,20 v60 h60 v-60 z" />
-                            {/* Dynamic dots patterns */}
-                            <rect x="30" y="30" width="10" height="10" />
-                            <rect x="50" y="30" width="20" height="10" />
-                            <rect x="30" y="50" width="10" height="20" />
-                            <rect x="60" y="60" width="10" height="10" />
-                            <rect x="50" y="50" width="10" height="10" />
+                        <div className="bg-white/95 p-2 rounded-2xl shadow-xl shadow-slate-950/20 flex flex-col items-center justify-center shrink-0 border border-slate-700/30">
+                          <svg viewBox="0 0 100 100" className="w-12 h-12 text-slate-900 fill-current">
+                            <path d="M0,0 h30 v30 h-30 z M10,10 v10 h10 v-10 z" />
+                            <path d="M70,0 h30 v30 h-30 z M80,10 v10 h10 v-10 z" />
+                            <path d="M0,70 h30 v30 h-30 z M10,80 v10 h10 v-10 z" />
+                            <rect x="40" y="10" width="10" height="10" />
+                            <rect x="50" y="20" width="10" height="10" />
+                            <rect x="40" y="40" width="20" height="10" />
+                            <rect x="10" y="40" width="10" height="10" />
+                            <rect x="70" y="40" width="10" height="10" />
+                            <rect x="40" y="70" width="10" height="20" />
+                            <rect x="80" y="80" width="10" height="10" />
                           </svg>
+                          <span className="text-[5px] font-black text-slate-500 uppercase tracking-widest mt-1">SCAN MQID</span>
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-2 gap-4 border-t border-white/20 pt-4 text-xs font-bold text-slate-200">
+                      <div className="mb-5">
+                        <p className="text-[8px] font-black text-[#00A3AD] uppercase tracking-widest mb-1.5 leading-none">Universal Medical Registry Key</p>
+                        <div className="w-full flex items-center justify-between gap-3 bg-slate-950/40 border border-slate-800 rounded-xl px-4 py-2.5">
+                          <span className="text-base font-mono font-black tracking-wider text-slate-100">
+                            MQ-{activeProfile.name.slice(0, 3).toUpperCase()}-{activeProfile.age}93
+                          </span>
+                          <span className="text-[9px] font-black uppercase text-indigo-400">DEMO ID</span>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-3 gap-3 border-t border-slate-800 pt-4 text-left">
                         <div>
-                          <span className="text-[8px] font-bold uppercase tracking-widest text-slate-350 block mb-0.5">Blood Group</span>
-                          <span className="text-white">{activeProfile.bloodGroup}</span>
+                          <span className="text-[7.5px] font-black text-slate-450 uppercase tracking-widest block mb-0.5">Blood Group</span>
+                          <span className="font-extrabold text-[12px] text-red-400">{activeProfile.bloodGroup || 'O+'}</span>
                         </div>
                         <div>
-                          <span className="text-[8px] font-bold uppercase tracking-widest text-slate-350 block mb-0.5">Allergen Class</span>
-                          <span className="text-rose-300 font-extrabold truncate block max-w-[100px]">{activeProfile.allergies}</span>
+                          <span className="text-[7.5px] font-black text-slate-450 uppercase tracking-widest block mb-0.5">Birth Date</span>
+                          <span className="font-extrabold text-[11px] text-slate-200">{activeProfile.age ? `${activeProfile.age} Yrs` : '01-Jan-1996'}</span>
                         </div>
+                        <div>
+                          <span className="text-[7.5px] font-black text-slate-450 uppercase tracking-widest block mb-0.5">Local ID</span>
+                          <span className="font-mono font-extrabold text-[11px] text-[#00A3AD] truncate block max-w-[90px]">{localPrefix || 'MQ'}-DEMO</span>
+                        </div>
+                      </div>
+
+                      <div className="mt-5 pt-3.5 border-t border-slate-800 flex items-center justify-between text-[8px] font-black uppercase text-slate-500 tracking-wider">
+                        <span className="flex items-center gap-1">
+                          <Shield className="w-3 h-3 text-indigo-500" />
+                          Unverified Demo Profile
+                        </span>
+                        <span>ID: DEMO-SECURE</span>
                       </div>
                     </div>
                   )}
