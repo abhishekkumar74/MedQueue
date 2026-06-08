@@ -955,6 +955,18 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
           {/* ── RIGHT MAIN WORKSPACE WINDOW ── */}
           <div className="lg:col-span-9 space-y-6">
 
+            {/* Mobile-only MQID Card Banner */}
+            {step === 'authenticated' && patient && (
+              <div className="block lg:hidden animate-fadeIn mb-4">
+                <MQIDCard
+                  patient={patient}
+                  hospitalName={tenant?.name || hospitalName}
+                  localPatientNo={hospitalProfile?.local_patient_no || hospitalProfile?.localPatientNo}
+                  localPrefix={localPrefix}
+                />
+              </div>
+            )}
+
             {/* Success and Errors alerts */}
             {bookingError && (
               <div className="flex items-center gap-2.5 bg-red-50 border border-red-200 text-red-600 rounded-2xl px-4 py-3 text-xs font-bold animate-fade-in">
@@ -1109,7 +1121,29 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
                   </div>
                 )}
 
-
+                {/* 1.3 QUICK DIRECTORIES ACCESS FOR MOBILE */}
+                <div className="grid grid-cols-2 gap-4 lg:hidden mt-6">
+                  <button
+                    onClick={() => setActiveTab('doctors')}
+                    className="flex flex-col items-center justify-center p-4 bg-white border border-slate-100 rounded-3xl text-center space-y-2 hover:border-slate-350 transition-all shadow-sm"
+                  >
+                    <div className="w-10 h-10 bg-indigo-50 border border-indigo-100 rounded-2xl flex items-center justify-center text-indigo-600">
+                      <Stethoscope className="w-5 h-5" />
+                    </div>
+                    <span className="text-xs font-black text-slate-800 uppercase tracking-wider block">Find Doctors</span>
+                    <span className="text-[10px] text-slate-400 font-semibold block">View live room rosters</span>
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('guide')}
+                    className="flex flex-col items-center justify-center p-4 bg-white border border-slate-100 rounded-3xl text-center space-y-2 hover:border-slate-350 transition-all shadow-sm"
+                  >
+                    <div className="w-10 h-10 bg-emerald-50 border border-emerald-100 rounded-2xl flex items-center justify-center text-emerald-600">
+                      <Building2 className="w-5 h-5" />
+                    </div>
+                    <span className="text-xs font-black text-slate-800 uppercase tracking-wider block">OPD Directions</span>
+                    <span className="text-[10px] text-slate-400 font-semibold block">Locate rooms & floors</span>
+                  </button>
+                </div>
 
               </div>
             )}
@@ -2327,9 +2361,9 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
       <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-xl border-t border-slate-150 p-2 shadow-[0_-8px_30px_rgba(0,0,0,0.06)] flex items-center justify-around select-none">
         {[
           { id: 'workspace', label: 'Booking', icon: Ticket },
+          { id: 'wallet', label: 'MQID Card', icon: Award },
           { id: 'timeline', label: 'Records', icon: Clock },
           { id: 'vault', label: 'Vault', icon: FileText, badge: vaultDocs.length },
-          { id: 'doctors', label: 'Doctors', icon: Stethoscope },
           { id: 'family', label: 'Members', icon: User },
         ].map(tab => {
           const Icon = tab.icon;
