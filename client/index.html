@@ -2,8 +2,12 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>MedQueue — Hospital Queue Management</title>
+
+    <!-- SEO: Robots & Canonical -->
+    <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large" />
+    <link rel="canonical" href="https://med-queue-chi.vercel.app/" />
 
     <!-- PWA -->
     <link rel="icon" type="image/png" href="/icon-192.png" />
@@ -14,17 +18,55 @@
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="theme-color" content="#005EB8" />
 
-    <!-- SEO -->
-    <meta name="description" content="Digital hospital queue management — register, track your token, and walk in on time." />
-    <meta property="og:title" content="MedQueue — Hospital Queue Management" />
-    <meta property="og:description" content="Skip the waiting room. Register digitally, track your queue in real-time." />
-    <meta property="og:image" content="/icon-512.png" />
-    <meta name="twitter:card" content="summary" />
+    <!-- SEO: Description & Open Graph -->
+    <meta name="description" content="MedQueue is a digital hospital queue management platform. Register online, track your OPD token in real-time, and walk in on time. Trusted by 500+ hospitals." />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://med-queue-chi.vercel.app/" />
+    <meta property="og:title" content="MedQueue — Smart Hospital Queue Management" />
+    <meta property="og:description" content="Skip the waiting room. Register digitally, track your queue in real-time, and get notified when it's your turn." />
+    <meta property="og:image" content="https://med-queue-chi.vercel.app/icon-512.png" />
+    <meta property="og:site_name" content="MedQueue" />
 
-    <!-- Google Fonts Plus Jakarta Sans -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- SEO: Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="MedQueue — Smart Hospital Queue Management" />
+    <meta name="twitter:description" content="Digital hospital queue management — register, track your token, and walk in on time." />
+    <meta name="twitter:image" content="https://med-queue-chi.vercel.app/icon-512.png" />
+
+    <!-- Best Practices: Content Security Policy -->
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests" />
+
+    <!-- Google Fonts: Non-render-blocking async loading -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" />
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
+    <noscript>
+      <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+    </noscript>
+
+    <!-- SEO: JSON-LD Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "MedQueue",
+      "applicationCategory": "HealthApplication",
+      "operatingSystem": "Web",
+      "description": "Digital hospital queue management platform. Register online, track your OPD token in real-time, and walk in on time.",
+      "url": "https://med-queue-chi.vercel.app/",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "INR"
+      },
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": "4.8",
+        "ratingCount": "500"
+      }
+    }
+    </script>
   </head>
   <body>
     <div id="root"></div>

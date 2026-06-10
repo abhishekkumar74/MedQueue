@@ -70,10 +70,45 @@ export default defineConfig({
               networkTimeoutSeconds: 10,
             },
           },
+          {
+            urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'google-fonts-stylesheets',
+              expiration: { maxEntries: 10, maxAgeSeconds: 60 * 60 * 24 * 365 },
+            },
+          },
+          {
+            urlPattern: /^https:\/\/fonts\.gstatic\.com\/.*/i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'google-fonts-webfonts',
+              expiration: { maxEntries: 30, maxAgeSeconds: 60 * 60 * 24 * 365 },
+            },
+          },
         ],
       },
       devOptions: { enabled: true, type: 'module' },
     }),
   ],
   optimizeDeps: { exclude: ['lucide-react'] },
+
+  // ── Performance: Strip console/debugger from production builds ──
+  esbuild: {
+    drop: ['console', 'debugger'],
+  },
+
+  // ── Performance: Code splitting via manual chunks ──
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vendor-react': ['react', 'react-dom'],
+          'vendor-supabase': ['@supabase/supabase-js'],
+          'vendor-icons': ['lucide-react'],
+          'vendor-crypto': ['bcryptjs'],
+        },
+      },
+    },
+  },
 });

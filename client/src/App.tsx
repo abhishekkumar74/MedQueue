@@ -1,18 +1,39 @@
-import { useState, useEffect } from 'react';
-import { LandingPage } from './features/landing';
-import { HospitalLandingPage } from './features/hospitals';
-import { PatientLoginPage, StaffLoginPage, SuperAdminLoginPage } from './features/auth';
-import { StaffDashboard, SuperAdminDashboard } from './features/admin';
-import { DisplayBoard, LiveTokenTracker } from './features/queue';
-import { AppointmentBooking } from './features/appointments';
-import { PharmacyDashboard } from './features/pharmacy';
-import { PatientHistory, PatientWorkspace } from './features/patient';
+import { useState, useEffect, lazy, Suspense } from 'react';
+
+// ── Lazy-loaded feature pages (code-splitting for Lighthouse Performance) ──
+const LandingPage = lazy(() => import('./features/landing/pages/LandingPage'));
+const HospitalLandingPage = lazy(() => import('./features/hospitals/pages/HospitalLandingPage'));
+const PatientLoginPage = lazy(() => import('./features/auth/pages/PatientLoginPage'));
+const StaffLoginPage = lazy(() => import('./features/auth/pages/StaffLoginPage'));
+const SuperAdminLoginPage = lazy(() => import('./features/auth/pages/SuperAdminLoginPage'));
+const StaffDashboard = lazy(() => import('./features/admin/pages/StaffDashboard'));
+const SuperAdminDashboard = lazy(() => import('./features/admin/pages/SuperAdminDashboard'));
+const DisplayBoard = lazy(() => import('./features/queue/display/pages/DisplayBoard'));
+const LiveTokenTracker = lazy(() => import('./features/queue/tracker/pages/LiveTokenTracker'));
+const AppointmentBooking = lazy(() => import('./features/appointments/pages/AppointmentBooking'));
+const PharmacyDashboard = lazy(() => import('./features/pharmacy/pages/PharmacyDashboard'));
+const PatientHistory = lazy(() => import('./features/patient/pages/PatientHistory'));
+const PatientWorkspace = lazy(() => import('./features/patient/pages/PatientWorkspace'));
+
+// ── Eagerly loaded (critical path, lightweight) ──
 import { OfflineIndicator } from './components';
 import { SetupBanner, UniversalHeader } from './layouts';
 import { supabase, isMissingConfig } from './lib/supabase';
 import { AuthUser, getCachedUser, fetchMe, logout, getAccessToken } from './lib/auth';
 import { LogOut, Clock, FileText, Home, AlertTriangle, ShieldAlert, Mail, Phone } from 'lucide-react';
 import { getTenantSlug, resolveTenantConfig, TenantConfig, getHomeRoute } from './lib/tenant';
+
+// ── Suspense fallback for lazy-loaded pages ──
+function PageLoader() {
+  return (
+    <div className="min-h-screen bg-[#F4F8FB] flex items-center justify-center" role="status" aria-label="Loading page">
+      <div className="text-center animate-fade-in">
+        <div className="w-10 h-10 border-3 border-[#005EB8] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+        <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Loading...</p>
+      </div>
+    </div>
+  );
+}
 
 type Page = 'landing' | 'patient-login' | 'staff-login' | 'register' | 'staff'
   | 'display' | 'tracker' | 'appointment' | 'pharmacy' | 'history' | 'super-admin' | 'super-admin-login' | 'hospital-landing';
@@ -480,85 +501,44 @@ export default function App() {
 
   // ── Landing ───────────────────────────────────────────
   if (page === 'landing') {
-    return <LandingPage
-      onGetStarted={() => setPage('patient-login')}
-      onStaffLogin={() => setPage('staff-login')}
-    />;
+    return (
+      <Suspense fallback={<PageLoader />}>
+        <LandingPage
+          onGetStarted={() => setPage('patient-login')}
+          onStaffLogin={() => setPage('staff-login')}
+        />
+      </Suspense>
+    );
   }
 
   // ── Patient login ─────────────────────────────────────
   if (page === 'patient-login' && !user) {
-    return <PatientLoginPage
-      onLogin={handlePatientLogin}
-      onLogoClick={() => {
-        const slug = getTenantSlug();
-        navigate(slug ? 'hospital-landing' : 'landing');
-      }}
-      onBack={() => {
-        const slug = getTenantSlug();
-        if (window.history.length > 1) {
-          window.history.back();
-        } else {
-          navigate(slug ? 'hospital-landing' : 'landing');
-        }
-      }}
-    />;
+    return (
+      <Suspense fallback={<PageLoader />}>
+        <PatientLoginPage
+          onLogin={handlePatientLogin}
+          onLogoClick={() => {
+            const slug = getTenantSlug();
+            navigate(slug ? 'hospital-landing' : 'landing');
+          }}
+          onBack={() => {
+            const slug = getTenantSlug();
+            if (window.history.length > 1) {
+              window.history.back();
+            } else {
+              navigate(slug ? 'hospital-landing' : 'landing');
+            }
+          }}
+        />
+      </Suspense>
+    );
   }
 
   // ── Staff login ───────────────────────────────────────
   if (page === 'staff-login' && !user) {
-    return <StaffLoginPage
-      onLogin={(u) => { 
-        setUser(u); 
-        const slug = getTenantSlug();
-        const homePage = getHomeRoute(u, slug);
-        setPage(homePage as Page);
-      }}
-      onLogoClick={() => {
-        const slug = getTenantSlug();
-        navigate(slug ? 'hospital-landing' : 'landing');
-      }}
-      onBack={() => {
-        const slug = getTenantSlug();
-        if (window.history.length > 1) {
-          window.history.back();
-        } else {
-          navigate(slug ? 'hospital-landing' : 'landing');
-        }
-      }}
-    />;
-  }
-
-  // ── Super Admin Login (Secret Secure Portal) ───────────
-  if (page === 'super-admin-login' && !user) {
-    return <SuperAdminLoginPage
-      onLogin={(u) => {
-        sessionStorage.removeItem('mq_superadmin_portal_active');
-        setUser(u);
-        setPage('super-admin');
-      }}
-      onBack={() => {
-        sessionStorage.removeItem('mq_superadmin_portal_active');
-        setPage('landing');
-      }}
-    />;
-  }
-
-  // ── Hospital Workspace Landing ─────────────────────────
-  if (page === 'hospital-landing' && tenant) {
     return (
-      <div className="min-h-screen bg-[#F4F8FB]">
-        <UniversalHeader page={page} navigate={navigate} currentUser={user} handleLogout={handleLogout} />
-        <HospitalLandingPage tenant={tenant} navigate={navigate} />
-      </div>
-    );
-  }
-
-  // ── Not logged in → landing ───────────────────────────
-  if (!user) {
-    if (tenant) {
-      if (page === 'staff-login') {
-        return <StaffLoginPage
+      <Suspense fallback={<PageLoader />}>
+        <StaffLoginPage
           onLogin={(u) => { 
             setUser(u); 
             const slug = getTenantSlug();
@@ -577,28 +557,99 @@ export default function App() {
               navigate(slug ? 'hospital-landing' : 'landing');
             }
           }}
-        />;
+        />
+      </Suspense>
+    );
+  }
+
+  // ── Super Admin Login (Secret Secure Portal) ───────────
+  if (page === 'super-admin-login' && !user) {
+    return (
+      <Suspense fallback={<PageLoader />}>
+        <SuperAdminLoginPage
+          onLogin={(u) => {
+            sessionStorage.removeItem('mq_superadmin_portal_active');
+            setUser(u);
+            setPage('super-admin');
+          }}
+          onBack={() => {
+            sessionStorage.removeItem('mq_superadmin_portal_active');
+            setPage('landing');
+          }}
+        />
+      </Suspense>
+    );
+  }
+
+  // ── Hospital Workspace Landing ─────────────────────────
+  if (page === 'hospital-landing' && tenant) {
+    return (
+      <div className="min-h-screen bg-[#F4F8FB]">
+        <UniversalHeader page={page} navigate={navigate} currentUser={user} handleLogout={handleLogout} />
+        <Suspense fallback={<PageLoader />}>
+          <HospitalLandingPage tenant={tenant} navigate={navigate} />
+        </Suspense>
+      </div>
+    );
+  }
+
+  // ── Not logged in → landing ───────────────────────────
+  if (!user) {
+    if (tenant) {
+      if (page === 'staff-login') {
+        return (
+          <Suspense fallback={<PageLoader />}>
+            <StaffLoginPage
+              onLogin={(u) => { 
+                setUser(u); 
+                const slug = getTenantSlug();
+                const homePage = getHomeRoute(u, slug);
+                setPage(homePage as Page);
+              }}
+              onLogoClick={() => {
+                const slug = getTenantSlug();
+                navigate(slug ? 'hospital-landing' : 'landing');
+              }}
+              onBack={() => {
+                const slug = getTenantSlug();
+                if (window.history.length > 1) {
+                  window.history.back();
+                } else {
+                  navigate(slug ? 'hospital-landing' : 'landing');
+                }
+              }}
+            />
+          </Suspense>
+        );
       }
-      return <PatientLoginPage
-        onLogin={handlePatientLogin}
-        onLogoClick={() => {
-          const slug = getTenantSlug();
-          navigate(slug ? 'hospital-landing' : 'landing');
-        }}
-        onBack={() => {
-          const slug = getTenantSlug();
-          if (window.history.length > 1) {
-            window.history.back();
-          } else {
-            navigate(slug ? 'hospital-landing' : 'landing');
-          }
-        }}
-      />;
+      return (
+        <Suspense fallback={<PageLoader />}>
+          <PatientLoginPage
+            onLogin={handlePatientLogin}
+            onLogoClick={() => {
+              const slug = getTenantSlug();
+              navigate(slug ? 'hospital-landing' : 'landing');
+            }}
+            onBack={() => {
+              const slug = getTenantSlug();
+              if (window.history.length > 1) {
+                window.history.back();
+              } else {
+                navigate(slug ? 'hospital-landing' : 'landing');
+              }
+            }}
+          />
+        </Suspense>
+      );
     }
-    return <LandingPage
-      onGetStarted={() => setPage('patient-login')}
-      onStaffLogin={() => setPage('staff-login')}
-    />;
+    return (
+      <Suspense fallback={<PageLoader />}>
+        <LandingPage
+          onGetStarted={() => setPage('patient-login')}
+          onStaffLogin={() => setPage('staff-login')}
+        />
+      </Suspense>
+    );
   }
 
   // ── Subscription Blockade Interceptor ────────────────
@@ -671,15 +722,18 @@ export default function App() {
   // ── Display board ─────────────────────────────────────
   if (page === 'display') {
     return (
-      <div>
-        <div className="fixed top-0 left-0 right-0 z-50 flex justify-end p-2">
-          <button onClick={() => navigate('staff')}
-            className="bg-white/20 hover:bg-white/30 text-white text-xs px-3 py-1.5 rounded-lg backdrop-blur-sm transition-colors border border-white/30">
-            Exit Display
-          </button>
+      <Suspense fallback={<PageLoader />}>
+        <div>
+          <div className="fixed top-0 left-0 right-0 z-50 flex justify-end p-2">
+            <button onClick={() => navigate('staff')}
+              aria-label="Exit display board and return to staff dashboard"
+              className="bg-white/20 hover:bg-white/30 text-white text-xs px-3 py-1.5 rounded-lg backdrop-blur-sm transition-colors border border-white/30">
+              Exit Display
+            </button>
+          </div>
+          <DisplayBoard />
         </div>
-        <DisplayBoard />
-      </div>
+      </Suspense>
     );
   }
 
@@ -712,8 +766,10 @@ export default function App() {
     return (
       <div className="min-h-screen bg-[#F4F8FB]">
         <UniversalHeader page={page} navigate={navigate} currentUser={user} handleLogout={handleLogout} />
-        <main key={page} className="animate-fade-in">
-          <PharmacyDashboard currentUser={user} />
+        <main id="main-content" role="main" key={page} className="animate-fade-in">
+          <Suspense fallback={<PageLoader />}>
+            <PharmacyDashboard currentUser={user} />
+          </Suspense>
         </main>
       </div>
     );
@@ -722,11 +778,18 @@ export default function App() {
   // ── Main layout ───────────────────────────────────────
   return (
     <div className="min-h-screen bg-[#E8F3FF] overflow-x-hidden w-full relative">
+      {/* Accessibility: Skip to main content link */}
+      <a href="#main-content" className="sr-only">Skip to main content</a>
+
       <UniversalHeader page={page} navigate={navigate} currentUser={user} handleLogout={handleLogout} />
 
       {/* Mobile bottom nav for patients */}
       {user.type === 'patient' && page !== 'register' && (
-        <div className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-slate-100 z-40 md:hidden shadow-[0_-4px_16px_rgba(0,0,0,0.03)] pb-[env(safe-area-inset-bottom,0px)]">
+        <nav
+          role="navigation"
+          aria-label="Patient mobile navigation"
+          className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-slate-100 z-40 md:hidden shadow-[0_-4px_16px_rgba(0,0,0,0.03)] pb-[env(safe-area-inset-bottom,0px)]"
+        >
           <div className="grid grid-cols-3 h-16">
             {[
               { id: 'register', label: 'Workspace', icon: <Home className="w-5.5 h-5.5" /> },
@@ -734,6 +797,8 @@ export default function App() {
               { id: 'history', label: 'Health Vault', icon: <FileText className="w-5.5 h-5.5" /> },
             ].map(link => (
               <button key={link.id} onClick={() => navigate(link.id)}
+                aria-label={`Navigate to ${link.label}`}
+                aria-current={page === link.id ? 'page' : undefined}
                 className={`flex flex-col items-center justify-center gap-1.5 transition-all duration-300 ${
                   page === link.id ? 'text-[#005EB8] scale-105 font-extrabold' : 'text-gray-400 font-semibold'
                 }`}>
@@ -742,14 +807,14 @@ export default function App() {
               </button>
             ))}
           </div>
-        </div>
+        </nav>
       )}
 
       {showUserMenu && <div className="fixed inset-0 z-40" onClick={() => setShowUserMenu(false)} />}
 
       {/* Super Admin context banner */}
       {user && user.role === 'SUPER_ADMIN' && page === 'staff' && (
-        <div className="bg-amber-50 text-white text-xs font-bold px-4 py-2 text-center flex items-center justify-center gap-2 shadow-inner">
+        <div className="bg-amber-50 text-white text-xs font-bold px-4 py-2 text-center flex items-center justify-center gap-2 shadow-inner" role="status">
           <span>🕵️‍♂️ Super Admin Mode: Currently managing </span>
           <span className="underline decoration-2 font-black">
             {localStorage.getItem('mq_selected_hospital_id') === 'd290f1ee-6c54-4b01-90e6-d701748f0851' ? 'Apollo Clinic' :
@@ -759,6 +824,7 @@ export default function App() {
           </span>
           <button 
             onClick={() => navigate('super-admin')}
+            aria-label="Return to Super Admin central controller"
             className="ml-4 bg-white/20 hover:bg-white/30 text-white rounded-md px-2 py-0.5 border border-white/20 transition-all font-extrabold"
           >
             Back to Central Controller ➜
@@ -766,18 +832,20 @@ export default function App() {
         </div>
       )}
 
-      <main key={page} className={`animate-fade-in ${user.type === 'patient' ? 'pb-[calc(4rem+env(safe-area-inset-bottom,0px))] md:pb-0' : ''}`}>
-        {page === 'register' && <PatientWorkspace currentUser={user} navigate={navigate} tenant={tenant} initialTab={pageState.tab} />}
-        {page === 'staff' && <StaffDashboard onNavigate={navigate} currentUser={user} />}
-        {page === 'super-admin' && <SuperAdminDashboard currentUser={user} onNavigate={navigate} />}
-        {page === 'tracker' && (
-          <LiveTokenTracker
-            tokenNumber={pageState.tokenNumber}
-            phone={pageState.phone ?? (user.type === 'patient' ? user.phone : undefined)}
-          />
-        )}
-        {page === 'appointment' && <AppointmentBooking onNavigate={navigate} currentUser={user} />}
-        {page === 'history' && user.type === 'patient' && <PatientHistory currentUser={user} />}
+      <main id="main-content" role="main" key={page} className={`animate-fade-in ${user.type === 'patient' ? 'pb-[calc(4rem+env(safe-area-inset-bottom,0px))] md:pb-0' : ''}`}>
+        <Suspense fallback={<PageLoader />}>
+          {page === 'register' && <PatientWorkspace currentUser={user} navigate={navigate} tenant={tenant} initialTab={pageState.tab} />}
+          {page === 'staff' && <StaffDashboard onNavigate={navigate} currentUser={user} />}
+          {page === 'super-admin' && <SuperAdminDashboard currentUser={user} onNavigate={navigate} />}
+          {page === 'tracker' && (
+            <LiveTokenTracker
+              tokenNumber={pageState.tokenNumber}
+              phone={pageState.phone ?? (user.type === 'patient' ? user.phone : undefined)}
+            />
+          )}
+          {page === 'appointment' && <AppointmentBooking onNavigate={navigate} currentUser={user} />}
+          {page === 'history' && user.type === 'patient' && <PatientHistory currentUser={user} />}
+        </Suspense>
       </main>
       <OfflineIndicator />
     </div>
