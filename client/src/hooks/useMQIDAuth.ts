@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
+import { getCachedUser } from '../lib/auth'
 import {
   lookupPatientByPhone,
   registerNewPatient,
@@ -42,9 +43,37 @@ export function useMQIDAuth(hospitalId: string, hospitalName: string, localPrefi
   useEffect(() => {
     const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession()
-      if (!session) return
+      let patient: MQPatient | null = null
 
-      const patient = await getCurrentPatient()
+      if (session) {
+        patient = await getCurrentPatient()
+      } else {
+        const cached = getCachedUser()
+        if (cached && cached.type === 'patient' && cached.phone) {
+          patient = await lookupPatientByPhone(cached.phone)
+          if (!patient) {
+            try {
+              // Auto-register global patient record if not exists yet
+              const form: PatientRegistrationForm = {
+                fullName: cached.name || 'Patient',
+                phone: cached.phone,
+                dob: '',
+                gender: null,
+                bloodGroup: null,
+                address: cached.address || '',
+                city: '',
+                emergencyContact: '',
+                allergies: [],
+              }
+              const { patient: registered } = await registerNewPatient(form, cached.id)
+              patient = registered
+            } catch (e) {
+              console.warn('Failed to auto-register patient globally:', e)
+            }
+          }
+        }
+      }
+
       if (patient) {
         // Ensure hospital profile exists
         try {

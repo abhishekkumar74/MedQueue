@@ -97,12 +97,12 @@ export default function UniversalHeader({ page, navigate, currentUser, handleLog
         // Only fetch emergency mode setting — other metrics removed from header UI
         const settingsRes = await supabase
           .from('system_settings')
-          .select('emergency_mode')
-          .eq('hospital_id', resolvedHospitalId)
+          .select('*')
+          .eq('key', 'emergency_mode')
           .maybeSingle();
 
         if (settingsRes.data) {
-          setEmergencyActive(settingsRes.data.emergency_mode === true);
+          setEmergencyActive(settingsRes.data.value === true || settingsRes.data.value === 'true');
         }
       } catch (err) {
         console.warn('Operational metrics sync failed:', err);
@@ -112,7 +112,7 @@ export default function UniversalHeader({ page, navigate, currentUser, handleLog
     fetchLiveMetrics();
     const interval = setInterval(fetchLiveMetrics, 12000);
     return () => clearInterval(interval);
-  }, [resolvedHospitalId]);
+  }, []);
 
   // Real-time PostgreSQL trigger listener for settings (Emergency Mode sync)
   useEffect(() => {
@@ -124,11 +124,11 @@ export default function UniversalHeader({ page, navigate, currentUser, handleLog
           event: '*',
           schema: 'public',
           table: 'system_settings',
-          filter: `hospital_id=eq.${resolvedHospitalId}`
+          filter: 'key=eq.emergency_mode'
         },
         (payload) => {
-          if (payload.new && 'emergency_mode' in payload.new) {
-            setEmergencyActive(payload.new.emergency_mode === true);
+          if (payload.new && payload.new.key === 'emergency_mode') {
+            setEmergencyActive(payload.new.value === true || payload.new.value === 'true');
           }
         }
       )
@@ -137,7 +137,7 @@ export default function UniversalHeader({ page, navigate, currentUser, handleLog
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [resolvedHospitalId]);
+  }, []);
 
   // Display user role nicely
   const getRoleLabel = () => {

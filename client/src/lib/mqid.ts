@@ -112,7 +112,7 @@ export async function registerNewPatient(
   const { data, error } = await supabase
     .from('mq_patients')
     .insert({
-      auth_user_id: authUserId,
+      auth_user_id: (authUserId && authUserId.length === 36) ? authUserId : null,
       full_name:    form.fullName,
       phone:        form.phone,
       dob:          form.dob || null,
@@ -138,7 +138,7 @@ export async function linkAuthToPatient(
   const { data, error } = await supabase
     .from('mq_patients')
     .update({
-      auth_user_id: authUserId,
+      auth_user_id: (authUserId && authUserId.length === 36) ? authUserId : null,
       last_login_at: new Date().toISOString(),
     })
     .eq('phone', phone)
