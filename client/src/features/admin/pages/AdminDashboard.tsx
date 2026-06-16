@@ -281,7 +281,7 @@ export default function AdminDashboard({ currentUser }: Props) {
         if (emergency) setEmergencyMode(emergency.value === true || emergency.value === 'true');
         if (gateway) setOtpGatewayOnline(gateway.value === 'ONLINE' || gateway.value === '"ONLINE"');
 
-        const social = settingsRes.data.find(s => s.key === `social_handles_${hospitalId}`);
+        const social = settingsRes.data.find(s => s.key === `social_${hospitalId}`);
         if (social?.value) {
           setSocialForm(prev => ({
             ...prev,
@@ -598,7 +598,7 @@ export default function AdminDashboard({ currentUser }: Props) {
       const { error } = await supabase
         .from('system_settings')
         .upsert({
-          key: `social_handles_${hospitalId}`,
+          key: `social_${hospitalId}`,
           value: socialForm
         }, { onConflict: 'key' });
 

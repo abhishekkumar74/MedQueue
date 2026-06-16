@@ -55,7 +55,7 @@ export default function HospitalLandingPage({ tenant, navigate }: Props) {
         const { data, error } = await supabase
           .from('system_settings')
           .select('value')
-          .eq('key', `social_handles_${tenant.id}`)
+          .eq('key', `social_${tenant.id}`)
           .maybeSingle();
 
         if (data?.value) {
