@@ -174,6 +174,15 @@ export default function HospitalLandingPage({ tenant, navigate }: Props) {
     return () => clearInterval(interval);
   }, [tenant?.id]);
 
+  const formatUrl = (url: string) => {
+    if (!url) return '';
+    const trimmed = url.trim();
+    if (/^https?:\/\//i.test(trimmed)) {
+      return trimmed;
+    }
+    return `https://${trimmed}`;
+  };
+
   const getInitials = (name: string) => {
     const cleanName = name.replace(/^(dr\.|dr)\s+/i, '').trim();
     const parts = cleanName.split(/\s+/);
@@ -767,27 +776,27 @@ export default function HospitalLandingPage({ tenant, navigate }: Props) {
               <span className="uppercase tracking-widest text-[10px] text-slate-400 block md:inline">Follow Us</span>
               <div className="flex items-center gap-4">
                 {socialLinks.instagram && (
-                  <a href={socialLinks.instagram} target="_blank" rel="noopener noreferrer" className="hover:text-slate-800 text-slate-500 transition-colors">
+                  <a href={formatUrl(socialLinks.instagram)} target="_blank" rel="noopener noreferrer" className="hover:text-slate-800 text-slate-500 transition-colors">
                     <Instagram className="w-4.5 h-4.5" />
                   </a>
                 )}
                 {socialLinks.facebook && (
-                  <a href={socialLinks.facebook} target="_blank" rel="noopener noreferrer" className="hover:text-slate-800 text-slate-500 transition-colors">
+                  <a href={formatUrl(socialLinks.facebook)} target="_blank" rel="noopener noreferrer" className="hover:text-slate-800 text-slate-500 transition-colors">
                     <Facebook className="w-4.5 h-4.5" />
                   </a>
                 )}
                 {socialLinks.twitter && (
-                  <a href={socialLinks.twitter} target="_blank" rel="noopener noreferrer" className="hover:text-slate-800 text-slate-500 transition-colors">
+                  <a href={formatUrl(socialLinks.twitter)} target="_blank" rel="noopener noreferrer" className="hover:text-slate-800 text-slate-500 transition-colors">
                     <Twitter className="w-4.5 h-4.5" />
                   </a>
                 )}
                 {socialLinks.linkedin && (
-                  <a href={socialLinks.linkedin} target="_blank" rel="noopener noreferrer" className="hover:text-slate-800 text-slate-500 transition-colors">
+                  <a href={formatUrl(socialLinks.linkedin)} target="_blank" rel="noopener noreferrer" className="hover:text-slate-800 text-slate-500 transition-colors">
                     <Linkedin className="w-4.5 h-4.5" />
                   </a>
                 )}
                 {socialLinks.youtube && (
-                  <a href={socialLinks.youtube} target="_blank" rel="noopener noreferrer" className="hover:text-slate-800 text-slate-500 transition-colors">
+                  <a href={formatUrl(socialLinks.youtube)} target="_blank" rel="noopener noreferrer" className="hover:text-slate-800 text-slate-500 transition-colors">
                     <Youtube className="w-4.5 h-4.5" />
                   </a>
                 )}
