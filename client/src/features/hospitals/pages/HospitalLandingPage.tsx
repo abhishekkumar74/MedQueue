@@ -113,6 +113,13 @@ export default function HospitalLandingPage({ tenant, navigate }: Props) {
       description: 'Serving Delhi with state-of-the-art diagnostic imaging, round-the-clock cardiac care, and intelligent queuing technologies.',
       heroImage: 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&q=80&w=600'
     },
+    max: {
+      timings: '08:00 AM - 10:00 PM Daily',
+      emergencyPhone: '+91 99999 99992',
+      departments: ['General Medicine', 'Orthopedics', 'Neurology', 'Pediatrics', 'ENT'],
+      description: 'Noida flagship super-specialty health hub incorporating modern surgery facilities, custom diagnostics, and digital patient services.',
+      heroImage: 'https://images.unsplash.com/photo-1505751172876-fa1923c5c528?auto=format&fit=crop&q=80&w=600'
+    },
     citycare: {
       timings: '24/7 Operational trauma center',
       emergencyPhone: '+91 99999 99993',
@@ -743,53 +750,56 @@ export default function HospitalLandingPage({ tenant, navigate }: Props) {
             </div>
           </div>
         </div>
+      </section>
 
-        {/* Divider line */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 mt-16">
-          <div className="w-full h-[1px] bg-slate-100" />
-        </div>
-
-        {/* Bottom copyright & socials bar */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 mt-8 flex flex-col sm:flex-row justify-between items-center gap-4 text-xs font-bold text-slate-400">
-          <div className="flex flex-wrap items-center gap-2">
-            <span>{tenant?.phone ? `info@${tenantSlug}.com` : 'info@modernhealthclinic.ca'}</span>
-            <span className="text-slate-200 font-normal">•</span>
-            <span className="uppercase tracking-widest text-[10px]">Follow Us</span>
-
-            <div className="flex items-center gap-3.5 ml-2">
-              {socialLinks.instagram && (
-                <a href={socialLinks.instagram} target="_blank" rel="noopener noreferrer" className="hover:text-slate-600 transition-colors">
-                  <Instagram className="w-4 h-4" />
-                </a>
-              )}
-              {socialLinks.facebook && (
-                <a href={socialLinks.facebook} target="_blank" rel="noopener noreferrer" className="hover:text-slate-600 transition-colors">
-                  <Facebook className="w-4 h-4" />
-                </a>
-              )}
-              {socialLinks.twitter && (
-                <a href={socialLinks.twitter} target="_blank" rel="noopener noreferrer" className="hover:text-slate-600 transition-colors">
-                  <Twitter className="w-4 h-4" />
-                </a>
-              )}
-              {socialLinks.linkedin && (
-                <a href={socialLinks.linkedin} target="_blank" rel="noopener noreferrer" className="hover:text-slate-600 transition-colors">
-                  <Linkedin className="w-4 h-4" />
-                </a>
-              )}
-              {socialLinks.youtube && (
-                <a href={socialLinks.youtube} target="_blank" rel="noopener noreferrer" className="hover:text-slate-600 transition-colors">
-                  <Youtube className="w-4 h-4" />
-                </a>
-              )}
+      {/* Bottom copyright & socials bar */}
+      <div className="bg-[#F8FAFC] border-t border-slate-150 py-8 relative z-10 w-full text-left">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 text-xs font-bold text-slate-500">
+          <div className="flex flex-col md:flex-row md:items-center gap-4 w-full md:w-auto">
+            {/* Email Address */}
+            <span className="text-slate-600 block">{tenant?.phone ? `info@${tenantSlug}.com` : 'info@modernhealthclinic.ca'}</span>
+            
+            {/* Divider (Hidden on mobile) */}
+            <span className="hidden md:inline text-slate-300 font-normal">•</span>
+            
+            {/* Follow Us and Social Icons */}
+            <div className="flex flex-col md:flex-row md:items-center gap-3 w-full md:w-auto">
+              <span className="uppercase tracking-widest text-[10px] text-slate-400 block md:inline">Follow Us</span>
+              <div className="flex items-center gap-4">
+                {socialLinks.instagram && (
+                  <a href={socialLinks.instagram} target="_blank" rel="noopener noreferrer" className="hover:text-slate-800 text-slate-500 transition-colors">
+                    <Instagram className="w-4.5 h-4.5" />
+                  </a>
+                )}
+                {socialLinks.facebook && (
+                  <a href={socialLinks.facebook} target="_blank" rel="noopener noreferrer" className="hover:text-slate-800 text-slate-500 transition-colors">
+                    <Facebook className="w-4.5 h-4.5" />
+                  </a>
+                )}
+                {socialLinks.twitter && (
+                  <a href={socialLinks.twitter} target="_blank" rel="noopener noreferrer" className="hover:text-slate-800 text-slate-500 transition-colors">
+                    <Twitter className="w-4.5 h-4.5" />
+                  </a>
+                )}
+                {socialLinks.linkedin && (
+                  <a href={socialLinks.linkedin} target="_blank" rel="noopener noreferrer" className="hover:text-slate-800 text-slate-500 transition-colors">
+                    <Linkedin className="w-4.5 h-4.5" />
+                  </a>
+                )}
+                {socialLinks.youtube && (
+                  <a href={socialLinks.youtube} target="_blank" rel="noopener noreferrer" className="hover:text-slate-800 text-slate-500 transition-colors">
+                    <Youtube className="w-4.5 h-4.5" />
+                  </a>
+                )}
+              </div>
             </div>
           </div>
 
-          <div>
+          <div className="text-slate-400 text-[11px] pt-4 md:pt-0 border-t border-slate-200/50 md:border-none w-full md:w-auto text-left">
             © 2026 by {tenant?.name || 'Modern Health Clinic'}
           </div>
         </div>
-      </section>
+      </div>
 
       {/* ── CONTACT FORM SUCCESS DIALOG MODAL ────────────────────── */}
       {showContactSuccess && (
