@@ -5,7 +5,7 @@ import {
   Building2, Calendar, Clock, AlertTriangle, Users,
   ArrowRight, MapPin, Activity, HeartPulse, Stethoscope,
   ShieldAlert, Mail, Map, Sparkles, Facebook, Instagram,
-  Twitter, Linkedin, Youtube, CheckCircle2
+  Twitter, Linkedin, Youtube, CheckCircle2, ArrowUp
 } from 'lucide-react';
 import { todayStartUTC } from '../../../lib/dateUtils';
 
@@ -29,6 +29,29 @@ export default function HospitalLandingPage({ tenant, navigate }: Props) {
   const [activeDoctorsCount, setActiveDoctorsCount] = useState<number>(0);
   const [showEmergencyDialog, setShowEmergencyDialog] = useState(false);
   const [selectedDept, setSelectedDept] = useState<string>('All');
+
+  const [showScrollTop, setShowScrollTop] = useState(false);
+  const [hoveredScrollTop, setHoveredScrollTop] = useState(false);
+  const [hoveredSocial, setHoveredSocial] = useState<string | null>(null);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 300) {
+        setShowScrollTop(true);
+      } else {
+        setShowScrollTop(false);
+      }
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const scrollToTop = () => {
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth',
+    });
+  };
 
   const [socialLinks, setSocialLinks] = useState({
     instagram: 'https://instagram.com',
@@ -203,7 +226,7 @@ export default function HospitalLandingPage({ tenant, navigate }: Props) {
     );
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] font-sans pb-16 select-none relative overflow-hidden">
+    <div className="min-h-screen bg-[#F8FAFC] font-sans pb-0 select-none relative overflow-hidden">
 
       {/* Decorative ambient background glows */}
       <div
@@ -633,19 +656,83 @@ export default function HospitalLandingPage({ tenant, navigate }: Props) {
         {/* Subtle grid pattern background */}
         <div className="absolute inset-0 bg-[radial-gradient(#e2e8f0_1px,transparent_1px)] [background-size:20px_20px] opacity-25 pointer-events-none" />
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 relative z-10 flex flex-col lg:flex-row gap-12">
-          {/* Left card: Need help booking an appointment? */}
-          <div className="flex-1 bg-white border border-slate-100/80 rounded-[32px] p-8 shadow-[0_20px_50px_rgba(0,0,0,0.02)] relative overflow-hidden group">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 relative z-10 grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12 items-start">
+          
+          {/* Column 1: Hospital Info & Branding */}
+          <div className="space-y-6">
+            <div className="space-y-3">
+              <h3 className="text-xl font-black tracking-tight" style={{ color: themeColor }}>
+                {tenant?.name || 'Modern Health Clinic'}
+              </h3>
+              <p className="text-xs text-slate-400 font-semibold leading-relaxed">
+                {meta.description || 'Providing smart, digital queue management and clinical excellence to protect patient time and elevate standard clinic procedures.'}
+              </p>
+            </div>
+            
+            <div className="space-y-3 font-semibold text-xs text-slate-700">
+              <div className="flex items-center gap-3">
+                <MapPin className="w-4.5 h-4.5 text-slate-400 flex-shrink-0" style={{ color: themeColor }} />
+                <span>{tenant?.address || 'Unit 102 - 317 Renfrew Dr, Markham, Ontario L3R 9S8'}</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <Clock className="w-4.5 h-4.5 text-slate-400 flex-shrink-0" />
+                <span>{meta.timings || '09:00 AM - 09:00 PM Outpatient Care'}</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <Mail className="w-4.5 h-4.5 text-slate-400 flex-shrink-0" />
+                <span>{tenant?.phone ? `info@${tenantSlug}.com` : 'info@modernhealthclinic.ca'}</span>
+              </div>
+            </div>
+
+            <button
+              onClick={() => navigate('appointment')}
+              className="inline-flex items-center justify-center px-6 py-3 border rounded-full text-xs font-black uppercase tracking-wider transition-all focus:outline-none hover:shadow-md"
+              style={{
+                color: themeColor,
+                borderColor: `${themeColor}30`,
+                backgroundColor: `${themeColor}05`
+              }}
+            >
+              Book Your Appointment
+            </button>
+          </div>
+
+          {/* Column 2: Clinic Hours */}
+          <div className="space-y-4 lg:w-[90%]">
+            <h4 className="text-[10px] font-black uppercase tracking-wider pb-2 border-b border-slate-100" style={{ color: themeColor }}>
+              Clinic Hours
+            </h4>
+
+            <div className="space-y-3 font-semibold text-xs text-slate-700">
+              {[
+                { day: 'Monday', hours: '9:30am - 1:30pm  /  3:30pm - 7:00pm' },
+                { day: 'Tuesday', hours: '9:30am - 1:30pm' },
+                { day: 'Wednesday', hours: '9:30am - 1:30pm  /  3:30pm - 7:00pm' },
+                { day: 'Thursday', hours: '9:30am - 1:30pm' },
+                { day: 'Friday', hours: '9:30am - 1:30pm  /  3:30pm - 7:00pm' },
+                { day: 'Saturday', hours: '9:30am - 1:30pm' },
+                { day: 'Sunday', hours: '9:30am - 1:30pm' },
+              ].map((item, idx) => (
+                <div key={idx} className="flex justify-between items-center border-b border-slate-50 pb-2.5">
+                  <span className="text-slate-800">{item.day}:</span>
+                  <span className="text-slate-500 text-right">{item.hours}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Column 3: Need help booking an appointment? */}
+          <div className="bg-white border border-slate-100 rounded-[32px] p-6 shadow-[0_8px_30px_rgb(0,0,0,0.015)] relative overflow-hidden group w-full">
             {/* dynamic theme subtle background glow */}
             <div className="absolute -top-24 -left-24 w-48 h-48 rounded-full blur-3xl opacity-20 pointer-events-none transition-all duration-700"
               style={{ backgroundColor: themeColor }}
             />
 
-            <h3 className="text-2xl font-black text-slate-800 tracking-tight leading-none mb-2">
-              Need help booking an appointment?
+            <h3 className="text-lg font-black text-slate-800 tracking-tight leading-none mb-2">
+              Need help booking?
             </h3>
             <p className="text-xs text-slate-400 font-semibold mb-6">
-              We can help! Fill out the form below.
+              Fill out the form below and we will contact you.
             </p>
 
             <form onSubmit={handleContactSubmit} className="space-y-4">
@@ -709,55 +796,6 @@ export default function HospitalLandingPage({ tenant, navigate }: Props) {
             </form>
           </div>
 
-          {/* Right column: Clinic Hours and Our Location */}
-          <div className="lg:w-[45%] flex flex-col justify-between py-2">
-            <div>
-              <h4 className="text-[10px] font-black uppercase tracking-wider mb-4" style={{ color: themeColor }}>
-                Clinic Hours
-              </h4>
-
-              <div className="space-y-3 font-semibold text-xs text-slate-700">
-                {[
-                  { day: 'Monday', hours: '9:30am - 1:30pm  /  3:30pm - 7:00pm' },
-                  { day: 'Tuesday', hours: '9:30am - 1:30pm' },
-                  { day: 'Wednesday', hours: '9:30am - 1:30pm  /  3:30pm - 7:00pm' },
-                  { day: 'Thursday', hours: '9:30am - 1:30pm' },
-                  { day: 'Friday', hours: '9:30am - 1:30pm  /  3:30pm - 7:00pm' },
-                  { day: 'Saturday', hours: '9:30am - 1:30pm' },
-                  { day: 'Sunday', hours: '9:30am - 1:30pm' },
-                ].map((item, idx) => (
-                  <div key={idx} className="flex justify-between items-center border-b border-slate-50 pb-2.5">
-                    <span className="text-slate-800">{item.day}:</span>
-                    <span className="text-slate-500 text-right">{item.hours}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="mt-8 space-y-4">
-              <div>
-                <h4 className="text-[10px] font-black uppercase tracking-wider mb-2" style={{ color: themeColor }}>
-                  Our Location
-                </h4>
-                <p className="text-xs text-slate-800 font-extrabold leading-relaxed">
-                  {tenant?.address || 'Unit 102 - 317 Renfrew Dr,\nMarkham, Ontario L3R 9S8'}
-                </p>
-                <p className="text-[10px] text-slate-400 font-bold mt-1">(Entrance at the back)</p>
-              </div>
-
-              <button
-                onClick={() => navigate('appointment')}
-                className="inline-flex items-center justify-center px-6 py-3 border rounded-full text-xs font-black uppercase tracking-wider transition-all focus:outline-none hover:shadow-md"
-                style={{
-                  color: themeColor,
-                  borderColor: `${themeColor}30`,
-                  backgroundColor: `${themeColor}05`
-                }}
-              >
-                Book Your Appointment
-              </button>
-            </div>
-          </div>
         </div>
       </section>
 
@@ -776,28 +814,68 @@ export default function HospitalLandingPage({ tenant, navigate }: Props) {
               <span className="uppercase tracking-widest text-[10px] text-slate-400 block md:inline">Follow Us</span>
               <div className="flex items-center gap-4">
                 {socialLinks.instagram && (
-                  <a href={formatUrl(socialLinks.instagram)} target="_blank" rel="noopener noreferrer" className="hover:text-slate-800 text-slate-500 transition-colors">
-                    <Instagram className="w-4.5 h-4.5" />
+                  <a
+                    href={formatUrl(socialLinks.instagram)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-slate-500 transition-all duration-300 transform hover:scale-110"
+                    style={{ color: hoveredSocial === 'instagram' ? themeColor : undefined }}
+                    onMouseEnter={() => setHoveredSocial('instagram')}
+                    onMouseLeave={() => setHoveredSocial(null)}
+                  >
+                    <Instagram className="w-5 h-5" />
                   </a>
                 )}
                 {socialLinks.facebook && (
-                  <a href={formatUrl(socialLinks.facebook)} target="_blank" rel="noopener noreferrer" className="hover:text-slate-800 text-slate-500 transition-colors">
-                    <Facebook className="w-4.5 h-4.5" />
+                  <a
+                    href={formatUrl(socialLinks.facebook)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-slate-500 transition-all duration-300 transform hover:scale-110"
+                    style={{ color: hoveredSocial === 'facebook' ? themeColor : undefined }}
+                    onMouseEnter={() => setHoveredSocial('facebook')}
+                    onMouseLeave={() => setHoveredSocial(null)}
+                  >
+                    <Facebook className="w-5 h-5" />
                   </a>
                 )}
                 {socialLinks.twitter && (
-                  <a href={formatUrl(socialLinks.twitter)} target="_blank" rel="noopener noreferrer" className="hover:text-slate-800 text-slate-500 transition-colors">
-                    <Twitter className="w-4.5 h-4.5" />
+                  <a
+                    href={formatUrl(socialLinks.twitter)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-slate-500 transition-all duration-300 transform hover:scale-110"
+                    style={{ color: hoveredSocial === 'twitter' ? themeColor : undefined }}
+                    onMouseEnter={() => setHoveredSocial('twitter')}
+                    onMouseLeave={() => setHoveredSocial(null)}
+                  >
+                    <Twitter className="w-5 h-5" />
                   </a>
                 )}
                 {socialLinks.linkedin && (
-                  <a href={formatUrl(socialLinks.linkedin)} target="_blank" rel="noopener noreferrer" className="hover:text-slate-800 text-slate-500 transition-colors">
-                    <Linkedin className="w-4.5 h-4.5" />
+                  <a
+                    href={formatUrl(socialLinks.linkedin)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-slate-500 transition-all duration-300 transform hover:scale-110"
+                    style={{ color: hoveredSocial === 'linkedin' ? themeColor : undefined }}
+                    onMouseEnter={() => setHoveredSocial('linkedin')}
+                    onMouseLeave={() => setHoveredSocial(null)}
+                  >
+                    <Linkedin className="w-5 h-5" />
                   </a>
                 )}
                 {socialLinks.youtube && (
-                  <a href={formatUrl(socialLinks.youtube)} target="_blank" rel="noopener noreferrer" className="hover:text-slate-800 text-slate-500 transition-colors">
-                    <Youtube className="w-4.5 h-4.5" />
+                  <a
+                    href={formatUrl(socialLinks.youtube)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-slate-500 transition-all duration-300 transform hover:scale-110"
+                    style={{ color: hoveredSocial === 'youtube' ? themeColor : undefined }}
+                    onMouseEnter={() => setHoveredSocial('youtube')}
+                    onMouseLeave={() => setHoveredSocial(null)}
+                  >
+                    <Youtube className="w-5 h-5" />
                   </a>
                 )}
               </div>
@@ -837,6 +915,24 @@ export default function HospitalLandingPage({ tenant, navigate }: Props) {
             </button>
           </div>
         </>
+      )}
+
+      {showScrollTop && (
+        <button
+          onClick={scrollToTop}
+          className="fixed bottom-6 right-6 z-50 p-3.5 bg-white border rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 focus:outline-none flex items-center justify-center group"
+          style={{
+            borderColor: hoveredScrollTop ? themeColor : '#E2E8F0',
+            backgroundColor: hoveredScrollTop ? `${themeColor}08` : '#FFFFFF'
+          }}
+          onMouseEnter={() => setHoveredScrollTop(true)}
+          onMouseLeave={() => setHoveredScrollTop(false)}
+        >
+          <ArrowUp
+            className="w-5 h-5 transition-colors duration-300"
+            style={{ color: hoveredScrollTop ? themeColor : '#64748B' }}
+          />
+        </button>
       )}
 
     </div>
