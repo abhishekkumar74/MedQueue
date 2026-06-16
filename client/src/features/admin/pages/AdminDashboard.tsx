@@ -7,7 +7,7 @@ import {
   TrendingUp, Clock, CheckCircle2, Calendar,
   Package, Search, PlusCircle, Volume2, ShieldAlert, Heart,
   HardDrive, Network, Layers, X, ChevronDown, ChevronUp, Printer, ArrowLeft,
-  FileSpreadsheet, Eye, Sparkles, MapPin, Database, Server, DollarSign
+  FileSpreadsheet, Eye, Sparkles, MapPin, Database, Server, DollarSign, Share2
 } from 'lucide-react';
 import { TokenStatus, Priority, Department, PRIORITY_LABEL, PRIORITY_COLOR, STATUS_COLOR, DEPARTMENT_LABEL } from '../../../types';
 
@@ -158,6 +158,15 @@ export default function AdminDashboard({ currentUser }: Props) {
   const [announcementMsg, setAnnouncementMsg] = useState('');
   const [announcementSeverity, setAnnouncementSeverity] = useState('info');
 
+  const [socialForm, setSocialForm] = useState({
+    instagram: '',
+    facebook: '',
+    twitter: '',
+    linkedin: '',
+    youtube: '',
+  });
+  const [savingSocial, setSavingSocial] = useState(false);
+
   // ── Diagnostics Pings ─────────────────────────────────────
   const pingDiagnostics = useCallback(async () => {
     const startDb = Date.now();
@@ -271,6 +280,14 @@ export default function AdminDashboard({ currentUser }: Props) {
         const gateway = settingsRes.data.find(s => s.key === 'otp_gateway_status');
         if (emergency) setEmergencyMode(emergency.value === true || emergency.value === 'true');
         if (gateway) setOtpGatewayOnline(gateway.value === 'ONLINE' || gateway.value === '"ONLINE"');
+
+        const social = settingsRes.data.find(s => s.key === `social_handles_${hospitalId}`);
+        if (social?.value) {
+          setSocialForm(prev => ({
+            ...prev,
+            ...(social.value as any)
+          }));
+        }
       }
 
       setError('');
@@ -569,6 +586,30 @@ export default function AdminDashboard({ currentUser }: Props) {
       fetchData();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Emergency intake failed');
+    }
+  };
+
+  const handleUpdateSocialLinks = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSavingSocial(true);
+    setError('');
+    setSuccess('');
+    try {
+      const { error } = await supabase
+        .from('system_settings')
+        .upsert({
+          key: `social_handles_${hospitalId}`,
+          value: socialForm
+        }, { onConflict: 'key' });
+
+      if (error) throw error;
+      setSuccess('Social media handles updated successfully.');
+      logLocalActivity('Hospital social media links updated.', 'system', 'bg-[#005EB8]');
+      fetchData(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update social handles');
+    } finally {
+      setSavingSocial(false);
     }
   };
 
@@ -2361,6 +2402,87 @@ export default function AdminDashboard({ currentUser }: Props) {
                 </div>
 
               </div>
+
+              {/* ── Clinic Branding & Social Handles Section ── */}
+              <div className="bg-white border border-slate-100 rounded-3xl p-6 mt-6 shadow-sm text-left">
+                <h3 className="text-sm font-black text-slate-700 flex items-center gap-1.5 uppercase tracking-wide border-b border-slate-50 pb-3 mb-4">
+                  <Share2 className="w-4 h-4 text-[#005EB8]" />
+                  Clinic Social Media Links
+                </h3>
+                <p className="text-xs text-slate-400 font-semibold mb-6">
+                  Configure the social media links displayed in your hospital landing page footer.
+                </p>
+
+                <form onSubmit={handleUpdateSocialLinks} className="space-y-4 max-w-xl">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-[10px] font-black text-slate-400 uppercase mb-1.5">Instagram Link</label>
+                      <input
+                        type="url"
+                        value={socialForm.instagram}
+                        onChange={e => setSocialForm({ ...socialForm, instagram: e.target.value })}
+                        placeholder="https://instagram.com/yourclinic"
+                        className="w-full text-xs p-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-[#005EB8] outline-none font-semibold"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-black text-slate-400 uppercase mb-1.5">Facebook Link</label>
+                      <input
+                        type="url"
+                        value={socialForm.facebook}
+                        onChange={e => setSocialForm({ ...socialForm, facebook: e.target.value })}
+                        placeholder="https://facebook.com/yourclinic"
+                        className="w-full text-xs p-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-[#005EB8] outline-none font-semibold"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-[10px] font-black text-slate-400 uppercase mb-1.5">Twitter / X Link</label>
+                      <input
+                        type="url"
+                        value={socialForm.twitter}
+                        onChange={e => setSocialForm({ ...socialForm, twitter: e.target.value })}
+                        placeholder="https://twitter.com/yourclinic"
+                        className="w-full text-xs p-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-[#005EB8] outline-none font-semibold"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-black text-slate-400 uppercase mb-1.5">LinkedIn Link</label>
+                      <input
+                        type="url"
+                        value={socialForm.linkedin}
+                        onChange={e => setSocialForm({ ...socialForm, linkedin: e.target.value })}
+                        placeholder="https://linkedin.com/company/yourclinic"
+                        className="w-full text-xs p-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-[#005EB8] outline-none font-semibold"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-black text-slate-400 uppercase mb-1.5">YouTube Link</label>
+                    <input
+                      type="url"
+                      value={socialForm.youtube}
+                      onChange={e => setSocialForm({ ...socialForm, youtube: e.target.value })}
+                      placeholder="https://youtube.com/c/yourclinic"
+                      className="w-full text-xs p-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-[#005EB8] outline-none font-semibold"
+                    />
+                  </div>
+
+                  <div className="pt-2">
+                    <button
+                      type="submit"
+                      disabled={savingSocial}
+                      className="px-5 py-3 bg-[#005EB8] hover:bg-[#004a96] text-white text-xs font-black uppercase tracking-wider rounded-xl shadow-md transition-all flex items-center justify-center gap-1.5"
+                    >
+                      {savingSocial ? 'Saving...' : 'Save Social Handles'}
+                    </button>
+                  </div>
+                </form>
+              </div>
+
             </div>
           )}
 
