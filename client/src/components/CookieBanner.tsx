@@ -56,44 +56,44 @@ export default function CookieBanner() {
           role="dialog"
           aria-live="polite"
           aria-label="Cookie Consent Disclaimer"
-          className="fixed bottom-0 md:bottom-6 left-0 md:left-6 right-0 md:right-6 bg-white text-slate-800 z-50 p-4 md:p-5 rounded-t-[20px] md:rounded-[24px] border-t md:border border-slate-150 shadow-[0_10px_30px_rgba(0,0,0,0.08)] flex flex-col md:flex-row items-start md:items-center justify-between gap-4 font-sans text-left transition-all duration-300 animate-slide-in pb-[calc(1rem+env(safe-area-inset-bottom,0px))] md:pb-5"
+          className="fixed bottom-0 md:bottom-6 left-0 md:left-auto right-0 md:right-6 bg-white text-slate-800 z-50 p-5 rounded-t-[20px] md:rounded-[20px] border-t md:border border-slate-150 shadow-[0_10px_30px_rgba(0,0,0,0.08)] w-full md:w-[360px] flex flex-col gap-4 font-sans text-left transition-all duration-300 animate-slide-in pb-[calc(1.2rem+env(safe-area-inset-bottom,0px))] md:pb-5"
         >
           {/* Warning Content */}
-          <div className="flex items-center gap-3.5 flex-1 min-w-0">
+          <div className="flex items-start gap-3.5 flex-1 min-w-0">
             <div 
-              className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+              className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5"
               style={{ 
                 backgroundColor: 'color-mix(in srgb, var(--primary-color, #005EB8) 10%, transparent)',
                 color: 'var(--primary-color, #005EB8)' 
               }}
             >
-              <HeartPulse className="w-4.5 h-4.5 animate-pulse" />
+              <HeartPulse className="w-4 h-4 animate-pulse" />
             </div>
-            <div className="space-y-0.5">
-              <h4 className="text-[10px] font-black uppercase tracking-wider text-slate-400">Cookie Security & Consent</h4>
-              <p className="text-[11px] text-slate-500 leading-relaxed font-semibold">
-                We use essential cookies to keep MedQueue secure. Optional cookies help personalize your experience. Medical records and patient health information are never stored in browser cookies.
+            <div className="space-y-1">
+              <h4 className="text-[9px] font-black uppercase tracking-wider text-slate-400">Cookie Security & Consent</h4>
+              <p className="text-[11px] text-slate-550 leading-relaxed font-semibold">
+                We use essential cookies to keep MedQueue secure. Optional cookies personalize your experience. Medical records are never stored in browser cookies.
               </p>
             </div>
           </div>
 
           {/* Action Buttons */}
-          <div className="flex items-center gap-2 w-full md:w-auto justify-end flex-shrink-0">
+          <div className="flex items-center gap-2 w-full justify-end flex-shrink-0">
             <button
               onClick={() => setIsModalOpen(true)}
-              className="flex-1 md:flex-none text-center px-3.5 py-2 bg-slate-50 hover:bg-slate-100 text-slate-600 font-extrabold text-[10px] uppercase tracking-wider rounded-xl border border-slate-200 transition-all focus:outline-none"
+              className="flex-1 text-center py-2 bg-slate-50 hover:bg-slate-100 text-slate-600 font-extrabold text-[10px] uppercase tracking-wider rounded-xl border border-slate-200 transition-all focus:outline-none"
             >
               Customize
             </button>
             <button
               onClick={handleRejectAll}
-              className="flex-1 md:flex-none text-center px-3.5 py-2 bg-slate-50 hover:bg-slate-100 text-slate-500 hover:text-slate-600 font-extrabold text-[10px] uppercase tracking-wider rounded-xl border border-transparent transition-all focus:outline-none"
+              className="flex-1 text-center py-2 bg-slate-50 hover:bg-slate-100 text-slate-500 hover:text-slate-600 font-extrabold text-[10px] uppercase tracking-wider rounded-xl transition-all focus:outline-none"
             >
               Reject
             </button>
             <button
               onClick={handleAcceptAll}
-              className="flex-1 md:flex-none text-center px-4 py-2 text-white font-extrabold text-[10px] uppercase tracking-wider rounded-xl shadow-md shadow-blue-500/10 transition-all focus:outline-none active:scale-[0.99]"
+              className="flex-1 text-center py-2 text-white font-extrabold text-[10px] uppercase tracking-wider rounded-xl shadow-md transition-all focus:outline-none active:scale-[0.99]"
               style={{ backgroundColor: 'var(--primary-color, #005EB8)' }}
             >
               Accept All

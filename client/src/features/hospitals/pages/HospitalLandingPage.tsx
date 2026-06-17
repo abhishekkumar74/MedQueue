@@ -556,27 +556,30 @@ export default function HospitalLandingPage({ tenant, navigate }: Props) {
                 return (
                   <div
                     key={doc.id}
-                    className="bg-white border border-slate-100 p-5 rounded-[24px] shadow-[0_8px_30px_rgb(0,0,0,0.015)] flex items-center gap-4 hover:shadow-[0_12px_40px_rgba(0,0,0,0.04)] hover:border-slate-200 hover:scale-[1.01] transition-all duration-300 group"
+                    className="bg-white border border-slate-100 p-4 rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.01)] flex items-center gap-3.5 hover:shadow-[0_8px_30px_rgba(0,0,0,0.03)] hover:border-slate-200/80 hover:scale-[1.01] transition-all duration-300 group"
                   >
                     {/* Avatar Badge */}
-                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-teal-50 to-[#E8F3FF] border border-teal-100 text-[#005EB8] flex items-center justify-center flex-shrink-0 font-black text-sm uppercase tracking-wider group-hover:scale-105 transition-transform duration-300 shadow-inner"
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-teal-50/70 to-[#E8F3FF]/70 border border-teal-100/60 text-[#005EB8] flex items-center justify-center flex-shrink-0 font-black text-xs uppercase tracking-wider group-hover:scale-102 transition-transform duration-300 shadow-inner"
                       style={{ color: themeColor }}>
                       {initials}
                     </div>
 
                     <div className="min-w-0 flex-1">
-                      <h4 className="text-xs font-black text-slate-800 truncate tracking-tight">{doc.name}</h4>
-                      <span className="inline-block text-[9px] bg-slate-50 border border-slate-150 text-slate-500 font-bold uppercase px-2 py-0.5 rounded-md tracking-wider mt-1.5">
-                        {doc.specialty || 'General Practitioner'}
-                      </span>
-                      <div className="flex items-center justify-between gap-2 mt-3 pt-2 border-t border-slate-50">
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 bg-emerald-50 text-emerald-600 rounded-full text-[8px] font-black uppercase tracking-wider leading-none border border-emerald-100">
+                      <div className="flex items-center justify-between gap-2">
+                        <h4 className="text-xs font-black text-slate-800 truncate tracking-tight">{doc.name}</h4>
+                        <span className="text-[8px] bg-slate-50 border border-slate-150 text-slate-500 font-extrabold uppercase px-1.5 py-0.5 rounded-md tracking-wider flex-shrink-0">
+                          {doc.specialty || 'General'}
+                        </span>
+                      </div>
+                      
+                      <div className="flex items-center justify-between gap-2 mt-2.5 pt-2 border-t border-slate-50/60">
+                        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 bg-emerald-50 text-emerald-600 rounded-md text-[8px] font-black uppercase tracking-wider leading-none border border-emerald-100/50">
                           <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                           Available
                         </span>
                         {doc.room_number && (
-                          <span className="text-[9px] font-black uppercase tracking-wider bg-blue-50/50 border border-blue-100/50 px-2 py-0.5 rounded-md font-mono"
-                            style={{ color: themeColor, borderColor: `${themeColor}20`, backgroundColor: `${themeColor}08` }}>
+                          <span className="text-[9px] font-black uppercase tracking-wider bg-blue-50/30 border border-blue-100/30 px-2 py-0.5 rounded-md font-mono"
+                            style={{ color: themeColor, borderColor: `${themeColor}15`, backgroundColor: `${themeColor}04` }}>
                             {displayRoom}
                           </span>
                         )}
