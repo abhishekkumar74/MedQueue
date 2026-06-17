@@ -5,6 +5,7 @@
 import { useState } from 'react';
 import { AuthUser, loginStaff } from '../../../lib/auth';
 import { Activity, Eye, EyeOff, Loader2, AlertCircle, Shield, ArrowLeft } from 'lucide-react';
+import { cookies } from '../../../lib/cookies';
 
 interface Props {
   onLogin: (user: AuthUser) => void;
@@ -18,6 +19,7 @@ export default function StaffLoginPage({ onLogin, onLogoClick, onBack }: Props) 
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [rememberMe, setRememberMe] = useState(true);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -26,6 +28,10 @@ export default function StaffLoginPage({ onLogin, onLogoClick, onBack }: Props) 
     setLoading(true); setError('');
     try {
       const user = await loginStaff(email, password);
+      cookies.setCookie('medqueue_remember_me', rememberMe ? 'true' : 'false', 30);
+      if (user.role) {
+        cookies.setCookie('medqueue_last_role', user.role, 365);
+      }
       onLogin(user);
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Login failed';
@@ -117,6 +123,19 @@ export default function StaffLoginPage({ onLogin, onLogoClick, onBack }: Props) 
                   {showPassword ? <EyeOff className="w-4.5 h-4.5" /> : <Eye className="w-4.5 h-4.5" />}
                 </button>
               </div>
+            </div>
+
+            <div className="flex items-center gap-2 text-left">
+              <input
+                type="checkbox"
+                id="remember_me"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+                className="rounded border-slate-800 bg-slate-950 text-[#005EB8] focus:ring-[#005EB8] w-4 h-4 cursor-pointer"
+              />
+              <label htmlFor="remember_me" className="text-xs text-slate-400 font-semibold cursor-pointer select-none">
+                Remember my login preference
+              </label>
             </div>
 
             <button type="submit" disabled={loading}

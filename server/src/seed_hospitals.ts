@@ -33,7 +33,7 @@ async function seed() {
     for (const hosp of defaultHospitals) {
       const { data, error } = await db
         .from('hospitals')
-        .upsert(hosp, { onConflict: 'slug' })
+        .upsert(hosp, { onConflict: 'id' })
         .select();
 
       if (error) {

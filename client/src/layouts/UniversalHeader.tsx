@@ -443,7 +443,10 @@ export default function UniversalHeader({ page, navigate, currentUser, handleLog
                       {/* Settings and Actions */}
                       <div className="border-t border-slate-100 pt-1">
                         <button 
-                          onClick={() => setShowProfileMenu(false)}
+                          onClick={() => {
+                            setShowProfileMenu(false);
+                            window.dispatchEvent(new CustomEvent('open-cookie-preferences'));
+                          }}
                           className="w-full flex items-center gap-2 px-4 py-2 text-left text-xs font-bold text-slate-600 hover:bg-slate-50 transition-colors"
                         >
                           <Settings className="w-3.5 h-3.5 text-slate-400" />
@@ -616,6 +619,17 @@ export default function UniversalHeader({ page, navigate, currentUser, handleLog
                     <p className="text-[10px] text-[#005EB8] font-bold uppercase tracking-wider mt-0.5">{getRoleLabel()}</p>
                   </div>
                 </div>
+
+                <button 
+                  onClick={() => {
+                    setShowMobileDrawer(false);
+                    window.dispatchEvent(new CustomEvent('open-cookie-preferences'));
+                  }}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-slate-50 border border-slate-150 text-slate-600 font-extrabold text-xs rounded-2xl transition-all active:scale-95"
+                >
+                  <Settings className="w-4 h-4 text-slate-400" />
+                  Clinic Settings
+                </button>
 
                 <button 
                   onClick={() => { setShowMobileDrawer(false); handleLogout(); }}

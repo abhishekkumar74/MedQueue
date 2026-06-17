@@ -16,7 +16,7 @@ const PatientHistory = lazy(() => import('./features/patient/pages/PatientHistor
 const PatientWorkspace = lazy(() => import('./features/patient/pages/PatientWorkspace'));
 
 // ── Eagerly loaded (critical path, lightweight) ──
-import { OfflineIndicator } from './components';
+import { OfflineIndicator, CookieBanner } from './components';
 import { SetupBanner, UniversalHeader } from './layouts';
 import { supabase, isMissingConfig } from './lib/supabase';
 import { AuthUser, getCachedUser, fetchMe, logout, getAccessToken } from './lib/auth';
@@ -386,7 +386,8 @@ export default function App() {
 
   if (isMissingConfig) return <SetupBanner />;
 
-  // ── Hospital Not Found Fallback Screen ─────────────────
+  function renderMainContent() {
+    // ── Hospital Not Found Fallback Screen ─────────────────
   if (tenantInvalid) {
     return (
       <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4 relative overflow-hidden font-sans">
@@ -850,5 +851,13 @@ export default function App() {
       <OfflineIndicator />
     </div>
   );
+}
+
+return (
+  <>
+    {renderMainContent()}
+    <CookieBanner />
+  </>
+);
 }
 

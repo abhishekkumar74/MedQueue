@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { AuthUser, requestSuperAdminOtp, verifySuperAdminOtp } from '../../../lib/auth';
 import { Shield, Eye, EyeOff, Loader2, AlertCircle, ArrowLeft, KeyRound, Mail, CheckCircle2, Lock } from 'lucide-react';
+import { cookies } from '../../../lib/cookies';
 
 interface Props {
   onLogin: (user: AuthUser) => void;
@@ -14,6 +15,7 @@ export default function SuperAdminLoginPage({ onLogin, onBack }: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
+  const [rememberMe, setRememberMe] = useState(true);
 
   // 2-Step OTP Verification states
   const [step, setStep] = useState<'credentials' | 'otp'>('credentials');
@@ -57,6 +59,8 @@ export default function SuperAdminLoginPage({ onLogin, onBack }: Props) {
     setSuccessMsg('');
     try {
       const user = await verifySuperAdminOtp(email, otpCode);
+      cookies.setCookie('medqueue_remember_me', rememberMe ? 'true' : 'false', 30);
+      cookies.setCookie('medqueue_last_role', 'SUPER_ADMIN', 365);
       setSuccessMsg('Email ID verified successfully! Granting global SaaS access...');
       setTimeout(() => {
         onLogin(user);
@@ -197,6 +201,19 @@ export default function SuperAdminLoginPage({ onLogin, onBack }: Props) {
                     {showPassword ? <EyeOff className="h-4.5 w-4.5" /> : <Eye className="h-4.5 w-4.5" />}
                   </button>
                 </div>
+              </div>
+
+              <div className="flex items-center gap-2 text-left">
+                <input
+                  type="checkbox"
+                  id="remember_me"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  className="rounded border-slate-800 bg-slate-950 text-violet-500 focus:ring-violet-500 w-4 h-4 cursor-pointer"
+                />
+                <label htmlFor="remember_me" className="text-xs text-slate-400 font-semibold cursor-pointer select-none">
+                  Remember my login preference
+                </label>
               </div>
 
               <button

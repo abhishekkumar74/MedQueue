@@ -5,6 +5,7 @@ import PhoneInput, { isValidPhone } from '../../../components/PhoneInput';
 import HospitalSelector from '../../../components/HospitalSelector';
 import { Activity, Loader2, AlertCircle, ArrowLeft, User, MapPin, Hash, Building2, HeartPulse, Calendar, FileText } from 'lucide-react';
 import { getTenantSlug, resolveTenantConfig, TenantConfig } from '../../../lib/tenant';
+import { cookies } from '../../../lib/cookies';
 
 type Mode = 'phone' | 'otp' | 'register';
 
@@ -24,6 +25,7 @@ export default function PatientLoginPage({ onLogin, onLogoClick, onBack }: Props
   const [tenant, setTenant] = useState<TenantConfig | null>(null);
   const [newPatientId, setNewPatientId] = useState('');
   const [regForm, setRegForm] = useState({ name: '', age: '', address: '' });
+  const [rememberMe, setRememberMe] = useState(true);
 
   useEffect(() => {
     async function loadTenant() {
@@ -63,6 +65,8 @@ export default function PatientLoginPage({ onLogin, onLogoClick, onBack }: Props
         setLoading(false);
         return;
       }
+      cookies.setCookie('medqueue_remember_me', rememberMe ? 'true' : 'false', 30);
+      cookies.setCookie('medqueue_last_role', 'PATIENT', 365);
       onLogin(user);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Invalid or expired OTP');
@@ -83,6 +87,8 @@ export default function PatientLoginPage({ onLogin, onLogoClick, onBack }: Props
         name: regForm.name.trim(), age, address: regForm.address.trim(), hospital_id: hospitalId
       }).eq('id', newPatientId);
       if (error) throw new Error(error.message);
+      cookies.setCookie('medqueue_remember_me', rememberMe ? 'true' : 'false', 30);
+      cookies.setCookie('medqueue_last_role', 'PATIENT', 365);
       onLogin({ id: newPatientId, name: regForm.name.trim(), type: 'patient', phone, age, address: regForm.address.trim(), hospital_id: hospitalId });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save details');
@@ -179,6 +185,19 @@ export default function PatientLoginPage({ onLogin, onLogoClick, onBack }: Props
               <div className="text-left">
                 <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Mobile Number *</label>
                 <PhoneInput value={phone} onChange={setPhone} focusColor="focus:border-[#005EB8]" />
+              </div>
+
+              <div className="flex items-center gap-2 text-left">
+                <input
+                  type="checkbox"
+                  id="remember_me"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  className="rounded border-slate-200 text-[#005EB8] focus:ring-[#005EB8] w-4 h-4 cursor-pointer"
+                />
+                <label htmlFor="remember_me" className="text-xs text-slate-500 font-semibold cursor-pointer select-none">
+                  Remember my login preference
+                </label>
               </div>
 
               <button type="submit" disabled={loading || !isValidPhone(phone)}
