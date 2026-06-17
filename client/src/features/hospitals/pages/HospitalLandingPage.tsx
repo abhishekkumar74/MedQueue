@@ -30,21 +30,8 @@ export default function HospitalLandingPage({ tenant, navigate }: Props) {
   const [showEmergencyDialog, setShowEmergencyDialog] = useState(false);
   const [selectedDept, setSelectedDept] = useState<string>('All');
 
-  const [showScrollTop, setShowScrollTop] = useState(false);
   const [hoveredScrollTop, setHoveredScrollTop] = useState(false);
   const [hoveredSocial, setHoveredSocial] = useState<string | null>(null);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      if (window.scrollY > 300) {
-        setShowScrollTop(true);
-      } else {
-        setShowScrollTop(false);
-      }
-    };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
 
   const scrollToTop = () => {
     window.scrollTo({
@@ -865,23 +852,6 @@ export default function HospitalLandingPage({ tenant, navigate }: Props) {
         </>
       )}
 
-      {showScrollTop && (
-        <button
-          onClick={scrollToTop}
-          className="fixed bottom-6 right-6 z-50 p-3.5 bg-white border rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 focus:outline-none flex items-center justify-center group"
-          style={{
-            borderColor: hoveredScrollTop ? themeColor : '#E2E8F0',
-            backgroundColor: hoveredScrollTop ? `${themeColor}08` : '#FFFFFF'
-          }}
-          onMouseEnter={() => setHoveredScrollTop(true)}
-          onMouseLeave={() => setHoveredScrollTop(false)}
-        >
-          <ArrowUp
-            className="w-5 h-5 transition-colors duration-300"
-            style={{ color: hoveredScrollTop ? themeColor : '#64748B' }}
-          />
-        </button>
-      )}
 
     </div>
   );
