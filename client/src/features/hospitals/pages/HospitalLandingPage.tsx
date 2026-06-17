@@ -652,50 +652,82 @@ export default function HospitalLandingPage({ tenant, navigate }: Props) {
       )}
 
       {/* ── FOOTER SECTION ───────────────────────────────────── */}
-      <footer className="bg-white border-t border-slate-100 py-12 relative overflow-hidden mt-16 text-left">
+      <footer className="bg-white border-t border-slate-100 py-16 relative overflow-hidden mt-16 text-left">
         {/* Subtle grid pattern background */}
         <div className="absolute inset-0 bg-[radial-gradient(#e2e8f0_1px,transparent_1px)] [background-size:20px_20px] opacity-25 pointer-events-none" />
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 relative z-10 space-y-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 relative z-10 space-y-12 animate-fade-in">
           
-          {/* Upper Footer Row: Brand and Action */}
-          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-8 pb-8 border-b border-slate-100">
+          {/* 4-column structure */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10">
             
-            {/* Brand Block */}
-            <div className="space-y-3 max-w-xl">
-              <h3 className="text-2xl font-black tracking-tight" style={{ color: themeColor }}>
-                {tenant?.name || 'Modern Health Clinic'}
-              </h3>
+            {/* Column 1: Brand & Logo */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2.5">
+                {/* Beautiful medical logo icon matching dynamic theme */}
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center text-white" style={{ backgroundColor: themeColor }}>
+                  <HeartPulse className="w-4.5 h-4.5" />
+                </div>
+                <span className="text-lg font-black text-slate-800 tracking-tight leading-none">
+                  {tenant?.name || 'Modern Health Clinic'}
+                </span>
+              </div>
               <p className="text-xs text-slate-400 font-semibold leading-relaxed">
                 {meta.description || 'Providing smart, digital queue management and clinical excellence to protect patient time.'}
               </p>
             </div>
 
-            {/* Action Button & Social Media Icons */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6 w-full lg:w-auto">
-              <button
-                onClick={() => navigate('appointment')}
-                className="w-full sm:w-auto inline-flex items-center justify-center px-6 py-3.5 border rounded-full text-xs font-black uppercase tracking-wider transition-all focus:outline-none hover:shadow-md animate-fade-in"
-                style={{
-                  color: themeColor,
-                  borderColor: `${themeColor}30`,
-                  backgroundColor: `${themeColor}05`
-                }}
-              >
-                Book Your Appointment
-              </button>
+            {/* Column 2: Quick Links */}
+            <div className="space-y-4">
+              <h4 className="text-xs font-black uppercase tracking-wider text-slate-700">Quick Links</h4>
+              <ul className="space-y-3 text-xs text-slate-500 font-semibold">
+                <li>
+                  <button onClick={() => navigate('appointment')} className="hover:text-slate-800 transition-colors focus:outline-none">Book Appointment</button>
+                </li>
+                <li>
+                  <button onClick={() => navigate('tracker')} className="hover:text-slate-800 transition-colors focus:outline-none">Live Queue Status</button>
+                </li>
+                <li>
+                  <button onClick={() => navigate('patient-login')} className="hover:text-slate-800 transition-colors focus:outline-none">Patient Portal</button>
+                </li>
+                <li>
+                  <button onClick={() => navigate('staff-login')} className="hover:text-slate-800 transition-colors focus:outline-none">Staff Secure Hub</button>
+                </li>
+              </ul>
+            </div>
 
-              {/* Social media circle icons */}
+            {/* Column 3: Contact & Address */}
+            <div className="space-y-4">
+              <h4 className="text-xs font-black uppercase tracking-wider text-slate-700">Contact & Address</h4>
+              <ul className="space-y-3.5 text-xs text-slate-500 font-semibold">
+                <li className="flex items-start gap-2.5">
+                  <MapPin className="w-4 h-4 text-slate-400 flex-shrink-0 mt-0.5" style={{ color: themeColor }} />
+                  <span className="leading-relaxed">{tenant?.address || 'Unit 102 - 317 Renfrew Dr, Markham, Ontario L3R 9S8'}</span>
+                </li>
+                <li className="flex items-center gap-2.5">
+                  <Clock className="w-4 h-4 text-slate-400 flex-shrink-0" />
+                  <span>{meta.timings || '24/7 Outpatient Care'}</span>
+                </li>
+                <li className="flex items-center gap-2.5">
+                  <Mail className="w-4 h-4 text-slate-400 flex-shrink-0" />
+                  <span className="truncate">{tenant?.phone ? `info@${tenantSlug}.com` : 'info@modernhealthclinic.ca'}</span>
+                </li>
+              </ul>
+            </div>
+
+            {/* Column 4: Follow Us & Social Handles */}
+            <div className="space-y-4">
+              <h4 className="text-xs font-black uppercase tracking-wider text-slate-700">Follow Us</h4>
               <div className="flex items-center gap-3">
                 {socialLinks.instagram && (
                   <a
                     href={formatUrl(socialLinks.instagram)}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="w-10 h-10 rounded-full border flex items-center justify-center transition-all duration-300 transform hover:scale-105 hover:shadow-md"
+                    className="w-10 h-10 rounded-full border flex items-center justify-center transition-all duration-300 transform hover:scale-105"
                     style={{
                       borderColor: hoveredSocial === 'instagram' ? themeColor : '#E2E8F0',
-                      backgroundColor: hoveredSocial === 'instagram' ? themeColor : '#F8FAFC',
+                      backgroundColor: hoveredSocial === 'instagram' ? themeColor : '#FFFFFF',
                       color: hoveredSocial === 'instagram' ? '#FFFFFF' : '#64748B'
                     }}
                     onMouseEnter={() => setHoveredSocial('instagram')}
@@ -709,10 +741,10 @@ export default function HospitalLandingPage({ tenant, navigate }: Props) {
                     href={formatUrl(socialLinks.facebook)}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="w-10 h-10 rounded-full border flex items-center justify-center transition-all duration-300 transform hover:scale-105 hover:shadow-md"
+                    className="w-10 h-10 rounded-full border flex items-center justify-center transition-all duration-300 transform hover:scale-105"
                     style={{
                       borderColor: hoveredSocial === 'facebook' ? themeColor : '#E2E8F0',
-                      backgroundColor: hoveredSocial === 'facebook' ? themeColor : '#F8FAFC',
+                      backgroundColor: hoveredSocial === 'facebook' ? themeColor : '#FFFFFF',
                       color: hoveredSocial === 'facebook' ? '#FFFFFF' : '#64748B'
                     }}
                     onMouseEnter={() => setHoveredSocial('facebook')}
@@ -726,10 +758,10 @@ export default function HospitalLandingPage({ tenant, navigate }: Props) {
                     href={formatUrl(socialLinks.twitter)}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="w-10 h-10 rounded-full border flex items-center justify-center transition-all duration-300 transform hover:scale-105 hover:shadow-md"
+                    className="w-10 h-10 rounded-full border flex items-center justify-center transition-all duration-300 transform hover:scale-105"
                     style={{
                       borderColor: hoveredSocial === 'twitter' ? themeColor : '#E2E8F0',
-                      backgroundColor: hoveredSocial === 'twitter' ? themeColor : '#F8FAFC',
+                      backgroundColor: hoveredSocial === 'twitter' ? themeColor : '#FFFFFF',
                       color: hoveredSocial === 'twitter' ? '#FFFFFF' : '#64748B'
                     }}
                     onMouseEnter={() => setHoveredSocial('twitter')}
@@ -743,10 +775,10 @@ export default function HospitalLandingPage({ tenant, navigate }: Props) {
                     href={formatUrl(socialLinks.linkedin)}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="w-10 h-10 rounded-full border flex items-center justify-center transition-all duration-300 transform hover:scale-105 hover:shadow-md"
+                    className="w-10 h-10 rounded-full border flex items-center justify-center transition-all duration-300 transform hover:scale-105"
                     style={{
                       borderColor: hoveredSocial === 'linkedin' ? themeColor : '#E2E8F0',
-                      backgroundColor: hoveredSocial === 'linkedin' ? themeColor : '#F8FAFC',
+                      backgroundColor: hoveredSocial === 'linkedin' ? themeColor : '#FFFFFF',
                       color: hoveredSocial === 'linkedin' ? '#FFFFFF' : '#64748B'
                     }}
                     onMouseEnter={() => setHoveredSocial('linkedin')}
@@ -760,10 +792,10 @@ export default function HospitalLandingPage({ tenant, navigate }: Props) {
                     href={formatUrl(socialLinks.youtube)}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="w-10 h-10 rounded-full border flex items-center justify-center transition-all duration-300 transform hover:scale-105 hover:shadow-md"
+                    className="w-10 h-10 rounded-full border flex items-center justify-center transition-all duration-300 transform hover:scale-105"
                     style={{
                       borderColor: hoveredSocial === 'youtube' ? themeColor : '#E2E8F0',
-                      backgroundColor: hoveredSocial === 'youtube' ? themeColor : '#F8FAFC',
+                      backgroundColor: hoveredSocial === 'youtube' ? themeColor : '#FFFFFF',
                       color: hoveredSocial === 'youtube' ? '#FFFFFF' : '#64748B'
                     }}
                     onMouseEnter={() => setHoveredSocial('youtube')}
@@ -777,65 +809,28 @@ export default function HospitalLandingPage({ tenant, navigate }: Props) {
 
           </div>
 
-          {/* Middle Footer Row: Contact Cards Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            
-            {/* Address Card */}
-            <div className="bg-slate-50 border border-slate-100 rounded-2xl p-5 flex items-start gap-4 hover:shadow-sm transition-all duration-300">
-              <div className="w-10 h-10 rounded-xl bg-white border border-slate-100 flex items-center justify-center flex-shrink-0 shadow-sm" style={{ color: themeColor }}>
-                <MapPin className="w-5 h-5" />
-              </div>
-              <div className="space-y-1 text-xs">
-                <span className="block font-black text-slate-400 uppercase tracking-wider text-[10px]">Location Address</span>
-                <p className="font-bold text-slate-700 leading-relaxed">
-                  {tenant?.address || 'Unit 102 - 317 Renfrew Dr, Markham, Ontario L3R 9S8'}
-                </p>
-              </div>
-            </div>
-
-            {/* Timings / Operating hours summary Card */}
-            <div className="bg-slate-50 border border-slate-100 rounded-2xl p-5 flex items-start gap-4 hover:shadow-sm transition-all duration-300">
-              <div className="w-10 h-10 rounded-xl bg-white border border-slate-100 flex items-center justify-center flex-shrink-0 shadow-sm" style={{ color: themeColor }}>
-                <Clock className="w-5 h-5" />
-              </div>
-              <div className="space-y-1 text-xs">
-                <span className="block font-black text-slate-400 uppercase tracking-wider text-[10px]">Operating Timings</span>
-                <p className="font-bold text-slate-700 leading-relaxed">
-                  {meta.timings || '24/7 Outpatient & Emergency Care'}
-                </p>
-              </div>
-            </div>
-
-            {/* Support Call-desk Email & Phone Card */}
-            <div className="bg-slate-50 border border-slate-100 rounded-2xl p-5 flex items-start gap-4 hover:shadow-sm transition-all duration-300">
-              <div className="w-10 h-10 rounded-xl bg-white border border-slate-100 flex items-center justify-center flex-shrink-0 shadow-sm" style={{ color: themeColor }}>
-                <Mail className="w-5 h-5" />
-              </div>
-              <div className="space-y-1 text-xs">
-                <span className="block font-black text-slate-400 uppercase tracking-wider text-[10px]">Support Call-Desk</span>
-                <p className="font-bold text-slate-700 leading-relaxed truncate">
-                  {tenant?.phone ? `info@${tenantSlug}.com` : 'info@modernhealthclinic.ca'}
-                </p>
-              </div>
-            </div>
-
-          </div>
+          {/* Divider line */}
+          <div className="border-t border-slate-100" />
 
           {/* Bottom Row: Copyright & Top Arrow link */}
-          <div className="pt-8 border-t border-slate-100 flex flex-col sm:flex-row justify-between items-center gap-4 text-xs font-bold text-slate-500">
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-4 text-xs font-semibold text-slate-400">
             <div>
-              © 2026 by {tenant?.name || 'Modern Health Clinic'}
+              All rights reserved by {tenant?.name || 'Modern Health Clinic'} 2026
             </div>
-            <button
-              onClick={scrollToTop}
-              className="text-slate-400 hover:text-slate-700 transition-colors uppercase tracking-widest text-[10px] flex items-center gap-1.5 focus:outline-none"
-              style={{ color: hoveredScrollTop ? themeColor : undefined }}
-              onMouseEnter={() => setHoveredScrollTop(true)}
-              onMouseLeave={() => setHoveredScrollTop(false)}
-            >
-              <span>Back To Top</span>
-              <ArrowUp className="w-3.5 h-3.5" />
-            </button>
+            <div className="flex flex-wrap items-center justify-center gap-6">
+              <a href="#" onClick={e => e.preventDefault()} className="hover:text-slate-600 transition-colors">Privacy Policy</a>
+              <a href="#" onClick={e => e.preventDefault()} className="hover:text-slate-600 transition-colors">Terms & Conditions</a>
+              <button
+                onClick={scrollToTop}
+                className="transition-colors uppercase tracking-widest text-[10px] flex items-center gap-1.5 focus:outline-none font-bold"
+                style={{ color: hoveredScrollTop ? themeColor : '#94A3B8' }}
+                onMouseEnter={() => setHoveredScrollTop(true)}
+                onMouseLeave={() => setHoveredScrollTop(false)}
+              >
+                <span>Back To Top</span>
+                <ArrowUp className="w-3.5 h-3.5" />
+              </button>
+            </div>
           </div>
 
         </div>
