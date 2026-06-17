@@ -56,41 +56,45 @@ export default function CookieBanner() {
           role="dialog"
           aria-live="polite"
           aria-label="Cookie Consent Disclaimer"
-          className="fixed bottom-0 md:bottom-6 left-0 md:left-6 right-0 md:right-6 bg-slate-900 text-white z-50 p-6 md:p-8 rounded-t-[28px] md:rounded-[28px] border-t md:border border-slate-800 shadow-2xl flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 font-sans text-left transition-all duration-300 animate-slide-in pb-[calc(1.5rem+env(safe-area-inset-bottom,0px))] md:pb-8"
+          className="fixed bottom-0 md:bottom-6 left-0 md:left-6 right-0 md:right-6 bg-white text-slate-800 z-50 p-4 md:p-5 rounded-t-[20px] md:rounded-[24px] border-t md:border border-slate-150 shadow-[0_10px_30px_rgba(0,0,0,0.08)] flex flex-col md:flex-row items-start md:items-center justify-between gap-4 font-sans text-left transition-all duration-300 animate-slide-in pb-[calc(1rem+env(safe-area-inset-bottom,0px))] md:pb-5"
         >
-          {/* Backdrop ambient blur inside the card */}
-          <div className="absolute top-0 right-0 w-48 h-48 bg-[#00A3AD]/5 rounded-full blur-2xl pointer-events-none" />
-
           {/* Warning Content */}
-          <div className="flex items-start gap-4 flex-1">
-            <div className="w-10 h-10 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center text-[#00A3AD] flex-shrink-0">
-              <HeartPulse className="w-5 h-5 animate-pulse" />
+          <div className="flex items-center gap-3.5 flex-1 min-w-0">
+            <div 
+              className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+              style={{ 
+                backgroundColor: 'color-mix(in srgb, var(--primary-color, #005EB8) 10%, transparent)',
+                color: 'var(--primary-color, #005EB8)' 
+              }}
+            >
+              <HeartPulse className="w-4.5 h-4.5 animate-pulse" />
             </div>
-            <div className="space-y-1 max-w-3xl">
-              <h4 className="text-xs font-black uppercase tracking-wider text-slate-400">Cookie Security & Consent</h4>
-              <p className="text-xs text-slate-350 leading-relaxed font-semibold">
-                We use essential cookies to keep MedQueue secure and operational. Optional cookies help personalize your experience and improve healthcare workflows. Medical records and patient health information are never stored in browser cookies.
+            <div className="space-y-0.5">
+              <h4 className="text-[10px] font-black uppercase tracking-wider text-slate-400">Cookie Security & Consent</h4>
+              <p className="text-[11px] text-slate-500 leading-relaxed font-semibold">
+                We use essential cookies to keep MedQueue secure. Optional cookies help personalize your experience. Medical records and patient health information are never stored in browser cookies.
               </p>
             </div>
           </div>
 
           {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row items-center gap-3 w-full lg:w-auto flex-shrink-0">
+          <div className="flex items-center gap-2 w-full md:w-auto justify-end flex-shrink-0">
             <button
               onClick={() => setIsModalOpen(true)}
-              className="w-full sm:w-auto px-5 py-3 bg-slate-800 hover:bg-slate-750 text-slate-300 hover:text-white font-extrabold text-xs uppercase tracking-wider rounded-2xl border border-slate-700 transition-all focus:outline-none"
+              className="flex-1 md:flex-none text-center px-3.5 py-2 bg-slate-50 hover:bg-slate-100 text-slate-600 font-extrabold text-[10px] uppercase tracking-wider rounded-xl border border-slate-200 transition-all focus:outline-none"
             >
-              Customize Preferences
+              Customize
             </button>
             <button
               onClick={handleRejectAll}
-              className="w-full sm:w-auto px-5 py-3 bg-slate-850 hover:bg-slate-800 text-slate-400 hover:text-slate-300 font-extrabold text-xs uppercase tracking-wider rounded-2xl transition-all focus:outline-none"
+              className="flex-1 md:flex-none text-center px-3.5 py-2 bg-slate-50 hover:bg-slate-100 text-slate-500 hover:text-slate-600 font-extrabold text-[10px] uppercase tracking-wider rounded-xl border border-transparent transition-all focus:outline-none"
             >
-              Reject Non-Essential
+              Reject
             </button>
             <button
               onClick={handleAcceptAll}
-              className="w-full sm:w-auto px-5 py-3 bg-[#00A3AD] hover:bg-[#008d95] text-slate-950 font-extrabold text-xs uppercase tracking-wider rounded-2xl shadow-lg shadow-[#00A3AD]/10 transition-all focus:outline-none active:scale-[0.99]"
+              className="flex-1 md:flex-none text-center px-4 py-2 text-white font-extrabold text-[10px] uppercase tracking-wider rounded-xl shadow-md shadow-blue-500/10 transition-all focus:outline-none active:scale-[0.99]"
+              style={{ backgroundColor: 'var(--primary-color, #005EB8)' }}
             >
               Accept All
             </button>
