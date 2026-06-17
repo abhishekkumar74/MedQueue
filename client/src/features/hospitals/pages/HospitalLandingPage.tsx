@@ -652,14 +652,14 @@ export default function HospitalLandingPage({ tenant, navigate }: Props) {
       )}
 
       {/* ── FOOTER SECTION ───────────────────────────────────── */}
-      <footer className="bg-white border-t border-slate-100 py-16 relative overflow-hidden mt-16 text-left">
+      <footer className="bg-white border-t border-slate-100 py-12 md:py-16 relative overflow-hidden mt-16 text-left">
         {/* Subtle grid pattern background */}
         <div className="absolute inset-0 bg-[radial-gradient(#e2e8f0_1px,transparent_1px)] [background-size:20px_20px] opacity-25 pointer-events-none" />
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 relative z-10 space-y-12 animate-fade-in">
           
           {/* 4-column structure */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-y-8 gap-x-10">
             
             {/* Column 1: Brand & Logo */}
             <div className="space-y-4">
@@ -680,18 +680,18 @@ export default function HospitalLandingPage({ tenant, navigate }: Props) {
             {/* Column 2: Quick Links */}
             <div className="space-y-4">
               <h4 className="text-xs font-black uppercase tracking-wider text-slate-700">Quick Links</h4>
-              <ul className="space-y-3 text-xs text-slate-500 font-semibold">
+              <ul className="space-y-2.5 text-xs text-slate-500 font-semibold">
                 <li>
-                  <button onClick={() => navigate('appointment')} className="hover:text-slate-800 transition-colors focus:outline-none">Book Appointment</button>
+                  <button onClick={() => navigate('appointment')} className="hover:text-slate-800 transition-colors focus:outline-none text-left w-full sm:w-auto">Book Appointment</button>
                 </li>
                 <li>
-                  <button onClick={() => navigate('tracker')} className="hover:text-slate-800 transition-colors focus:outline-none">Live Queue Status</button>
+                  <button onClick={() => navigate('tracker')} className="hover:text-slate-800 transition-colors focus:outline-none text-left w-full sm:w-auto">Live Queue Status</button>
                 </li>
                 <li>
-                  <button onClick={() => navigate('patient-login')} className="hover:text-slate-800 transition-colors focus:outline-none">Patient Portal</button>
+                  <button onClick={() => navigate('patient-login')} className="hover:text-slate-800 transition-colors focus:outline-none text-left w-full sm:w-auto">Patient Portal</button>
                 </li>
                 <li>
-                  <button onClick={() => navigate('staff-login')} className="hover:text-slate-800 transition-colors focus:outline-none">Staff Secure Hub</button>
+                  <button onClick={() => navigate('staff-login')} className="hover:text-slate-800 transition-colors focus:outline-none text-left w-full sm:w-auto">Staff Secure Hub</button>
                 </li>
               </ul>
             </div>
@@ -699,10 +699,10 @@ export default function HospitalLandingPage({ tenant, navigate }: Props) {
             {/* Column 3: Contact & Address */}
             <div className="space-y-4">
               <h4 className="text-xs font-black uppercase tracking-wider text-slate-700">Contact & Address</h4>
-              <ul className="space-y-3.5 text-xs text-slate-500 font-semibold">
+              <ul className="space-y-2.5 text-xs text-slate-500 font-semibold">
                 <li className="flex items-start gap-2.5">
                   <MapPin className="w-4 h-4 text-slate-400 flex-shrink-0 mt-0.5" style={{ color: themeColor }} />
-                  <span className="leading-relaxed">{tenant?.address || 'Unit 102 - 317 Renfrew Dr, Markham, Ontario L3R 9S8'}</span>
+                  <span className="leading-relaxed text-left">{tenant?.address || 'Unit 102 - 317 Renfrew Dr, Markham, Ontario L3R 9S8'}</span>
                 </li>
                 <li className="flex items-center gap-2.5">
                   <Clock className="w-4 h-4 text-slate-400 flex-shrink-0" />
@@ -812,12 +812,12 @@ export default function HospitalLandingPage({ tenant, navigate }: Props) {
           {/* Divider line */}
           <div className="border-t border-slate-100" />
 
-          {/* Bottom Row: Copyright & Top Arrow link */}
-          <div className="flex flex-col sm:flex-row justify-between items-center gap-4 text-xs font-semibold text-slate-400">
-            <div>
+          {/* Bottom Row: Copyright & Policy Links */}
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 text-xs font-semibold text-slate-400 w-full">
+            <div className="text-left w-full sm:w-auto">
               All rights reserved by {tenant?.name || 'Modern Health Clinic'} 2026
             </div>
-            <div className="flex flex-wrap items-center justify-center gap-6">
+            <div className="flex flex-wrap items-center justify-start sm:justify-end gap-x-6 gap-y-3 w-full sm:w-auto">
               <a href="#" onClick={e => e.preventDefault()} className="hover:text-slate-600 transition-colors">Privacy Policy</a>
               <a href="#" onClick={e => e.preventDefault()} className="hover:text-slate-600 transition-colors">Terms & Conditions</a>
               <button
