@@ -652,178 +652,56 @@ export default function HospitalLandingPage({ tenant, navigate }: Props) {
       )}
 
       {/* ── FOOTER SECTION ───────────────────────────────────── */}
-      <section className="bg-white border-t border-slate-100 py-16 relative overflow-hidden mt-16 text-left">
+      <footer className="bg-white border-t border-slate-100 py-12 relative overflow-hidden mt-16 text-left">
         {/* Subtle grid pattern background */}
         <div className="absolute inset-0 bg-[radial-gradient(#e2e8f0_1px,transparent_1px)] [background-size:20px_20px] opacity-25 pointer-events-none" />
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 relative z-10 grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12 items-start">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 relative z-10 space-y-10">
           
-          {/* Column 1: Hospital Info & Branding */}
-          <div className="space-y-6">
-            <div className="space-y-3">
-              <h3 className="text-xl font-black tracking-tight" style={{ color: themeColor }}>
+          {/* Upper Footer Row: Brand and Action */}
+          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-8 pb-8 border-b border-slate-100">
+            
+            {/* Brand Block */}
+            <div className="space-y-3 max-w-xl">
+              <h3 className="text-2xl font-black tracking-tight" style={{ color: themeColor }}>
                 {tenant?.name || 'Modern Health Clinic'}
               </h3>
               <p className="text-xs text-slate-400 font-semibold leading-relaxed">
-                {meta.description || 'Providing smart, digital queue management and clinical excellence to protect patient time and elevate standard clinic procedures.'}
+                {meta.description || 'Providing smart, digital queue management and clinical excellence to protect patient time.'}
               </p>
             </div>
-            
-            <div className="space-y-3 font-semibold text-xs text-slate-700">
-              <div className="flex items-center gap-3">
-                <MapPin className="w-4.5 h-4.5 text-slate-400 flex-shrink-0" style={{ color: themeColor }} />
-                <span>{tenant?.address || 'Unit 102 - 317 Renfrew Dr, Markham, Ontario L3R 9S8'}</span>
-              </div>
-              <div className="flex items-center gap-3">
-                <Clock className="w-4.5 h-4.5 text-slate-400 flex-shrink-0" />
-                <span>{meta.timings || '09:00 AM - 09:00 PM Outpatient Care'}</span>
-              </div>
-              <div className="flex items-center gap-3">
-                <Mail className="w-4.5 h-4.5 text-slate-400 flex-shrink-0" />
-                <span>{tenant?.phone ? `info@${tenantSlug}.com` : 'info@modernhealthclinic.ca'}</span>
-              </div>
-            </div>
 
-            <button
-              onClick={() => navigate('appointment')}
-              className="inline-flex items-center justify-center px-6 py-3 border rounded-full text-xs font-black uppercase tracking-wider transition-all focus:outline-none hover:shadow-md"
-              style={{
-                color: themeColor,
-                borderColor: `${themeColor}30`,
-                backgroundColor: `${themeColor}05`
-              }}
-            >
-              Book Your Appointment
-            </button>
-          </div>
-
-          {/* Column 2: Clinic Hours */}
-          <div className="space-y-4 lg:w-[90%]">
-            <h4 className="text-[10px] font-black uppercase tracking-wider pb-2 border-b border-slate-100" style={{ color: themeColor }}>
-              Clinic Hours
-            </h4>
-
-            <div className="space-y-3 font-semibold text-xs text-slate-700">
-              {[
-                { day: 'Monday', hours: '9:30am - 1:30pm  /  3:30pm - 7:00pm' },
-                { day: 'Tuesday', hours: '9:30am - 1:30pm' },
-                { day: 'Wednesday', hours: '9:30am - 1:30pm  /  3:30pm - 7:00pm' },
-                { day: 'Thursday', hours: '9:30am - 1:30pm' },
-                { day: 'Friday', hours: '9:30am - 1:30pm  /  3:30pm - 7:00pm' },
-                { day: 'Saturday', hours: '9:30am - 1:30pm' },
-                { day: 'Sunday', hours: '9:30am - 1:30pm' },
-              ].map((item, idx) => (
-                <div key={idx} className="flex justify-between items-center border-b border-slate-50 pb-2.5">
-                  <span className="text-slate-800">{item.day}:</span>
-                  <span className="text-slate-500 text-right">{item.hours}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Column 3: Need help booking an appointment? */}
-          <div className="bg-white border border-slate-100 rounded-[32px] p-6 shadow-[0_8px_30px_rgb(0,0,0,0.015)] relative overflow-hidden group w-full">
-            {/* dynamic theme subtle background glow */}
-            <div className="absolute -top-24 -left-24 w-48 h-48 rounded-full blur-3xl opacity-20 pointer-events-none transition-all duration-700"
-              style={{ backgroundColor: themeColor }}
-            />
-
-            <h3 className="text-lg font-black text-slate-800 tracking-tight leading-none mb-2">
-              Need help booking?
-            </h3>
-            <p className="text-xs text-slate-400 font-semibold mb-6">
-              Fill out the form below and we will contact you.
-            </p>
-
-            <form onSubmit={handleContactSubmit} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <input
-                  type="text"
-                  value={contactForm.firstName}
-                  onChange={e => setContactForm({ ...contactForm, firstName: e.target.value })}
-                  placeholder="First Name"
-                  className="w-full text-xs p-3.5 bg-slate-50 border border-slate-100 rounded-2xl focus:bg-white focus:border-slate-200 outline-none transition-all font-semibold"
-                  required
-                />
-                <input
-                  type="text"
-                  value={contactForm.lastName}
-                  onChange={e => setContactForm({ ...contactForm, lastName: e.target.value })}
-                  placeholder="Last Name"
-                  className="w-full text-xs p-3.5 bg-slate-50 border border-slate-100 rounded-2xl focus:bg-white focus:border-slate-200 outline-none transition-all font-semibold"
-                  required
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <input
-                  type="email"
-                  value={contactForm.email}
-                  onChange={e => setContactForm({ ...contactForm, email: e.target.value })}
-                  placeholder="Email"
-                  className="w-full text-xs p-3.5 bg-slate-50 border border-slate-100 rounded-2xl focus:bg-white focus:border-slate-200 outline-none transition-all font-semibold"
-                  required
-                />
-                <input
-                  type="tel"
-                  value={contactForm.phone}
-                  onChange={e => setContactForm({ ...contactForm, phone: e.target.value })}
-                  placeholder="Phone"
-                  className="w-full text-xs p-3.5 bg-slate-50 border border-slate-100 rounded-2xl focus:bg-white focus:border-slate-200 outline-none transition-all font-semibold"
-                  required
-                />
-              </div>
-
-              <textarea
-                value={contactForm.message}
-                onChange={e => setContactForm({ ...contactForm, message: e.target.value })}
-                placeholder="Type your message here..."
-                rows={3}
-                className="w-full text-xs p-3.5 bg-slate-50 border border-slate-100 rounded-2xl focus:bg-white focus:border-slate-200 outline-none transition-all font-semibold resize-none"
-                required
-              />
-
+            {/* Action Button & Social Media Icons */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6 w-full lg:w-auto">
               <button
-                type="submit"
-                disabled={submittingContact}
-                className="w-full text-xs font-black uppercase tracking-wider text-white py-4 rounded-2xl shadow-lg transition-all focus:outline-none flex items-center justify-center gap-2"
+                onClick={() => navigate('appointment')}
+                className="w-full sm:w-auto inline-flex items-center justify-center px-6 py-3.5 border rounded-full text-xs font-black uppercase tracking-wider transition-all focus:outline-none hover:shadow-md animate-fade-in"
                 style={{
-                  backgroundColor: themeColor
+                  color: themeColor,
+                  borderColor: `${themeColor}30`,
+                  backgroundColor: `${themeColor}05`
                 }}
               >
-                {submittingContact ? 'Submitting...' : 'Submit'}
+                Book Your Appointment
               </button>
-            </form>
-          </div>
 
-        </div>
-      </section>
-
-      {/* Bottom copyright & socials bar */}
-      <div className="bg-[#F8FAFC] border-t border-slate-150 py-8 relative z-10 w-full text-left">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 text-xs font-bold text-slate-500">
-          <div className="flex flex-col md:flex-row md:items-center gap-4 w-full md:w-auto">
-            {/* Email Address */}
-            <span className="text-slate-600 block">{tenant?.phone ? `info@${tenantSlug}.com` : 'info@modernhealthclinic.ca'}</span>
-            
-            {/* Divider (Hidden on mobile) */}
-            <span className="hidden md:inline text-slate-300 font-normal">•</span>
-            
-            {/* Follow Us and Social Icons */}
-            <div className="flex flex-col md:flex-row md:items-center gap-3 w-full md:w-auto">
-              <span className="uppercase tracking-widest text-[10px] text-slate-400 block md:inline">Follow Us</span>
-              <div className="flex items-center gap-4">
+              {/* Social media circle icons */}
+              <div className="flex items-center gap-3">
                 {socialLinks.instagram && (
                   <a
                     href={formatUrl(socialLinks.instagram)}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-slate-500 transition-all duration-300 transform hover:scale-110"
-                    style={{ color: hoveredSocial === 'instagram' ? themeColor : undefined }}
+                    className="w-10 h-10 rounded-full border flex items-center justify-center transition-all duration-300 transform hover:scale-105 hover:shadow-md"
+                    style={{
+                      borderColor: hoveredSocial === 'instagram' ? themeColor : '#E2E8F0',
+                      backgroundColor: hoveredSocial === 'instagram' ? themeColor : '#F8FAFC',
+                      color: hoveredSocial === 'instagram' ? '#FFFFFF' : '#64748B'
+                    }}
                     onMouseEnter={() => setHoveredSocial('instagram')}
                     onMouseLeave={() => setHoveredSocial(null)}
                   >
-                    <Instagram className="w-5 h-5" />
+                    <Instagram className="w-4.5 h-4.5" />
                   </a>
                 )}
                 {socialLinks.facebook && (
@@ -831,12 +709,16 @@ export default function HospitalLandingPage({ tenant, navigate }: Props) {
                     href={formatUrl(socialLinks.facebook)}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-slate-500 transition-all duration-300 transform hover:scale-110"
-                    style={{ color: hoveredSocial === 'facebook' ? themeColor : undefined }}
+                    className="w-10 h-10 rounded-full border flex items-center justify-center transition-all duration-300 transform hover:scale-105 hover:shadow-md"
+                    style={{
+                      borderColor: hoveredSocial === 'facebook' ? themeColor : '#E2E8F0',
+                      backgroundColor: hoveredSocial === 'facebook' ? themeColor : '#F8FAFC',
+                      color: hoveredSocial === 'facebook' ? '#FFFFFF' : '#64748B'
+                    }}
                     onMouseEnter={() => setHoveredSocial('facebook')}
                     onMouseLeave={() => setHoveredSocial(null)}
                   >
-                    <Facebook className="w-5 h-5" />
+                    <Facebook className="w-4.5 h-4.5" />
                   </a>
                 )}
                 {socialLinks.twitter && (
@@ -844,12 +726,16 @@ export default function HospitalLandingPage({ tenant, navigate }: Props) {
                     href={formatUrl(socialLinks.twitter)}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-slate-500 transition-all duration-300 transform hover:scale-110"
-                    style={{ color: hoveredSocial === 'twitter' ? themeColor : undefined }}
+                    className="w-10 h-10 rounded-full border flex items-center justify-center transition-all duration-300 transform hover:scale-105 hover:shadow-md"
+                    style={{
+                      borderColor: hoveredSocial === 'twitter' ? themeColor : '#E2E8F0',
+                      backgroundColor: hoveredSocial === 'twitter' ? themeColor : '#F8FAFC',
+                      color: hoveredSocial === 'twitter' ? '#FFFFFF' : '#64748B'
+                    }}
                     onMouseEnter={() => setHoveredSocial('twitter')}
                     onMouseLeave={() => setHoveredSocial(null)}
                   >
-                    <Twitter className="w-5 h-5" />
+                    <Twitter className="w-4.5 h-4.5" />
                   </a>
                 )}
                 {socialLinks.linkedin && (
@@ -857,12 +743,16 @@ export default function HospitalLandingPage({ tenant, navigate }: Props) {
                     href={formatUrl(socialLinks.linkedin)}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-slate-500 transition-all duration-300 transform hover:scale-110"
-                    style={{ color: hoveredSocial === 'linkedin' ? themeColor : undefined }}
+                    className="w-10 h-10 rounded-full border flex items-center justify-center transition-all duration-300 transform hover:scale-105 hover:shadow-md"
+                    style={{
+                      borderColor: hoveredSocial === 'linkedin' ? themeColor : '#E2E8F0',
+                      backgroundColor: hoveredSocial === 'linkedin' ? themeColor : '#F8FAFC',
+                      color: hoveredSocial === 'linkedin' ? '#FFFFFF' : '#64748B'
+                    }}
                     onMouseEnter={() => setHoveredSocial('linkedin')}
                     onMouseLeave={() => setHoveredSocial(null)}
                   >
-                    <Linkedin className="w-5 h-5" />
+                    <Linkedin className="w-4.5 h-4.5" />
                   </a>
                 )}
                 {socialLinks.youtube && (
@@ -870,23 +760,86 @@ export default function HospitalLandingPage({ tenant, navigate }: Props) {
                     href={formatUrl(socialLinks.youtube)}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-slate-500 transition-all duration-300 transform hover:scale-110"
-                    style={{ color: hoveredSocial === 'youtube' ? themeColor : undefined }}
+                    className="w-10 h-10 rounded-full border flex items-center justify-center transition-all duration-300 transform hover:scale-105 hover:shadow-md"
+                    style={{
+                      borderColor: hoveredSocial === 'youtube' ? themeColor : '#E2E8F0',
+                      backgroundColor: hoveredSocial === 'youtube' ? themeColor : '#F8FAFC',
+                      color: hoveredSocial === 'youtube' ? '#FFFFFF' : '#64748B'
+                    }}
                     onMouseEnter={() => setHoveredSocial('youtube')}
                     onMouseLeave={() => setHoveredSocial(null)}
                   >
-                    <Youtube className="w-5 h-5" />
+                    <Youtube className="w-4.5 h-4.5" />
                   </a>
                 )}
               </div>
             </div>
+
           </div>
 
-          <div className="text-slate-400 text-[11px] pt-4 md:pt-0 border-t border-slate-200/50 md:border-none w-full md:w-auto text-left">
-            © 2026 by {tenant?.name || 'Modern Health Clinic'}
+          {/* Middle Footer Row: Contact Cards Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            
+            {/* Address Card */}
+            <div className="bg-slate-50 border border-slate-100 rounded-2xl p-5 flex items-start gap-4 hover:shadow-sm transition-all duration-300">
+              <div className="w-10 h-10 rounded-xl bg-white border border-slate-100 flex items-center justify-center flex-shrink-0 shadow-sm" style={{ color: themeColor }}>
+                <MapPin className="w-5 h-5" />
+              </div>
+              <div className="space-y-1 text-xs">
+                <span className="block font-black text-slate-400 uppercase tracking-wider text-[10px]">Location Address</span>
+                <p className="font-bold text-slate-700 leading-relaxed">
+                  {tenant?.address || 'Unit 102 - 317 Renfrew Dr, Markham, Ontario L3R 9S8'}
+                </p>
+              </div>
+            </div>
+
+            {/* Timings / Operating hours summary Card */}
+            <div className="bg-slate-50 border border-slate-100 rounded-2xl p-5 flex items-start gap-4 hover:shadow-sm transition-all duration-300">
+              <div className="w-10 h-10 rounded-xl bg-white border border-slate-100 flex items-center justify-center flex-shrink-0 shadow-sm" style={{ color: themeColor }}>
+                <Clock className="w-5 h-5" />
+              </div>
+              <div className="space-y-1 text-xs">
+                <span className="block font-black text-slate-400 uppercase tracking-wider text-[10px]">Operating Timings</span>
+                <p className="font-bold text-slate-700 leading-relaxed">
+                  {meta.timings || '24/7 Outpatient & Emergency Care'}
+                </p>
+              </div>
+            </div>
+
+            {/* Support Call-desk Email & Phone Card */}
+            <div className="bg-slate-50 border border-slate-100 rounded-2xl p-5 flex items-start gap-4 hover:shadow-sm transition-all duration-300">
+              <div className="w-10 h-10 rounded-xl bg-white border border-slate-100 flex items-center justify-center flex-shrink-0 shadow-sm" style={{ color: themeColor }}>
+                <Mail className="w-5 h-5" />
+              </div>
+              <div className="space-y-1 text-xs">
+                <span className="block font-black text-slate-400 uppercase tracking-wider text-[10px]">Support Call-Desk</span>
+                <p className="font-bold text-slate-700 leading-relaxed truncate">
+                  {tenant?.phone ? `info@${tenantSlug}.com` : 'info@modernhealthclinic.ca'}
+                </p>
+              </div>
+            </div>
+
           </div>
+
+          {/* Bottom Row: Copyright & Top Arrow link */}
+          <div className="pt-8 border-t border-slate-100 flex flex-col sm:flex-row justify-between items-center gap-4 text-xs font-bold text-slate-500">
+            <div>
+              © 2026 by {tenant?.name || 'Modern Health Clinic'}
+            </div>
+            <button
+              onClick={scrollToTop}
+              className="text-slate-400 hover:text-slate-700 transition-colors uppercase tracking-widest text-[10px] flex items-center gap-1.5 focus:outline-none"
+              style={{ color: hoveredScrollTop ? themeColor : undefined }}
+              onMouseEnter={() => setHoveredScrollTop(true)}
+              onMouseLeave={() => setHoveredScrollTop(false)}
+            >
+              <span>Back To Top</span>
+              <ArrowUp className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
         </div>
-      </div>
+      </footer>
 
       {/* ── CONTACT FORM SUCCESS DIALOG MODAL ────────────────────── */}
       {showContactSuccess && (
