@@ -152,7 +152,7 @@ export default function PatientLoginPage({ onLogin, onLogoClick, onBack }: Props
                 </div>
                 <div className="flex flex-col items-center gap-1">
                   <FileText className="w-4.5 h-4.5 text-violet-500" />
-                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider">Vault</span>
+                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider">History</span>
                 </div>
               </div>
 

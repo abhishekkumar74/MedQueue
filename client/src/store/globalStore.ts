@@ -49,24 +49,5 @@ export const globalStore = {
     } else {
       sessionStorage.removeItem('mq_superadmin_portal_active');
     }
-  },
-
-  // ── Offline & PWA Client Cache ──
-  getFamilyProfiles(phone: string): any[] {
-    const raw = localStorage.getItem(`mq_family_profiles_${phone}`);
-    return raw ? JSON.parse(raw) : [];
-  },
-
-  setFamilyProfiles(phone: string, profiles: any[]): void {
-    localStorage.setItem(`mq_family_profiles_${phone}`, JSON.stringify(profiles));
-  },
-
-  getMedicalVault(phone: string, profileName: string): any[] {
-    const raw = localStorage.getItem(`mq_medical_vault_${phone}_${profileName}`);
-    return raw ? JSON.parse(raw) : [];
-  },
-
-  setMedicalVault(phone: string, profileName: string, docs: any[]): void {
-    localStorage.setItem(`mq_medical_vault_${phone}_${profileName}`, JSON.stringify(docs));
   }
 };

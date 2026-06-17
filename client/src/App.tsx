@@ -795,7 +795,7 @@ export default function App() {
             {[
               { id: 'register', label: 'Workspace', icon: <Home className="w-5.5 h-5.5" /> },
               { id: 'tracker', label: 'Live Queue', icon: <Clock className="w-5.5 h-5.5" /> },
-              { id: 'history', label: 'Health Vault', icon: <FileText className="w-5.5 h-5.5" /> },
+              { id: 'history', label: 'History', icon: <FileText className="w-5.5 h-5.5" /> },
             ].map(link => (
               <button key={link.id} onClick={() => navigate(link.id)}
                 aria-label={`Navigate to ${link.label}`}
