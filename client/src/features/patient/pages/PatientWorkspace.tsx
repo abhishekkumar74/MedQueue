@@ -581,12 +581,12 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
     const isNight = freq.includes('night') || freq.includes('twice') || freq.includes('thrice') || freq.endsWith('-1') || freq.includes('1-1-1');
     
     return (
-      <div className="flex items-center gap-1.5 mt-1 bg-slate-50 border border-slate-100 px-2 py-0.5 rounded w-max select-none text-[8px] font-bold">
-        <span className={isMorning ? 'text-amber-500 font-black' : 'text-slate-300 opacity-45'}>☀️ Morning</span>
+      <div className="flex items-center gap-1 mt-0.5 bg-slate-50 border border-slate-100 px-1.5 py-0.5 rounded w-max select-none text-[7.5px] font-bold">
+        <span className={isMorning ? 'text-amber-500 font-black' : 'text-slate-350 opacity-40'}>☀️ Morning</span>
         <span className="text-slate-200">|</span>
-        <span className={isAfternoon ? 'text-amber-600 font-black' : 'text-slate-300 opacity-45'}>🌤️ Noon</span>
+        <span className={isAfternoon ? 'text-amber-600 font-black' : 'text-slate-350 opacity-40'}>🌤️ Noon</span>
         <span className="text-slate-200">|</span>
-        <span className={isNight ? 'text-indigo-500 font-black' : 'text-slate-300 opacity-45'}>🌙 Night</span>
+        <span className={isNight ? 'text-indigo-500 font-black' : 'text-slate-350 opacity-40'}>🌙 Night</span>
       </div>
     );
   };
@@ -609,7 +609,7 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
   }
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] font-sans pb-24 md:pb-8 relative overflow-x-hidden w-full max-w-full text-slate-800 antialiased text-left">
+    <div className="min-h-screen bg-[#F8FAFC] font-sans pb-20 md:pb-6 relative overflow-x-hidden w-full max-w-full text-slate-800 antialiased text-left">
       
       {/* Ambient background decoration */}
       <div className="absolute top-0 left-[-5%] w-[45%] h-[30%] bg-gradient-to-br from-[#005EB8]/3 to-transparent rounded-full blur-[60px] pointer-events-none" />
@@ -617,34 +617,41 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
 
       {/* Connectivity Banner */}
       {isOffline && (
-        <div className="bg-rose-50 text-rose-700 border-b border-rose-100 py-1.5 px-3 text-[10px] font-black text-center flex items-center justify-center gap-2 shadow-inner z-50 sticky top-0 uppercase tracking-wider">
-          <WifiOff className="w-3.5 h-3.5 animate-bounce" />
+        <div className="bg-rose-50 text-rose-700 border-b border-rose-100 py-1 px-3 text-[9px] font-black text-center flex items-center justify-center gap-1.5 shadow-inner z-50 sticky top-0 uppercase tracking-wider">
+          <WifiOff className="w-3 h-3 animate-bounce" />
           <span>Offline Mode — Displaying Cached Records</span>
         </div>
       )}
 
       {/* Page Body Grid */}
-      <main className="max-w-2xl mx-auto px-4 pt-4 space-y-4">
+      <main className="max-w-2xl mx-auto px-4 pt-3.5 space-y-3.5">
 
         {/* ── TAB 1: HOME DASHBOARD ── */}
         {activeTab === 'home' && (
-          <div className="space-y-4 animate-fade-in text-left">
+          <div className="space-y-3.5 animate-fade-in text-left">
             
-            {/* Ambient greeting & hospital banner */}
-            <div className="flex items-center justify-between bg-slate-50 border border-slate-200/50 rounded-xl px-3.5 py-2 text-[11px] font-semibold text-slate-500 select-none">
-              <div className="flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                <span className="font-extrabold text-slate-700 uppercase tracking-wider">{tenant?.name || 'Apollo Medical Center'}</span>
+            {/* Ambient greeting & hospital welcome chip */}
+            <div className="flex items-center justify-between py-1.5 select-none border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded bg-[#005EB8]/10 text-[#005EB8] flex items-center justify-center font-black text-[11px] uppercase tracking-wider">
+                  {profileForm.name ? profileForm.name.substring(0, 2).toUpperCase() : 'PT'}
+                </div>
+                <div>
+                  <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest block leading-none">{greeting.text} {greeting.icon}</span>
+                  <h3 className="text-[11px] font-black text-slate-800 mt-1 leading-none">{profileForm.name || 'Verified Patient'}</h3>
+                </div>
               </div>
-              <div className="flex items-center gap-2.5">
-                <span className="text-[9.5px] text-slate-400 font-bold uppercase tracking-wider">{greeting.text}, {profileForm.name || 'User'}</span>
-                <span className="text-slate-200">|</span>
+              <div className="flex items-center gap-2">
+                <span className="text-[8px] font-black uppercase tracking-wider text-emerald-600 bg-emerald-50 border border-emerald-100/50 px-2 py-0.5 rounded flex items-center gap-1">
+                  <span className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse" />
+                  {tenant?.name || 'Apollo Medical'}
+                </span>
                 <button
                   onClick={async () => {
                     await clearOfflineCache();
                     signOut();
                   }}
-                  className="text-[#005EB8] hover:text-[#004a96] font-black uppercase tracking-wider text-[9.5px] active:scale-95 transition-transform"
+                  className="px-2 py-0.5 bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-550 hover:text-slate-700 text-[8px] font-black rounded uppercase tracking-wider transition-all active:scale-95 min-h-[24px]"
                 >
                   Log Out
                 </button>
@@ -653,28 +660,28 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
             
             {/* 1.1 ZOMATO/UBER STYLE LIVE TRACKER CARD */}
             {activeToken ? (
-              <div className="bg-white border border-slate-200/60 rounded-xl p-4 shadow-sm space-y-4 text-left relative overflow-hidden">
+              <div className="bg-white border border-slate-200/60 rounded-xl p-3.5 shadow-sm space-y-3.5 text-left relative overflow-hidden">
                 <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#005EB8] to-[#00A3AD]" />
                 
-                <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
-                  <div className="flex items-center gap-1.5">
-                    <span className="w-2 h-2 bg-emerald-500 rounded-full animate-ping" />
-                    <span className="w-2 h-2 bg-emerald-500 rounded-full absolute" />
-                    <span className="text-[8px] font-black text-[#005EB8] uppercase tracking-widest ml-1">Live Queue Track</span>
+                <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                  <div className="flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-ping" />
+                    <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full absolute" />
+                    <span className="text-[7.5px] font-black text-[#005EB8] uppercase tracking-widest ml-1">Live Queue Track</span>
                   </div>
-                  <div className="text-[9px] text-slate-400 font-bold uppercase">
-                    Token <strong className="text-slate-800 text-[11px] font-black">#{activeToken.token_number}</strong>
+                  <div className="text-[8.5px] text-slate-400 font-bold uppercase">
+                    Token <strong className="text-slate-800 text-xs font-black">#{activeToken.token_number}</strong>
                   </div>
                 </div>
 
                 {/* Progress Tracking Bar */}
                 <div className="relative pt-1 pb-1 select-none">
                   {/* Progress Line Background */}
-                  <div className="absolute top-[20px] left-[5%] right-[5%] h-0.5 bg-slate-100 rounded-full" />
+                  <div className="absolute top-[18px] left-[5%] right-[5%] h-0.5 bg-slate-100 rounded-full" />
                   
                   {/* Progress Line Fill */}
                   <div 
-                    className="absolute top-[20px] left-[5%] h-0.5 bg-[#005EB8] rounded-full transition-all duration-500" 
+                    className="absolute top-[18px] left-[5%] h-0.5 bg-[#005EB8] rounded-full transition-all duration-500" 
                     style={{
                       width: 
                         activeToken.status === 'SERVING' ? '90%' :
@@ -692,15 +699,15 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
                       { label: 'Serving', active: activeToken.status === 'SERVING' },
                     ].map((step, idx) => (
                       <div key={idx} className="flex flex-col items-center w-1/4">
-                        <div className={`w-6 h-6 rounded-full flex items-center justify-center border transition-all relative z-10 text-[9px] font-bold ${
+                        <div className={`w-5 h-5 rounded-full flex items-center justify-center border transition-all relative z-10 text-[8px] font-bold ${
                           step.active 
                             ? 'bg-[#005EB8] border-[#005EB8] text-white shadow-sm' 
                             : 'bg-white border-slate-200 text-slate-400'
                         }`}>
                           {step.active ? '✓' : idx + 1}
                         </div>
-                        <span className={`text-[7.5px] font-black uppercase tracking-wider mt-1.5 block ${
-                          step.active ? 'text-[#005EB8]' : 'text-slate-400'
+                        <span className={`text-[7px] font-black uppercase tracking-wider mt-1 block ${
+                          step.active ? 'text-[#005EB8]' : 'text-slate-450'
                         }`}>{step.label}</span>
                       </div>
                     ))}
@@ -708,45 +715,45 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
                 </div>
 
                 {/* Doctor, Room and ETA details */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 bg-slate-50 border border-slate-200/30 rounded-xl p-3 text-[11px] font-semibold">
-                  <div className="space-y-1">
-                    <div className="text-slate-400 text-[8px] uppercase tracking-wider font-bold">Consulting Specialist</div>
-                    <div className="font-extrabold text-slate-800 text-xs truncate flex items-center gap-1">
-                      <Stethoscope className="w-3.5 h-3.5 text-[#005EB8]" />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 bg-slate-50 border border-slate-200/30 rounded-xl p-2.5 text-[10.5px] font-semibold">
+                  <div className="space-y-0.5">
+                    <div className="text-slate-400 text-[7.5px] uppercase tracking-wider font-bold">Consulting Specialist</div>
+                    <div className="font-extrabold text-slate-800 text-[11px] truncate flex items-center gap-1">
+                      <Stethoscope className="w-3 h-3 text-[#005EB8]" />
                       {activeToken.doctor_name || 'Assigned Practitioner'}
                     </div>
-                    <div className="text-[9.5px] text-slate-500 uppercase">Room: <strong className="text-slate-700">{activeToken.room_number || 'TBA'}</strong></div>
+                    <div className="text-[9px] text-slate-500 uppercase">Room: <strong className="text-slate-700">{activeToken.room_number || 'TBA'}</strong></div>
                   </div>
-                  <div className="flex items-center gap-2.5 border-t md:border-t-0 md:border-l border-slate-200/50 pt-2.5 md:pt-0 md:pl-3">
-                    <div className="w-7 h-7 rounded-lg bg-[#005EB8]/10 flex items-center justify-center text-[#005EB8]">
-                      <Clock className="w-4 h-4 animate-pulse" />
+                  <div className="flex items-center gap-2 border-t md:border-t-0 md:border-l border-slate-200/50 pt-2 md:pt-0 md:pl-2.5">
+                    <div className="w-6 h-6 rounded-lg bg-[#005EB8]/10 flex items-center justify-center text-[#005EB8]">
+                      <Clock className="w-3.5 h-3.5 animate-pulse" />
                     </div>
                     <div>
-                      <div className="text-slate-400 text-[8px] uppercase tracking-wider font-bold">Approximate Wait</div>
-                      <div className="text-[11px] font-black text-slate-800">
+                      <div className="text-slate-400 text-[7.5px] uppercase tracking-wider font-bold">Approximate Wait</div>
+                      <div className="text-[10.5px] font-black text-slate-800">
                         {activeToken.status === 'SERVING' ? 'You are being served now' : `~${patientsAhead * 10 + 8} mins remaining`}
                       </div>
                       {activeToken.status === 'WAITING' && (
-                        <span className="text-[8.5px] text-slate-400 block mt-0.5">{patientsAhead} patients ahead in queue</span>
+                        <span className="text-[8px] text-slate-400 block mt-0.5">{patientsAhead} patients ahead in queue</span>
                       )}
                     </div>
                   </div>
                 </div>
               </div>
             ) : (
-              <div className="bg-gradient-to-r from-[#005EB8]/10 to-[#00A3AD]/5 border border-[#005EB8]/15 rounded-xl p-5 text-center space-y-3.5 shadow-inner">
-                <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center mx-auto text-[#005EB8] shadow-sm">
-                  <Ticket className="w-5 h-5 animate-pulse" />
+              <div className="bg-gradient-to-r from-[#005EB8]/10 to-[#00A3AD]/5 border border-[#005EB8]/15 rounded-xl p-4 text-center space-y-3 shadow-inner">
+                <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center mx-auto text-[#005EB8] shadow-sm">
+                  <Ticket className="w-4 h-4 animate-pulse" />
                 </div>
-                <div className="space-y-1">
-                  <h3 className="text-xs font-black text-slate-855 uppercase tracking-wider">No Active Queue Token Today</h3>
-                  <p className="text-[10px] text-slate-400 font-semibold max-w-xs mx-auto leading-relaxed">
+                <div className="space-y-0.5">
+                  <h3 className="text-[11px] font-black text-slate-855 uppercase tracking-wider">No Active Queue Token Today</h3>
+                  <p className="text-[9.5px] text-slate-400 font-semibold max-w-xs mx-auto leading-relaxed">
                     Instantly book your clinic walk-in outpatient token to secure your position in queue.
                   </p>
                 </div>
                 <button
                   onClick={() => setShowBookingOverlay(true)}
-                  className="px-5 py-2.5 bg-[#005EB8] hover:bg-[#004a96] text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition-all shadow-sm shadow-[#005EB8]/10 min-h-[38px]"
+                  className="px-4 py-2 bg-[#005EB8] hover:bg-[#004a96] text-white text-[9px] font-black uppercase tracking-widest rounded-lg transition-all shadow-sm shadow-[#005EB8]/10 min-h-[34px]"
                 >
                   Book Walk-in Token →
                 </button>
@@ -755,27 +762,27 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
 
             {/* 1.2 UPCOMING APPOINTMENT CHECK */}
             {dbAppointments.length > 0 && (
-              <div className="bg-white border border-slate-200/60 rounded-xl p-4 shadow-sm space-y-3">
-                <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-                  <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1">
-                    <Calendar className="w-3.5 h-3.5 text-amber-500" />
+              <div className="bg-white border border-slate-200/60 rounded-xl p-3 shadow-sm space-y-2.5">
+                <div className="flex items-center justify-between border-b border-slate-100 pb-1.5">
+                  <span className="text-[7.5px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1">
+                    <Calendar className="w-3 h-3 text-amber-500" />
                     Upcoming Visit
                   </span>
-                  <span className="text-[8px] font-black uppercase text-amber-600 bg-amber-50 border border-amber-100/50 px-2 py-0.5 rounded-md">
+                  <span className="text-[7.5px] font-black uppercase text-amber-600 bg-amber-50 border border-amber-100/50 px-1.5 py-0.5 rounded">
                     Confirmed
                   </span>
                 </div>
-                <div className="flex justify-between items-start text-[11px] font-semibold gap-3">
+                <div className="flex justify-between items-start text-[10.5px] font-semibold gap-3">
                   <div className="space-y-0.5">
                     <h4 className="font-extrabold text-slate-850">{dbAppointments[0].doctor_name || 'Specialist Doctor'}</h4>
-                    <p className="text-[9.5px] text-slate-400 capitalize">{dbAppointments[0].department} Specialty</p>
-                    <p className="text-[9.5px] text-slate-500 mt-1">
+                    <p className="text-[9px] text-slate-400 capitalize">{dbAppointments[0].department} Specialty</p>
+                    <p className="text-[9px] text-slate-500 mt-0.5">
                       {new Date(dbAppointments[0].appointment_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })} • {dbAppointments[0].time_slot}
                     </p>
                   </div>
                   <button 
                     onClick={() => { setActiveTab('guide'); }}
-                    className="px-3 py-1 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-655 text-[9.5px] font-black uppercase tracking-wider rounded-lg transition-all"
+                    className="px-2.5 py-1 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-655 text-[9px] font-black uppercase tracking-wider rounded transition-all min-h-[26px]"
                   >
                     OPD Map
                   </button>
@@ -785,21 +792,21 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
 
             {/* 1.3 VITALS SUMMARY CARD */}
             {dbVisits.length > 0 && (
-              <div className="bg-white border border-slate-200/60 rounded-xl p-4 shadow-sm space-y-3">
-                <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest block border-b border-slate-100 pb-2">
+              <div className="bg-white border border-slate-200/60 rounded-xl p-3 shadow-sm space-y-2.5">
+                <span className="text-[7.5px] font-black text-slate-400 uppercase tracking-widest block border-b border-slate-100 pb-1.5">
                   Latest Triage Vitals Snapshot
                 </span>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-center">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center">
                   {[
                     { label: 'BP', val: dbVisits[0].bp || '120/80', unit: 'mmHg', color: 'text-indigo-650 bg-indigo-50/50' },
                     { label: 'Sugar', val: dbVisits[0].sugar || '98', unit: 'mg/dL', color: 'text-emerald-650 bg-emerald-50/50' },
                     { label: 'Oxygen', val: dbVisits[0].tokens?.patient_intake?.[0]?.oxygen || '98', unit: '%', color: 'text-blue-650 bg-blue-50/50' },
                     { label: 'Pulse', val: dbVisits[0].tokens?.patient_intake?.[0]?.pulse || '72', unit: 'BPM', color: 'text-rose-650 bg-rose-50/50' },
                   ].map((v, i) => (
-                    <div key={i} className={`p-2.5 rounded-xl ${v.color} flex flex-col justify-center`}>
-                      <span className="text-[8px] uppercase font-bold tracking-wider opacity-60">{v.label}</span>
-                      <strong className="text-xs font-extrabold block mt-0.5 tracking-tight">{v.val}</strong>
-                      <span className="text-[7.5px] opacity-50 block mt-0.5">{v.unit}</span>
+                    <div key={i} className={`p-2 rounded-lg ${v.color} flex flex-col justify-center`}>
+                      <span className="text-[7.5px] uppercase font-bold tracking-wider opacity-60">{v.label}</span>
+                      <strong className="text-[11px] font-extrabold block mt-0.5 tracking-tight">{v.val}</strong>
+                      <span className="text-[7px] opacity-50 block mt-0.5">{v.unit}</span>
                     </div>
                   ))}
                 </div>
@@ -808,29 +815,29 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
 
             {/* 1.4 LATEST PRESCRIPTION CHECKLIST */}
             {dbPrescriptions.length > 0 && (
-              <div className="bg-white border border-slate-200/60 rounded-xl p-4 shadow-sm space-y-3">
-                <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-                  <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1">
-                    <FileText className="w-3.5 h-3.5 text-emerald-500" />
+              <div className="bg-white border border-slate-200/60 rounded-xl p-3 shadow-sm space-y-2.5">
+                <div className="flex items-center justify-between border-b border-slate-100 pb-1.5">
+                  <span className="text-[7.5px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1">
+                    <FileText className="w-3 h-3 text-emerald-500" />
                     Current Medication Schedule
                   </span>
-                  <span className="text-[7.5px] font-black text-slate-400 uppercase">
+                  <span className="text-[7px] font-black text-slate-400 uppercase">
                     Dispensed
                   </span>
                 </div>
-                <div className="space-y-1.5">
-                  <div className="text-[11px] font-semibold">
+                <div className="space-y-1">
+                  <div className="text-[10.5px] font-semibold">
                     <strong className="text-slate-800">{dbPrescriptions[0].diagnosis || 'Mild Diagnosis'}</strong>
                   </div>
-                  <div className="space-y-2 mt-1.5">
+                  <div className="space-y-1.5 mt-1">
                     {Array.isArray(dbPrescriptions[0].medications) && dbPrescriptions[0].medications.slice(0, 2).map((med: any, idx: number) => (
-                      <div key={idx} className="bg-slate-50 border border-slate-100/50 p-2.5 rounded-lg flex items-center justify-between text-[11px] font-semibold gap-3">
+                      <div key={idx} className="bg-slate-50 border border-slate-100/50 p-2 rounded-md flex items-center justify-between text-[10.5px] font-semibold gap-3">
                         <div>
                           <strong className="text-slate-800 font-extrabold block">• {med.name}</strong>
-                          <span className="text-[8.5px] text-slate-400 block mt-0.5">{med.instructions || 'Take post meals'}</span>
+                          <span className="text-[8px] text-slate-400 block mt-0.5">{med.instructions || 'Take post meals'}</span>
                         </div>
                         <div className="text-right shrink-0">
-                          <span className="text-[8.5px] text-[#005EB8] font-black uppercase tracking-wider bg-[#005EB8]/5 border border-[#005EB8]/10 px-2 py-0.5 rounded-md">
+                          <span className="text-[8px] text-[#005EB8] font-black uppercase tracking-wider bg-[#005EB8]/5 border border-[#005EB8]/10 px-1.5 py-0.5 rounded">
                             {med.dosage}
                           </span>
                         </div>
@@ -840,7 +847,7 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
                   {dbPrescriptions[0].medications?.length > 2 && (
                     <button 
                       onClick={() => { setActiveTab('history'); setTimelineCategory('Prescriptions'); }}
-                      className="text-[8px] font-black uppercase text-[#005EB8] tracking-wider block mt-1.5 hover:underline"
+                      className="text-[7.5px] font-black uppercase text-[#005EB8] tracking-wider block mt-1 hover:underline"
                     >
                       + View {dbPrescriptions[0].medications.length - 2} more medications
                     </button>
@@ -850,9 +857,9 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
             )}
 
             {/* 1.5 QUICK ACTIONS GRID */}
-            <div className="space-y-1.5">
-              <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest block px-1">Quick Shortcuts</span>
-              <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <span className="text-[7.5px] font-black text-slate-400 uppercase tracking-widest block px-1">Quick Shortcuts</span>
+              <div className="grid grid-cols-2 gap-2.5">
                 {[
                   { label: 'Register Token', icon: Ticket, action: () => setShowBookingOverlay(true), desc: 'Outpatient queue token' },
                   { label: 'Health Vault', icon: Clock, action: () => setActiveTab('history'), desc: 'Consultations & Rx logs' },
@@ -864,14 +871,14 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
                     <button
                       key={i}
                       onClick={act.action}
-                      className="bg-white hover:bg-slate-50 border border-slate-200/50 rounded-xl p-3 text-left shadow-sm flex gap-2.5 items-start group transition-all duration-205 min-h-[62px] select-none active:scale-[0.98]"
+                      className="bg-white hover:bg-slate-50 border border-slate-200/50 rounded-xl p-2.5 text-left shadow-sm flex gap-2 items-start group transition-all duration-200 min-h-[56px] select-none active:scale-[0.98]"
                     >
-                      <div className="w-8 h-8 rounded-lg bg-[#005EB8]/5 group-hover:bg-[#005EB8]/10 flex items-center justify-center text-[#005EB8] shrink-0 transition-colors">
-                        <Icon className="w-4 h-4" />
+                      <div className="w-7 h-7 rounded-lg bg-[#005EB8]/5 group-hover:bg-[#005EB8]/10 flex items-center justify-center text-[#005EB8] shrink-0 transition-colors">
+                        <Icon className="w-3.5 h-3.5" />
                       </div>
                       <div className="min-w-0">
-                        <strong className="text-[11px] font-black text-slate-800 block truncate leading-tight group-hover:text-[#005EB8] transition-colors">{act.label}</strong>
-                        <span className="text-[8.5px] text-slate-400 font-bold block mt-0.5 truncate">{act.desc}</span>
+                        <strong className="text-[10.5px] font-black text-slate-800 block truncate leading-tight group-hover:text-[#005EB8] transition-colors">{act.label}</strong>
+                        <span className="text-[8px] text-slate-400 font-bold block mt-0.5 truncate">{act.desc}</span>
                       </div>
                     </button>
                   );
@@ -880,18 +887,18 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
             </div>
 
             {/* 1.6 EMERGENCY SPEED DIAL */}
-            <div className="bg-rose-50 border border-rose-100 rounded-xl p-4 flex gap-3.5 items-start">
-              <ShieldAlert className="w-5 h-5 text-rose-500 flex-shrink-0 mt-0.5 animate-bounce" />
-              <div className="space-y-1.5 text-[11px] font-semibold text-left">
-                <span className="text-[8px] font-black text-rose-700 uppercase tracking-widest block">Emergency Services Contact</span>
-                <p className="text-rose-600 leading-relaxed font-bold text-[10.5px]">
+            <div className="bg-rose-50 border border-rose-100 rounded-xl p-3 flex gap-3 items-start">
+              <ShieldAlert className="w-4.5 h-4.5 text-rose-500 flex-shrink-0 mt-0.5 animate-bounce" />
+              <div className="space-y-1 text-[10.5px] font-semibold text-left">
+                <span className="text-[7.5px] font-black text-rose-700 uppercase tracking-widest block">Emergency Services Contact</span>
+                <p className="text-rose-600 leading-relaxed font-bold text-[10.0px]">
                   Facing severe pain or health crisis? Skip standard booking queues and dial the clinic triage desk immediately.
                 </p>
                 <a
                   href="tel:+919999999991"
-                  className="inline-flex items-center gap-1 px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white text-[9px] font-black uppercase tracking-wider rounded-lg transition-all shadow-sm w-max min-h-[32px]"
+                  className="inline-flex items-center gap-1 px-2.5 py-1 bg-rose-600 hover:bg-rose-700 text-white text-[8.5px] font-black uppercase tracking-wider rounded transition-all shadow-sm w-max min-h-[28px]"
                 >
-                  <PhoneCall className="w-3 h-3" />
+                  <PhoneCall className="w-2.5 h-2.5" />
                   <span>Call Hospital Help</span>
                 </a>
               </div>
@@ -902,37 +909,37 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
 
         {/* ── TAB 2: MEDICAL HISTORY TIMELINE (APPLE HEALTH VAULT) ── */}
         {activeTab === 'history' && (
-          <div className="space-y-4 animate-fade-in text-left">
+          <div className="space-y-3.5 animate-fade-in text-left">
             <div>
-              <h2 className="text-[11px] font-black text-slate-800 tracking-widest flex items-center gap-1.5 uppercase">
-                <Clock className="w-4 h-4 text-[#005EB8]" />
+              <h2 className="text-[10px] font-black text-slate-850 tracking-widest flex items-center gap-1.5 uppercase leading-none">
+                <Clock className="w-3.5 h-3.5 text-[#005EB8]" />
                 Medical EHR Vault
               </h2>
-              <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">
+              <p className="text-[8.5px] text-slate-400 font-bold uppercase tracking-wider mt-1">
                 Your medical history consolidated across MedQueue network nodes.
               </p>
             </div>
 
             {/* Timelines Search & Filter Pane */}
-            <div className="bg-white border border-slate-200/50 rounded-xl p-3.5 shadow-sm space-y-3.5">
-              <div className="flex flex-col sm:flex-row gap-2.5">
+            <div className="bg-white border border-slate-200/50 rounded-xl p-2.5 shadow-sm space-y-2.5">
+              <div className="flex flex-col sm:flex-row gap-2">
                 {/* Search Index Input */}
                 <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
                   <input
                     type="text"
                     value={searchQuery}
                     onChange={e => setSearchQuery(e.target.value)}
                     placeholder="Search vault..."
-                    className="w-full pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold focus:outline-none focus:border-[#005EB8] focus:bg-white transition-all min-h-[38px]"
+                    className="w-full pl-7 pr-2.5 py-1 bg-slate-50 border border-slate-200 rounded-lg text-[11px] font-semibold focus:outline-none focus:border-[#005EB8] focus:bg-white transition-all min-h-[32px]"
                   />
                 </div>
                 {/* Hospital Node Vault Dropdown */}
-                <div className="w-full sm:w-48">
+                <div className="w-full sm:w-44">
                   <select
                     value={selectedHospitalFilter}
                     onChange={e => setSelectedHospitalFilter(e.target.value)}
-                    className="w-full border border-slate-200 bg-slate-50 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-700 focus:outline-none focus:border-[#005EB8] focus:bg-white transition-all min-h-[38px] appearance-none"
+                    className="w-full border border-slate-200 bg-slate-50 rounded-lg px-2.5 py-1 text-[11px] font-semibold text-slate-700 focus:outline-none focus:border-[#005EB8] focus:bg-white transition-all min-h-[32px] appearance-none"
                   >
                     <option value="All">All Hospital Vaults</option>
                     {Object.entries(hospitals).map(([id, name]) => (
@@ -943,7 +950,7 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
               </div>
 
               {/* Tag Categories & Periods */}
-              <div className="flex flex-col gap-2.5 pt-3 border-t border-slate-100">
+              <div className="flex flex-col gap-2 pt-2 border-t border-slate-100">
                 <div className="flex gap-1 overflow-x-auto pb-1 scrollbar-none">
                   {[
                     { id: 'All', label: 'All Logs' },
@@ -955,7 +962,7 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
                     <button
                       key={cat.id}
                       onClick={() => setTimelineCategory(cat.id)}
-                      className={`flex-shrink-0 px-2.5 py-1.5 rounded-lg text-[8px] font-black uppercase tracking-wider transition-all border ${
+                      className={`flex-shrink-0 px-2 py-1 rounded text-[7.5px] font-black uppercase tracking-wider transition-all border min-h-[26px] ${
                         timelineCategory === cat.id
                           ? 'bg-[#005EB8] border-transparent text-white shadow-sm'
                           : 'bg-white hover:bg-slate-50 text-slate-550 border-slate-200'
@@ -966,9 +973,9 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
                   ))}
                 </div>
 
-                <div className="flex justify-between items-center text-[8.5px] font-black text-slate-400 uppercase tracking-wider">
+                <div className="flex justify-between items-center text-[8px] font-black text-slate-400 uppercase tracking-wider">
                   <span>Vault Date Range</span>
-                  <div className="flex gap-1 bg-slate-100 p-0.5 rounded-md border border-slate-200/50">
+                  <div className="flex gap-1 bg-slate-100 p-0.5 rounded border border-slate-200/50">
                     {[
                       { id: 'all', label: 'All time' },
                       { id: '30', label: '30 Days' },
@@ -977,7 +984,7 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
                       <button
                         key={per.id}
                         onClick={() => setTimelineFilter(per.id as any)}
-                        className={`px-2 py-0.5 rounded text-[7.5px] font-black tracking-wider transition-all uppercase ${
+                        className={`px-1.5 py-0.5 rounded text-[7px] font-black tracking-wider transition-all uppercase ${
                           timelineFilter === per.id ? 'bg-white text-[#005EB8] shadow-sm' : 'text-slate-450 hover:text-slate-800'
                         }`}
                       >
@@ -991,36 +998,36 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
 
             {/* Apple Health Timeline */}
             {loadingHistory ? (
-              <div className="p-6 text-center text-slate-400 font-semibold bg-white border border-slate-200/50 rounded-xl animate-pulse text-xs">
+              <div className="p-5 text-center text-slate-450 font-semibold bg-white border border-slate-200/50 rounded-xl animate-pulse text-[11px]">
                 ⏳ Accessing digital core registries...
               </div>
             ) : filteredTimelineEvents.length === 0 ? (
-              <div className="bg-white border border-slate-200/50 rounded-xl p-8 text-center text-slate-450 space-y-2.5 shadow-sm select-none">
-                <Clock className="w-8 h-8 text-slate-300 mx-auto" />
-                <h3 className="font-extrabold text-[11px] uppercase text-slate-700">No medical records found</h3>
-                <p className="text-[10px] text-slate-400 max-w-xs mx-auto leading-relaxed">
+              <div className="bg-white border border-slate-200/50 rounded-xl p-6 text-center text-slate-450 space-y-2 shadow-sm select-none">
+                <Clock className="w-7 h-7 text-slate-300 mx-auto" />
+                <h3 className="font-extrabold text-[10px] uppercase text-slate-750">No medical records found</h3>
+                <p className="text-[9px] text-slate-400 max-w-xs mx-auto leading-relaxed">
                   Modify your keywords, categories, date limits, or check hospital filters.
                 </p>
               </div>
             ) : (
-              <div className="space-y-5 relative">
+              <div className="space-y-4 relative">
                 {/* Visual Timeline line connector */}
-                <div className="absolute left-[12px] top-5 bottom-5 w-0.5 bg-slate-200" />
+                <div className="absolute left-[10px] top-4.5 bottom-4.5 w-0.5 bg-slate-200" />
 
                 {Object.entries(groupedEvents).map(([year, months]) => (
-                  <div key={year} className="space-y-3">
+                  <div key={year} className="space-y-2.5">
                     {/* Year badge indicator */}
-                    <div className="sticky top-[80px] z-20 w-max bg-slate-900 text-white text-[8px] font-black px-2.5 py-0.5 rounded-md uppercase tracking-widest shadow-sm">
+                    <div className="sticky top-[80px] z-20 w-max bg-slate-900 text-white text-[7.5px] font-black px-2 py-0.5 rounded uppercase tracking-widest shadow-sm">
                       Year {year}
                     </div>
 
                     {Object.entries(months).map(([month, dateGroups]) => (
-                      <div key={month} className="space-y-3 pl-1">
-                        <span className="text-[9px] font-black text-[#00A3AD] uppercase tracking-widest block">{month}</span>
+                      <div key={month} className="space-y-2.5 pl-1">
+                        <span className="text-[8.5px] font-black text-[#00A3AD] uppercase tracking-widest block">{month}</span>
                         
                         {Object.entries(dateGroups).map(([dateKey, events]) => (
-                          <div key={dateKey} className="space-y-2.5">
-                            <div className="text-[7.5px] font-bold text-slate-455 uppercase tracking-widest pl-5">
+                          <div key={dateKey} className="space-y-2">
+                            <div className="text-[7px] font-bold text-slate-450 uppercase tracking-widest pl-4">
                               {dateKey}
                             </div>
                             
@@ -1046,13 +1053,13 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
                               const hospName = e.hospitalId ? (hospitals[e.hospitalId] || 'Clinic Outlet') : 'Global Vault';
 
                               return (
-                                <div key={e.id || idx} className="relative pl-5 text-left group">
+                                <div key={e.id || idx} className="relative pl-4 text-left group">
                                   {/* Dot connector */}
-                                  <div className={`absolute left-[-1px] top-3.5 w-3 h-3 rounded-full border border-white flex items-center justify-center shadow-sm z-10 transition-transform group-hover:scale-110 ${accentColor}`}>
-                                    <IconComponent className="w-1.5 h-1.5" />
+                                  <div className={`absolute left-[-1.5px] top-3 w-2.5 h-2.5 rounded-full border border-white flex items-center justify-center shadow-sm z-10 transition-transform group-hover:scale-110 ${accentColor}`}>
+                                    <IconComponent className="w-1 h-1" />
                                   </div>
 
-                                  <div className="bg-white border border-slate-200/50 rounded-xl p-3 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden">
+                                  <div className="bg-white border border-slate-200/50 rounded-xl py-2.5 px-3 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden">
                                     {/* Physical status line tag */}
                                     <div className={`absolute top-0 bottom-0 left-0 w-1 ${
                                       isPresc ? 'bg-emerald-500' :
@@ -1061,54 +1068,54 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
                                     }`} />
 
                                     {/* Event header info */}
-                                    <div className="flex items-center justify-between gap-2.5 border-b border-slate-100 pb-2 mb-2">
+                                    <div className="flex items-center justify-between gap-2 border-b border-slate-100 pb-1.5 mb-1.5">
                                       <div>
-                                        <span className="text-[7px] font-black uppercase text-slate-400 tracking-wider block">
+                                        <span className="text-[6.5px] font-black uppercase text-slate-400 tracking-wider block">
                                           {e.type}
                                         </span>
-                                        <h4 className="font-extrabold text-slate-800 text-[11px] mt-0.5 truncate max-w-[180px]">
+                                        <h4 className="font-extrabold text-slate-800 text-[10.5px] mt-0.5 truncate max-w-[170px]">
                                           {e.title}
                                         </h4>
                                       </div>
-                                      <span className="text-[7.5px] font-black text-slate-500 bg-slate-50 border border-slate-200/50 px-2 py-0.5 rounded uppercase tracking-wider">
+                                      <span className="text-[7px] font-black text-slate-500 bg-slate-50 border border-slate-200/50 px-1.5 py-0.5 rounded uppercase tracking-wider">
                                         {hospName}
                                       </span>
                                     </div>
 
                                     {/* Visit Details */}
                                     {isVisit && (
-                                      <div className="space-y-2 text-[11px] font-semibold text-slate-500">
-                                        <div className="flex justify-between items-start gap-3">
+                                      <div className="space-y-1.5 text-[10px] font-semibold text-slate-500">
+                                        <div className="flex justify-between items-start gap-2.5">
                                           <div>
-                                            <span className="text-[7px] font-bold text-slate-400 uppercase tracking-widest block">Attending specialist</span>
-                                            <strong className="text-slate-850 text-[11px] block mt-0.5">{e.doctorName}</strong>
-                                            <span className="text-[9px] text-slate-400 capitalize">{e.subtitle}</span>
+                                            <span className="text-[6.5px] font-bold text-slate-400 uppercase tracking-widest block">Attending specialist</span>
+                                            <strong className="text-slate-850 text-[10.5px] block mt-0.5">{e.doctorName}</strong>
+                                            <span className="text-[8.5px] text-slate-400 capitalize">{e.subtitle}</span>
                                           </div>
                                           <div className="text-right">
-                                            <span className="text-[7px] font-bold text-slate-400 uppercase tracking-widest block">Recorded vitals</span>
-                                            <span className="text-slate-700 font-extrabold text-[11px] block mt-0.5">BP: {e.details.bp || '120/80'}</span>
-                                            <span className="text-[9.5px] text-slate-450 block">Sugar: {e.details.sugar || '98'} mg/dL</span>
+                                            <span className="text-[6.5px] font-bold text-slate-400 uppercase tracking-widest block">Recorded vitals</span>
+                                            <span className="text-slate-700 font-extrabold text-[10.5px] block mt-0.5">BP: {e.details.bp || '120/80'}</span>
+                                            <span className="text-[9px] text-slate-450 block">Sugar: {e.details.sugar || '98'} mg/dL</span>
                                           </div>
                                         </div>
-                                        <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-100 text-[10px] space-y-1 leading-relaxed">
+                                        <div className="bg-slate-50 p-2 rounded-md border border-slate-100 text-[9.5px] space-y-0.5 leading-relaxed">
                                           <div>
-                                            <span className="text-[7px] uppercase font-bold text-slate-400 tracking-widest block">Chief Symptoms</span>
+                                            <span className="text-[6.5px] uppercase font-bold text-slate-400 tracking-widest block">Chief Symptoms</span>
                                             <p className="text-slate-655 italic">{e.details.symptoms || 'Regular health follow-up'}</p>
                                           </div>
                                           {e.details.doctor_notes && (
                                             <div className="pt-1 border-t border-slate-200/50">
-                                              <span className="text-[7px] uppercase font-bold text-slate-400 tracking-widest block">Doctor Notes</span>
+                                              <span className="text-[6.5px] uppercase font-bold text-slate-400 tracking-widest block">Doctor Notes</span>
                                               <p className="text-slate-800 font-bold">{e.details.doctor_notes}</p>
                                             </div>
                                           )}
                                         </div>
-                                        <div className="flex justify-between items-center pt-1.5 border-t border-slate-50">
-                                          <span className="text-[8px] font-black uppercase text-slate-400">
+                                        <div className="flex justify-between items-center pt-1 border-t border-slate-50">
+                                          <span className="text-[7.5px] font-black uppercase text-slate-400">
                                             Status: <strong className="text-[#005EB8]">{e.status}</strong>
                                           </span>
                                           <button
                                             onClick={() => handlePrintTimelinePrescription(e.details, dbPrescriptions.find(p => p.visit_id === e.details.id || (e.details.token_id && p.token_id === e.details.token_id)))}
-                                            className="px-2.5 py-1.5 bg-[#005EB8] hover:bg-[#004a96] text-white text-[8px] font-black rounded uppercase tracking-wider transition-all animate-fade-in"
+                                            className="px-2 py-1 bg-[#005EB8] hover:bg-[#004a96] text-white text-[7.5px] font-black rounded uppercase tracking-wider transition-all animate-fade-in min-h-[24px]"
                                           >
                                             View Rx Details
                                           </button>
@@ -1118,38 +1125,38 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
 
                                     {/* Prescription Details */}
                                     {isPresc && (
-                                      <div className="space-y-2 text-[11px] font-semibold text-slate-500">
-                                        <div className="flex justify-between items-start gap-3">
+                                      <div className="space-y-1.5 text-[10px] font-semibold text-slate-500">
+                                        <div className="flex justify-between items-start gap-2.5">
                                           <div>
-                                            <span className="text-[7px] font-bold text-slate-400 uppercase tracking-widest block">Prescribed By</span>
-                                            <strong className="text-slate-850 text-[11px] block mt-0.5">{e.doctorName}</strong>
-                                            <span className="text-[9px] text-slate-400">{e.subtitle}</span>
+                                            <span className="text-[6.5px] font-bold text-slate-400 uppercase tracking-widest block">Prescribed By</span>
+                                            <strong className="text-slate-850 text-[10.5px] block mt-0.5">{e.doctorName}</strong>
+                                            <span className="text-[8.5px] text-slate-400">{e.subtitle}</span>
                                           </div>
                                           <div className="text-right">
-                                            <span className="text-[7px] font-bold text-slate-400 uppercase tracking-widest block">Meds count</span>
-                                            <strong className="text-slate-700 text-[11px] block mt-0.5">{e.details.medications?.length || 0} items</strong>
+                                            <span className="text-[6.5px] font-bold text-slate-400 uppercase tracking-widest block">Meds count</span>
+                                            <strong className="text-slate-700 text-[10.5px] block mt-0.5">{e.details.medications?.length || 0} items</strong>
                                           </div>
                                         </div>
                                         <div className="space-y-1">
                                           {Array.isArray(e.details.medications) && e.details.medications.map((m: any, mIdx: number) => (
-                                            <div key={mIdx} className="bg-slate-50 p-2 border border-slate-100 rounded-lg flex justify-between items-center text-[10px] font-bold gap-2">
+                                            <div key={mIdx} className="bg-slate-50 p-1.5 border border-slate-100 rounded-md flex justify-between items-center text-[9.5px] font-bold gap-2">
                                               <div>
                                                 <span className="text-slate-800">{m.name}</span>
                                                 {renderDosageTimeline(m.frequency)}
                                               </div>
-                                              <span className="text-[#005EB8] uppercase tracking-wider text-[8px] bg-[#005EB8]/5 border border-[#005EB8]/10 px-2 py-0.5 rounded">
+                                              <span className="text-[#005EB8] uppercase tracking-wider text-[7.5px] bg-[#005EB8]/5 border border-[#005EB8]/10 px-1.5 py-0.5 rounded">
                                                 {m.dosage}
                                               </span>
                                             </div>
                                           ))}
                                         </div>
-                                        <div className="flex justify-between items-center pt-1.5 border-t border-slate-50">
-                                          <span className="text-[8px] font-black uppercase text-slate-400">
+                                        <div className="flex justify-between items-center pt-1 border-t border-slate-50">
+                                          <span className="text-[7.5px] font-black uppercase text-slate-400">
                                             Fulfillment: <strong className="text-emerald-500">{e.status}</strong>
                                           </span>
                                           <button
                                             onClick={() => handlePrintTimelinePrescription(dbVisits.find(v => v.id === e.details.visit_id || (e.details.token_id && v.token_id === e.details.token_id)) || { created_at: e.date, tokens: {} }, e.details)}
-                                            className="px-2.5 py-1.5 bg-[#005EB8] hover:bg-[#004a96] text-white text-[8px] font-black rounded uppercase tracking-wider transition-all"
+                                            className="px-2 py-1 bg-[#005EB8] hover:bg-[#004a96] text-white text-[7.5px] font-black rounded uppercase tracking-wider transition-all min-h-[24px]"
                                           >
                                             Print Rx Sheet
                                           </button>
@@ -1159,26 +1166,26 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
 
                                     {/* Appointment Details */}
                                     {isAppt && (
-                                      <div className="space-y-2 text-[11px] font-semibold text-slate-500">
-                                        <div className="grid grid-cols-2 gap-3">
+                                      <div className="space-y-1.5 text-[10px] font-semibold text-slate-500">
+                                        <div className="grid grid-cols-2 gap-2.5">
                                           <div>
-                                            <span className="text-[7px] font-bold text-slate-400 uppercase tracking-widest block">Attending Consultant</span>
-                                            <strong className="text-slate-800 block mt-0.5">{e.doctorName}</strong>
-                                            <span className="text-[9px] text-slate-400 capitalize">{e.subtitle}</span>
+                                            <span className="text-[6.5px] font-bold text-slate-400 uppercase tracking-widest block">Attending Consultant</span>
+                                            <strong className="text-slate-805 block mt-0.5">{e.doctorName}</strong>
+                                            <span className="text-[8.5px] text-slate-400 capitalize">{e.subtitle}</span>
                                           </div>
                                           <div>
-                                            <span className="text-[7px] font-bold text-slate-400 uppercase tracking-widest block">Time Slot</span>
-                                            <strong className="text-slate-800 block mt-0.5">
+                                            <span className="text-[6.5px] font-bold text-slate-400 uppercase tracking-widest block">Time Slot</span>
+                                            <strong className="text-slate-805 block mt-0.5">
                                               {new Date(e.details.appointment_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
                                             </strong>
-                                            <span className="text-[9px] text-slate-400">{e.details.time_slot}</span>
+                                            <span className="text-[8.5px] text-slate-400">{e.details.time_slot}</span>
                                           </div>
                                         </div>
-                                        <div className="flex justify-between items-center pt-1.5 border-t border-slate-100">
-                                          <span className="text-[8px] font-black uppercase text-slate-400">
+                                        <div className="flex justify-between items-center pt-1 border-t border-slate-100">
+                                          <span className="text-[7.5px] font-black uppercase text-slate-400">
                                             Status: <strong className="text-amber-500">{e.status}</strong>
                                           </span>
-                                          <span className="text-[8.5px] text-slate-500 font-extrabold uppercase bg-slate-100 px-2 py-0.5 rounded">
+                                          <span className="text-[8px] text-slate-500 font-extrabold uppercase bg-slate-100 px-1.5 py-0.5 rounded">
                                             Fee: ₹{e.details.consultation_fee || 0}
                                           </span>
                                         </div>
@@ -1187,25 +1194,25 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
 
                                     {/* Lab Report Details */}
                                     {isReport && (
-                                      <div className="space-y-2 text-[11px] font-semibold text-slate-500">
-                                        <div className="flex justify-between items-start gap-3">
+                                      <div className="space-y-1.5 text-[10px] font-semibold text-slate-500">
+                                        <div className="flex justify-between items-start gap-2.5">
                                           <div>
-                                            <span className="text-[7px] font-bold text-slate-400 uppercase tracking-widest block">Test Category</span>
-                                            <strong className="text-slate-850 text-[11px] block mt-0.5">{e.title}</strong>
-                                            <span className="text-[9px] text-slate-400">{e.subtitle}</span>
+                                            <span className="text-[6.5px] font-bold text-slate-400 uppercase tracking-widest block">Test Category</span>
+                                            <strong className="text-slate-850 text-[10.5px] block mt-0.5">{e.title}</strong>
+                                            <span className="text-[8.5px] text-slate-400">{e.subtitle}</span>
                                           </div>
                                           <div className="text-right">
-                                            <span className="text-[7px] uppercase font-black px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-100 text-emerald-600">
+                                            <span className="text-[6.5px] uppercase font-black px-1.5 py-0.5 rounded-full bg-emerald-50 border border-emerald-100 text-emerald-600">
                                               {e.status}
                                             </span>
                                           </div>
                                         </div>
-                                        <div className="flex gap-2 pt-1.5 border-t border-slate-50">
+                                        <div className="flex gap-2 pt-1 border-t border-slate-50">
                                           <button
                                             onClick={() => alert('Diagnostic PDF Report downloaded locally')}
-                                            className="flex-1 py-1.5 bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-655 text-[8.5px] font-black uppercase tracking-wider rounded-lg transition-all flex items-center justify-center gap-1"
+                                            className="flex-1 py-1.5 bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-655 text-[8px] font-black uppercase tracking-wider rounded transition-all flex items-center justify-center gap-1 min-h-[24px]"
                                           >
-                                            <Download className="w-3 h-3" /> Download PDF
+                                            <Download className="w-2.5 h-2.5" /> Download PDF
                                           </button>
                                         </div>
                                       </div>
@@ -1228,26 +1235,26 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
 
         {/* ── TAB 5: PROFILE CONTROL CENTER ── */}
         {activeTab === 'profile' && (
-          <div className="space-y-4 animate-fade-in text-left">
+          <div className="space-y-3.5 animate-fade-in text-left">
             <div>
-              <h2 className="text-[11px] font-black text-slate-800 tracking-widest flex items-center gap-1.5 uppercase">
-                <User className="w-4 h-4 text-[#005EB8]" />
+              <h2 className="text-[10px] font-black text-slate-850 tracking-widest flex items-center gap-1.5 uppercase leading-none">
+                <User className="w-3.5 h-3.5 text-[#005EB8]" />
                 Profile Control Center
               </h2>
-              <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">
+              <p className="text-[8.5px] text-slate-400 font-bold uppercase tracking-wider mt-1">
                 Manage your credentials, emergency contacts, and allergies.
               </p>
             </div>
 
             {profileSuccess && (
-              <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-100 text-emerald-700 rounded-xl px-3 py-2.5 text-[11px] font-bold">
-                <CheckCircle className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+              <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-100 text-emerald-700 rounded-xl px-3 py-2 text-[10.5px] font-bold">
+                <CheckCircle className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />
                 <span>Profile synchronized successfully.</span>
               </div>
             )}
 
-            <div className="bg-white border border-slate-200/60 rounded-xl p-4 shadow-sm">
-              <form onSubmit={handleSaveProfile} className="space-y-4">
+            <div className="bg-white border border-slate-200/60 rounded-xl p-3.5 shadow-sm">
+              <form onSubmit={handleSaveProfile} className="space-y-3.5">
                 <div>
                   <label className="block text-[8px] font-extrabold text-slate-400 uppercase tracking-widest mb-1">Full Name *</label>
                   <input
@@ -1255,7 +1262,7 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
                     required
                     value={profileForm.name}
                     onChange={e => setProfileForm({ ...profileForm, name: e.target.value })}
-                    className="w-full text-base md:text-xs p-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:border-[#005EB8] focus:bg-white outline-none font-bold text-slate-800 transition-colors min-h-[40px]"
+                    className="w-full text-base md:text-xs p-2 bg-slate-50 border border-slate-200 rounded-md focus:border-[#005EB8] focus:bg-white outline-none font-bold text-slate-800 transition-colors min-h-[36px]"
                   />
                 </div>
 
@@ -1265,7 +1272,7 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
                     type="email"
                     value={profileForm.email}
                     onChange={e => setProfileForm({ ...profileForm, email: e.target.value })}
-                    className="w-full text-base md:text-xs p-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:border-[#005EB8] focus:bg-white outline-none font-bold text-slate-800 transition-colors min-h-[40px]"
+                    className="w-full text-base md:text-xs p-2 bg-slate-50 border border-slate-200 rounded-md focus:border-[#005EB8] focus:bg-white outline-none font-bold text-slate-800 transition-colors min-h-[36px]"
                   />
                 </div>
 
@@ -1275,7 +1282,7 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
                     type="text"
                     value={profileForm.address}
                     onChange={e => setProfileForm({ ...profileForm, address: e.target.value })}
-                    className="w-full text-base md:text-xs p-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:border-[#005EB8] focus:bg-white outline-none font-bold text-slate-800 transition-colors min-h-[40px]"
+                    className="w-full text-base md:text-xs p-2 bg-slate-50 border border-slate-200 rounded-md focus:border-[#005EB8] focus:bg-white outline-none font-bold text-slate-800 transition-colors min-h-[36px]"
                   />
                 </div>
 
@@ -1286,16 +1293,16 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
                     value={profileForm.allergies}
                     onChange={e => setProfileForm({ ...profileForm, allergies: e.target.value })}
                     placeholder="e.g. Penicillin, Latex (or None)"
-                    className="w-full text-base md:text-xs p-2.5 bg-slate-50 border border-slate-200 rounded-lg focus:border-[#005EB8] focus:bg-white outline-none font-bold text-slate-800 transition-colors min-h-[40px]"
+                    className="w-full text-base md:text-xs p-2 bg-slate-50 border border-slate-200 rounded-md focus:border-[#005EB8] focus:bg-white outline-none font-bold text-slate-800 transition-colors min-h-[36px]"
                   />
                 </div>
 
                 <button
                   type="submit"
                   disabled={profileSaving}
-                  className="w-full min-h-[42px] py-2 px-4 bg-[#005EB8] hover:bg-[#004a96] disabled:opacity-50 text-white font-black text-[10.5px] rounded-lg shadow-md uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 outline-none font-sans"
+                  className="w-full min-h-[38px] py-1.5 px-3.5 bg-[#005EB8] hover:bg-[#004a96] disabled:opacity-50 text-white font-black text-[9.5px] rounded-lg shadow-md uppercase tracking-wider transition-all flex items-center justify-center gap-1 outline-none font-sans"
                 >
-                  {profileSaving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle className="w-3.5 h-3.5" />}
+                  {profileSaving ? <Loader2 className="w-3 h-3 animate-spin" /> : <CheckCircle className="w-3 h-3" />}
                   <span>{profileSaving ? 'Saving Profile...' : 'Save Profile Credentials'}</span>
                 </button>
 
@@ -1305,7 +1312,7 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
                     await clearOfflineCache();
                     signOut();
                   }}
-                  className="w-full min-h-[42px] py-2 px-4 bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-600 font-black text-[10.5px] rounded-lg uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 outline-none mt-2 active:scale-95"
+                  className="w-full min-h-[38px] py-1.5 px-3.5 bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-600 font-black text-[9.5px] rounded-lg uppercase tracking-wider transition-all flex items-center justify-center gap-1 outline-none mt-2 active:scale-95"
                 >
                   Log Out from Account
                 </button>
@@ -1316,32 +1323,32 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
 
         {/* ── TAB 6: OPD CAMPUS NAVIGATION GUIDE ── */}
         {activeTab === 'guide' && (
-          <div className="space-y-4 animate-fade-in text-left">
+          <div className="space-y-3.5 animate-fade-in text-left">
             <div>
-              <h2 className="text-[11px] font-black text-slate-800 tracking-widest flex items-center gap-1.5 uppercase">
-                <Building2 className="w-4 h-4 text-[#005EB8]" />
+              <h2 className="text-[10px] font-black text-slate-850 tracking-widest flex items-center gap-1.5 uppercase leading-none">
+                <Building2 className="w-3.5 h-3.5 text-[#005EB8]" />
                 OPD Guide Map
               </h2>
-              <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">
+              <p className="text-[8.5px] text-slate-400 font-bold uppercase tracking-wider mt-1">
                 Step-by-step directions to locate consulting rooms and medical facilities.
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5">
               {[
                 { floor: 'Ground Floor', rooms: ['Reception Desk', 'Pharmacy counter', 'General OPD Room 101'], desc: 'Lobby area. Emergency triage desk is immediately to the right side of the main lobby entry.' },
                 { floor: '1st Floor', rooms: ['OPD Cardiology Room 204', 'Pediatrics Room 205', 'Diagnostic Labs'], desc: 'Consultation suites. Escalators are located in the center aisle, and lifts are past reception.' },
                 { floor: '2nd Floor', rooms: ['Administrative Blocks', 'Executive Conference Hall'], desc: 'Office spaces. Authorized administrative access only.' }
               ].map((fl, idx) => (
-                <div key={idx} className="bg-white border border-slate-200/50 rounded-xl p-3.5 shadow-sm text-left flex flex-col justify-between min-h-[160px]">
-                  <div className="space-y-1.5">
-                    <span className="text-[7px] font-black uppercase text-[#005EB8] bg-[#005EB8]/10 border border-[#005EB8]/15 px-2 py-0.5 rounded-md">{fl.floor}</span>
-                    <h4 className="font-extrabold text-slate-750 text-[10.5px] mt-1.5 leading-relaxed">{fl.desc}</h4>
+                <div key={idx} className="bg-white border border-slate-200/50 rounded-xl p-3 shadow-sm text-left flex flex-col justify-between min-h-[140px]">
+                  <div className="space-y-1">
+                    <span className="text-[6.5px] font-black uppercase text-[#005EB8] bg-[#005EB8]/10 border border-[#005EB8]/15 px-1.5 py-0.5 rounded">{fl.floor}</span>
+                    <h4 className="font-extrabold text-slate-750 text-[10px] mt-1 leading-relaxed">{fl.desc}</h4>
                     
-                    <div className="space-y-1 mt-2.5">
-                      <span className="text-[7px] font-black text-slate-400 uppercase tracking-widest block mb-0.5">Featured Rooms</span>
+                    <div className="space-y-0.5 mt-2">
+                      <span className="text-[6.5px] font-black text-slate-400 uppercase tracking-widest block mb-0.5">Featured Rooms</span>
                       {fl.rooms.map((rm, rIdx) => (
-                        <div key={rIdx} className="text-[9.5px] text-slate-500 font-bold flex items-center gap-1">
+                        <div key={rIdx} className="text-[9px] text-slate-500 font-bold flex items-center gap-1">
                           <span className="w-1 h-1 bg-[#00A3AD] rounded-full" />
                           <span>{rm}</span>
                         </div>
@@ -1353,11 +1360,11 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
             </div>
 
             {/* Contextual directions sync banner */}
-            <div className="bg-blue-50 border border-blue-105 rounded-xl p-4 text-left flex gap-3 items-start">
-              <Building2 className="w-5 h-5 text-[#005EB8] flex-shrink-0 mt-0.5" />
-              <div className="space-y-0.5 text-[11px] font-semibold">
-                <span className="text-[8px] font-black text-[#005EB8] uppercase tracking-wider block">OPD Campus Directions Helper</span>
-                <p className="text-slate-600 font-bold leading-relaxed text-[10.5px]">
+            <div className="bg-blue-50 border border-blue-105 rounded-xl p-3 text-left flex gap-2.5 items-start">
+              <Building2 className="w-4.5 h-4.5 text-[#005EB8] flex-shrink-0 mt-0.5" />
+              <div className="space-y-0.5 text-[10.5px] font-semibold">
+                <span className="text-[7.5px] font-black text-[#005EB8] uppercase tracking-wider block">OPD Campus Directions Helper</span>
+                <p className="text-slate-600 font-bold leading-relaxed text-[10.0px]">
                   {activeToken ? (
                     <>
                       Your active token is registered for <strong>{activeToken.doctor_name || 'Specialist'}</strong>. Go to the <strong>1st Floor</strong>, turn left into the Cardiology corridor, and queue outside <strong>Room {activeToken.room_number || '204'}</strong>.
@@ -1373,50 +1380,50 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
 
         {/* ── TAB 7: LAB REPORTS DIAGNOSTICS VAULT ── */}
         {activeTab === 'reports' && (
-          <div className="space-y-4 animate-fade-in text-left">
+          <div className="space-y-3.5 animate-fade-in text-left">
             <div>
-              <h2 className="text-[11px] font-black text-slate-800 tracking-widest flex items-center gap-1.5 uppercase">
-                <FileSpreadsheet className="w-4 h-4 text-indigo-500" />
+              <h2 className="text-[10px] font-black text-slate-850 tracking-widest flex items-center gap-1.5 uppercase leading-none">
+                <FileSpreadsheet className="w-3.5 h-3.5 text-indigo-500" />
                 Diagnostics Reports
               </h2>
-              <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">
+              <p className="text-[8.5px] text-slate-400 font-bold uppercase tracking-wider mt-1">
                 Access your verified blood counts, ECGs, and scans.
               </p>
             </div>
 
             {dbLabReports.length === 0 ? (
-              <div className="bg-white border border-slate-200/50 rounded-xl p-6 text-center space-y-3.5 shadow-sm select-none py-8">
-                <div className="w-10 h-10 bg-slate-50 border border-slate-200/50 rounded-xl flex items-center justify-center mx-auto text-indigo-500 shadow-sm">
-                  <Lock className="w-5 h-5" />
+              <div className="bg-white border border-slate-200/50 rounded-xl p-5 text-center space-y-3 shadow-sm select-none py-6">
+                <div className="w-8 h-8 bg-slate-50 border border-slate-200/50 rounded-lg flex items-center justify-center mx-auto text-indigo-500 shadow-sm">
+                  <Lock className="w-4 h-4" />
                 </div>
-                <div className="space-y-1">
-                  <h3 className="font-extrabold text-[11px] uppercase text-slate-700">Diagnostics Reports Not Linked</h3>
-                  <p className="text-[10px] text-slate-400 font-bold max-w-xs mx-auto leading-relaxed font-sans">
+                <div className="space-y-0.5">
+                  <h3 className="font-extrabold text-[10px] uppercase text-slate-700">Diagnostics Reports Not Linked</h3>
+                  <p className="text-[9.5px] text-slate-400 font-bold max-w-xs mx-auto leading-relaxed font-sans">
                     Test reports (CBC blood tests, scan panels, radiology metrics) will appear here automatically once uploaded and verified by clinicians.
                   </p>
                 </div>
                 <button
                   onClick={() => alert('Syncing diagnostics records...')}
-                  className="px-5 py-2.5 bg-slate-105 hover:bg-slate-200 border border-slate-200 text-slate-650 text-[10px] font-black uppercase tracking-wider rounded-xl transition-all shadow-inner min-h-[38px]"
+                  className="px-4 py-2 bg-slate-105 hover:bg-slate-200 border border-slate-200 text-slate-650 text-[9px] font-black uppercase tracking-wider rounded transition-all shadow-inner min-h-[34px]"
                 >
                   Verify Lab Linkage
                 </button>
               </div>
             ) : (
-              <div className="space-y-2.5">
+              <div className="space-y-2">
                 {dbLabReports.map(rep => (
-                  <div key={rep.id} className="bg-white border border-slate-200/50 rounded-xl p-3 flex items-center justify-between gap-3 text-left shadow-sm">
-                    <div className="flex gap-2.5 items-center">
-                      <div className="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-500">
-                        <FileSpreadsheet className="w-4.5 h-4.5" />
+                  <div key={rep.id} className="bg-white border border-slate-200/50 rounded-xl p-2.5 flex items-center justify-between gap-2.5 text-left shadow-sm">
+                    <div className="flex gap-2 items-center">
+                      <div className="w-7 h-7 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-500">
+                        <FileSpreadsheet className="w-4 h-4" />
                       </div>
                       <div>
-                        <h4 className="font-extrabold text-xs text-slate-800">{rep.test_name || 'Lab Report'}</h4>
-                        <span className="text-[9px] text-slate-400 font-bold block mt-0.5">{new Date(rep.created_at).toLocaleDateString('en-IN')} • {rep.category || 'Labs'}</span>
+                        <h4 className="font-extrabold text-[11px] text-slate-800">{rep.test_name || 'Lab Report'}</h4>
+                        <span className="text-[8.5px] text-slate-400 font-bold block mt-0.5">{new Date(rep.created_at).toLocaleDateString('en-IN')} • {rep.category || 'Labs'}</span>
                       </div>
                     </div>
                     <div className="text-right">
-                      <span className="text-[7.5px] font-black uppercase px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-100 text-emerald-600">
+                      <span className="text-[7px] font-black uppercase px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-100 text-emerald-600">
                         {rep.status || 'VERIFIED'}
                       </span>
                     </div>
@@ -1430,7 +1437,7 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
       </main>
 
       {/* ── MOBILE PWA BOTTOM FLOATING NAVIGATION CAPSULE ── */}
-      <nav className="fixed bottom-4 left-4 right-4 z-50 bg-white/90 backdrop-blur-md border border-slate-200/60 p-2 shadow-lg flex items-center justify-around select-none rounded-2xl max-w-md mx-auto">
+      <nav className="fixed bottom-4 left-4 right-4 z-50 bg-white/90 backdrop-blur-md border border-slate-200/60 p-1.5 shadow-lg flex items-center justify-around select-none rounded-2xl max-w-md mx-auto">
         {[
           { id: 'home', label: 'Home', icon: Home },
           { id: 'history', label: 'Vault', icon: Clock },
@@ -1442,13 +1449,13 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as any)}
-              className="flex flex-col items-center justify-center gap-1 py-1 rounded-xl transition-all active:scale-90 flex-1 min-h-[44px] outline-none"
+              className="flex flex-col items-center justify-center gap-0.5 py-0.5 rounded-lg transition-all active:scale-90 flex-1 min-h-[38px] outline-none"
               aria-label={`Navigate to ${tab.label}`}
             >
-              <div className={`p-1 rounded-xl transition-all relative ${isActive ? 'bg-[#005EB8]/10 text-[#005EB8]' : 'text-slate-400 hover:text-slate-650'}`}>
-                <Icon className="w-4.5 h-4.5" />
+              <div className={`p-1 rounded-lg transition-all relative ${isActive ? 'bg-[#005EB8]/10 text-[#005EB8]' : 'text-slate-400 hover:text-slate-650'}`}>
+                <Icon className="w-4 h-4" />
               </div>
-              <span className={`text-[8.5px] font-black tracking-wider uppercase transition-colors ${isActive ? 'text-[#005EB8]' : 'text-slate-400'}`}>
+              <span className={`text-[7.5px] font-black tracking-wider uppercase transition-colors ${isActive ? 'text-[#005EB8]' : 'text-slate-400'}`}>
                 {tab.label}
               </span>
             </button>
@@ -1459,34 +1466,34 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
       {/* ── SLIDING QUICK BOOKING MODAL OVERLAY ── */}
       {showBookingOverlay && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-end justify-center p-0 transition-opacity animate-fade-in">
-          <div className="bg-white rounded-t-2xl w-full max-w-lg p-5 shadow-2xl space-y-5 animate-slide-in max-h-[80vh] overflow-y-auto text-left relative">
+          <div className="bg-white rounded-t-xl w-full max-w-lg p-4 space-y-4 animate-slide-in max-h-[75vh] overflow-y-auto text-left relative">
             <button
               onClick={() => { setShowBookingOverlay(false); setBookingError(''); }}
-              className="absolute right-4 top-4 text-slate-400 hover:text-slate-600 bg-slate-100 hover:bg-slate-200 p-1.5 rounded-full transition-colors outline-none"
+              className="absolute right-3.5 top-3.5 text-slate-400 hover:text-slate-600 bg-slate-100 hover:bg-slate-200 p-1 rounded-full transition-colors outline-none"
             >
-              <X className="w-4 h-4" />
+              <X className="w-3.5 h-3.5" />
             </button>
 
-            <div className="border-b border-slate-100 pb-2.5">
-              <span className="text-[8px] font-black text-[#005EB8] uppercase tracking-widest bg-blue-50 border border-blue-100 px-2 py-0.5 rounded-md">
+            <div className="border-b border-slate-100 pb-2">
+              <span className="text-[7.5px] font-black text-[#005EB8] uppercase tracking-widest bg-blue-50 border border-blue-100 px-1.5 py-0.5 rounded">
                 Queue Registration
               </span>
-              <h3 className="text-xs font-black text-slate-800 mt-2">Register Outpatient Queue Ticket</h3>
-              <p className="text-[9.5px] text-slate-400 font-semibold mt-0.5">Register walk-in tokens for immediate specialist triage tracking.</p>
+              <h3 className="text-[11px] font-black text-slate-800 mt-2">Register Outpatient Queue Ticket</h3>
+              <p className="text-[9px] text-slate-400 font-semibold mt-0.5">Register walk-in tokens for immediate specialist triage tracking.</p>
             </div>
 
-            <form onSubmit={handleQuickBookSubmit} className="space-y-5">
+            <form onSubmit={handleQuickBookSubmit} className="space-y-4">
               {bookingError && (
-                <div className="p-3 bg-rose-50 border border-rose-100 text-rose-600 rounded-xl text-[11px] font-bold flex items-center gap-1.5 text-left">
-                  <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
+                <div className="p-2.5 bg-rose-50 border border-rose-100 text-rose-600 rounded-lg text-[10px] font-bold flex items-center gap-1.5 text-left">
+                  <AlertCircle className="w-3 h-3 flex-shrink-0" />
                   <span>{bookingError}</span>
                 </div>
               )}
 
               {/* Specialty Grid */}
-              <div className="space-y-1.5">
-                <label className="block text-[8px] font-black text-slate-400 uppercase tracking-widest">Select Specialty Department *</label>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              <div className="space-y-1">
+                <label className="block text-[7.5px] font-black text-slate-400 uppercase tracking-widest">Select Specialty Department *</label>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
                   {DEPARTMENTS.map(d => {
                     const isSelected = quickDept === d;
                     return (
@@ -1494,14 +1501,14 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
                         key={d}
                         type="button"
                         onClick={() => setQuickDept(d)}
-                        className={`p-2 rounded-xl border transition-all flex flex-col items-center justify-center text-center gap-1 min-h-[60px] outline-none ${
+                        className={`p-1.5 rounded-lg border transition-all flex flex-col items-center justify-center text-center gap-0.5 min-h-[52px] outline-none ${
                           isSelected
                             ? 'border-transparent bg-gradient-to-br from-[#005EB8] to-[#00A3AD] text-white shadow-sm'
                             : 'border-slate-200 bg-white text-slate-700 hover:border-slate-350'
                         }`}
                       >
-                        <span className="text-lg">{DEPT_ICONS[d] || '🩺'}</span>
-                        <span className="text-[8px] font-black uppercase tracking-wider block">
+                        <span className="text-base">{DEPT_ICONS[d] || '🩺'}</span>
+                        <span className="text-[7.5px] font-black uppercase tracking-wider block">
                           {DEPARTMENT_LABEL[d]}
                         </span>
                       </button>
@@ -1511,24 +1518,24 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
               </div>
 
               {/* Priority Selectors */}
-              <div className="space-y-1.5">
-                <label className="block text-[8px] font-black text-slate-400 uppercase tracking-widest">Priority Classification</label>
-                <div className="grid grid-cols-1 gap-2">
+              <div className="space-y-1">
+                <label className="block text-[7.5px] font-black text-slate-400 uppercase tracking-widest">Priority Classification</label>
+                <div className="grid grid-cols-1 gap-1.5">
                   {PRIORITY_OPTIONS.map(p => (
                     <button
                       key={p.value}
                       type="button"
                       onClick={() => setQuickPriority(p.value)}
-                      className={`p-2.5 rounded-xl border transition-all flex items-center gap-2 text-left outline-none ${
+                      className={`p-2 rounded-lg border transition-all flex items-center gap-2 text-left outline-none ${
                         quickPriority === p.value 
                           ? p.color + ' border-transparent shadow-sm' 
                           : 'border-slate-200 bg-white text-slate-655 hover:border-slate-350'
                       }`}
                     >
-                      <span className={`w-2 h-2 rounded-full ${p.dot} shrink-0`} />
+                      <span className={`w-1.5 h-1.5 rounded-full ${p.dot} shrink-0`} />
                       <div className="min-w-0">
-                        <span className="text-[10.5px] font-black uppercase tracking-wide block leading-none">{p.label}</span>
-                        <span className="text-[8.5px] text-slate-455 font-bold block mt-0.5">{p.desc}</span>
+                        <span className="text-[10px] font-black uppercase tracking-wide block leading-none">{p.label}</span>
+                        <span className="text-[8px] text-slate-455 font-bold block mt-0.5">{p.desc}</span>
                       </div>
                     </button>
                   ))}
@@ -1538,9 +1545,9 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
               <button
                 type="submit"
                 disabled={bookingLoading || !quickDept}
-                className="w-full min-h-[44px] bg-[#005EB8] hover:bg-[#004a96] disabled:opacity-50 text-white font-black text-[10.5px] rounded-lg shadow-md uppercase tracking-widest transition-all flex items-center justify-center gap-1.5 outline-none active:scale-[0.98]"
+                className="w-full min-h-[38px] bg-[#005EB8] hover:bg-[#004a96] disabled:opacity-50 text-white font-black text-[10px] rounded-lg shadow-md uppercase tracking-widest transition-all flex items-center justify-center gap-1.5 outline-none active:scale-[0.98]"
               >
-                {bookingLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Ticket className="w-4 h-4" />}
+                {bookingLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Ticket className="w-3.5 h-3.5" />}
                 <span>{bookingLoading ? 'Registering Queue Token...' : 'Register Queue Ticket →'}</span>
               </button>
             </form>
@@ -1550,56 +1557,56 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
 
       {/* ── PRESCRIPTION PRINT/PDF PREVIEW MODAL ── */}
       {activePrescriptionModal && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[80] flex items-center justify-center p-4 overflow-y-auto transition-opacity">
-          <div className="bg-white rounded-xl max-w-lg w-full shadow-2xl overflow-hidden border border-slate-100 max-h-[90vh] flex flex-col animate-fade-in text-left">
-            <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between bg-slate-50 flex-shrink-0 gap-2 select-none">
-              <span className="text-[8.5px] font-black text-slate-700 uppercase tracking-widest">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[80] flex items-center justify-center p-3 overflow-y-auto transition-opacity">
+          <div className="bg-white rounded-xl max-w-md w-full shadow-2xl overflow-hidden border border-slate-100 max-h-[85vh] flex flex-col animate-fade-in text-left">
+            <div className="px-3.5 py-2.5 border-b border-slate-100 flex items-center justify-between bg-slate-50 flex-shrink-0 gap-2 select-none">
+              <span className="text-[8px] font-black text-slate-700 uppercase tracking-widest">
                 Prescription Sheet Vault
               </span>
               <div className="flex items-center gap-1.5">
                 <button
                   onClick={() => window.print()}
-                  className="flex items-center gap-1 px-3 py-1.5 bg-[#005EB8] hover:bg-[#004a96] text-white text-[9px] font-black uppercase tracking-wider rounded-lg shadow-sm min-h-[32px]"
+                  className="flex items-center gap-1 px-2.5 py-1 bg-[#005EB8] hover:bg-[#004a96] text-white text-[8.5px] font-black uppercase tracking-wider rounded shadow-sm min-h-[28px]"
                 >
-                  <Printer className="w-3 h-3" />
+                  <Printer className="w-2.5 h-2.5" />
                   <span>Print Sheet</span>
                 </button>
                 <button
                   onClick={() => setActivePrescriptionModal(null)}
-                  className="w-7 h-7 bg-slate-200 hover:bg-slate-300 text-slate-500 hover:text-slate-800 flex items-center justify-center rounded-lg transition-all"
+                  className="w-6 h-6 bg-slate-200 hover:bg-slate-350 text-slate-500 hover:text-slate-800 flex items-center justify-center rounded transition-all"
                 >
-                  <X className="w-3.5 h-3.5" />
+                  <X className="w-3 h-3" />
                 </button>
               </div>
             </div>
 
-            <div className="p-4 sm:p-5 overflow-y-auto flex-1 font-sans print-sheet" id="printable-prescription-container">
+            <div className="p-3.5 sm:p-4.5 overflow-y-auto flex-1 font-sans print-sheet" id="printable-prescription-container">
               {/* Branded Hospital Header */}
-              <div className="border-b-2 border-[#005EB8] pb-4 flex justify-between items-start gap-3">
+              <div className="border-b border-[#005EB8] pb-3 flex justify-between items-start gap-2.5">
                 <div>
-                  <h2 className="text-sm font-black text-slate-800 tracking-tight flex items-center gap-1.5 uppercase">
-                    <Building2 className="w-4.5 h-4.5 text-[#005EB8]" />
+                  <h2 className="text-[13px] font-black text-slate-800 tracking-tight flex items-center gap-1 uppercase">
+                    <Building2 className="w-4 h-4 text-[#005EB8]" />
                     {tenant?.name || 'Apollo Clinic'}
                   </h2>
-                  <span className="text-[8px] text-slate-400 font-extrabold uppercase tracking-widest block mt-0.5">
+                  <span className="text-[7.5px] text-slate-400 font-extrabold uppercase tracking-widest block mt-0.5">
                     MedQueue EHR Cloud Record Node
                   </span>
                 </div>
                 <div className="text-right flex-shrink-0">
-                  <div className="text-[8px] font-black text-slate-700 uppercase">Triage Token</div>
-                  <div className="text-[9px] text-[#00A3AD] font-bold mt-0.5">
+                  <div className="text-[7.5px] font-black text-slate-700 uppercase">Triage Token</div>
+                  <div className="text-[8.5px] text-[#00A3AD] font-bold mt-0.5">
                     TOKEN #{activePrescriptionModal.vis.tokens?.token_number || 'TBA'}
                   </div>
-                  <div className="text-[8px] text-slate-400 mt-0.5">
+                  <div className="text-[7.5px] text-slate-400 mt-0.5">
                     {new Date(activePrescriptionModal.vis.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
                   </div>
                 </div>
               </div>
 
               {/* Doctors & Patient split details */}
-              <div className="grid grid-cols-2 gap-3 py-3 border-b border-slate-100 text-[10.5px] font-semibold">
+              <div className="grid grid-cols-2 gap-2.5 py-2.5 border-b border-slate-100 text-[10px] font-semibold">
                 <div className="min-w-0">
-                  <span className="text-[7.5px] font-black text-slate-400 uppercase tracking-widest block mb-0.5">Prescribing Doctor</span>
+                  <span className="text-[7px] font-black text-slate-400 uppercase tracking-widest block mb-0.5">Prescribing Doctor</span>
                   <div className="font-extrabold text-slate-800 truncate">
                     {(() => {
                       const matched = docByRoomMap[activePrescriptionModal.vis.tokens?.room_number || activePrescriptionModal.vis.room_number];
@@ -1617,7 +1624,7 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
                 </div>
 
                 <div className="min-w-0">
-                  <span className="text-[7.5px] font-black text-slate-400 uppercase tracking-widest block mb-0.5">Patient Details</span>
+                  <span className="text-[7px] font-black text-slate-400 uppercase tracking-widest block mb-0.5">Patient Details</span>
                   <div className="font-extrabold text-slate-800 truncate">{profileForm.name || 'Patient'}</div>
                   <div className="text-slate-400 font-semibold mt-0.5 truncate">
                     Age: {currentUser?.age || '—'} yrs • Phone: {patientPhone}
@@ -1626,9 +1633,9 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
               </div>
 
               {/* Vitals Summary */}
-              <div className="py-3 border-b border-slate-100">
-                <span className="text-[7.5px] font-black text-slate-400 uppercase tracking-widest block mb-1.5">Vitals Recorded</span>
-                <div className="grid grid-cols-3 sm:grid-cols-5 gap-1.5">
+              <div className="py-2.5 border-b border-slate-100">
+                <span className="text-[7px] font-black text-slate-400 uppercase tracking-widest block mb-1">Vitals Recorded</span>
+                <div className="grid grid-cols-3 sm:grid-cols-5 gap-1">
                   {[
                     { label: 'BP', val: activePrescriptionModal.vis.bp || '120/80' },
                     { label: 'Sugar', val: (activePrescriptionModal.vis.sugar || '110') + ' mg/dL' },
@@ -1636,36 +1643,36 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
                     { label: 'Pulse', val: (activePrescriptionModal.vis.tokens?.patient_intake?.[0]?.pulse || activePrescriptionModal.vis.pulse || '72') + ' BPM' },
                     { label: 'Oxygen', val: (activePrescriptionModal.vis.tokens?.patient_intake?.[0]?.oxygen || activePrescriptionModal.vis.oxygen || '98') + ' %' },
                   ].map((v, i) => (
-                    <div key={i} className="bg-slate-50 rounded-lg p-1.5 border border-slate-150 text-center">
-                      <div className="text-[7px] font-black text-slate-400 uppercase tracking-wider">{v.label}</div>
-                      <div className="text-[9.5px] font-black text-slate-800 mt-0.5 truncate">{v.val}</div>
+                    <div key={i} className="bg-slate-50 rounded p-1 border border-slate-150 text-center">
+                      <div className="text-[6.5px] font-black text-slate-400 uppercase tracking-wider">{v.label}</div>
+                      <div className="text-[9px] font-black text-slate-800 mt-0.5 truncate">{v.val}</div>
                     </div>
                   ))}
                 </div>
               </div>
 
               {/* Symptoms and Diagnosis */}
-              <div className="py-3 border-b border-slate-100 grid grid-cols-1 sm:grid-cols-2 gap-3 text-[10.5px] font-semibold">
+              <div className="py-2.5 border-b border-slate-100 grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-[10px] font-semibold">
                 <div>
-                  <span className="text-[7.5px] font-black text-slate-400 uppercase tracking-widest block mb-0.5">Chief Symptoms</span>
-                  <div className="text-slate-700 bg-slate-50 rounded-lg p-2 leading-relaxed">
+                  <span className="text-[7px] font-black text-slate-400 uppercase tracking-widest block mb-0.5">Chief Symptoms</span>
+                  <div className="text-slate-700 bg-slate-50 rounded p-1.5 leading-relaxed">
                     {activePrescriptionModal.vis.symptoms || 'General routine followup checkup'}
                   </div>
                 </div>
                 <div>
-                  <span className="text-[7.5px] font-black text-slate-400 uppercase tracking-widest block mb-0.5">Diagnosis</span>
-                  <div className="text-slate-700 font-bold bg-slate-50 rounded-lg p-2 leading-relaxed">
+                  <span className="text-[7px] font-black text-slate-400 uppercase tracking-widest block mb-0.5">Diagnosis</span>
+                  <div className="text-slate-700 font-bold bg-slate-50 rounded p-1.5 leading-relaxed">
                     {activePrescriptionModal.presc?.diagnosis || 'Outpatient Consultation Findings'}
                   </div>
                 </div>
               </div>
 
               {/* Medications grid table */}
-              <div className="py-3">
-                <span className="text-[7.5px] font-black text-slate-400 uppercase tracking-widest block mb-1.5">Medications List (Rx)</span>
-                <table className="w-full text-[10.5px] font-semibold">
+              <div className="py-2.5">
+                <span className="text-[7px] font-black text-slate-400 uppercase tracking-widest block mb-1">Medications List (Rx)</span>
+                <table className="w-full text-[10px] font-semibold">
                   <thead>
-                    <tr className="border-b border-slate-200 text-slate-400 font-black text-[7.5px] uppercase tracking-wider text-left">
+                    <tr className="border-b border-slate-200 text-slate-400 font-black text-[7px] uppercase tracking-wider text-left">
                       <th className="pb-1 w-[40%]">Medicine</th>
                       <th className="pb-1 w-[20%]">Dosage</th>
                       <th className="pb-1 w-[20%]">Frequency</th>
@@ -1676,20 +1683,20 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
                     {activePrescriptionModal.presc && Array.isArray(activePrescriptionModal.presc.medications) && activePrescriptionModal.presc.medications.length > 0 ? (
                       activePrescriptionModal.presc.medications.map((m: any, i: number) => (
                         <tr key={i} className="border-b border-slate-100 text-slate-700">
-                          <td className="py-2 font-extrabold text-slate-900">
+                          <td className="py-1.5 font-extrabold text-slate-900">
                             <div>• {m.name}</div>
                             {m.instructions && (
-                              <div className="text-[8.5px] text-slate-400 font-bold italic mt-0.5">{m.instructions}</div>
+                              <div className="text-[8px] text-slate-400 font-bold italic mt-0.5">{m.instructions}</div>
                             )}
                           </td>
-                          <td className="py-2">{m.dosage || '—'}</td>
-                          <td className="py-2 font-extrabold text-[#005EB8]">{m.frequency || '—'}</td>
-                          <td className="py-2">{m.duration || '—'}</td>
+                          <td className="py-1.5">{m.dosage || '—'}</td>
+                          <td className="py-1.5 font-extrabold text-[#005EB8]">{m.frequency || '—'}</td>
+                          <td className="py-1.5">{m.duration || '—'}</td>
                         </tr>
                       ))
                     ) : (
                       <tr>
-                        <td colSpan={4} className="py-3 text-center text-slate-450 font-semibold italic">
+                        <td colSpan={4} className="py-2 text-center text-slate-450 font-semibold italic">
                           No medications prescribed.
                         </td>
                       </tr>
@@ -1699,12 +1706,12 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
               </div>
 
               {/* Verified Badge and Signature */}
-              <div className="mt-4 flex justify-between items-end border-t border-slate-100 pt-4">
-                <span className="border border-emerald-500 text-emerald-500 font-black tracking-widest uppercase rounded px-2 py-0.5 rotate-[-2deg] bg-emerald-50 text-[9px] shadow-sm select-none">
+              <div className="mt-3.5 flex justify-between items-end border-t border-slate-100 pt-3">
+                <span className="border border-emerald-500 text-emerald-500 font-black tracking-widest uppercase rounded px-1.5 py-0.5 rotate-[-2deg] bg-emerald-50 text-[8.5px] shadow-sm select-none">
                   Verified EHR Rx
                 </span>
                 <div className="text-center font-semibold">
-                  <div className="border-t border-slate-350 w-28 pt-1 text-slate-500 text-[8px] uppercase">
+                  <div className="border-t border-slate-350 w-24 pt-1 text-slate-500 text-[7.5px] uppercase">
                     Authorized Sign
                   </div>
                 </div>
