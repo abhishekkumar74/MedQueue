@@ -37,11 +37,12 @@ const PRIORITY_OPTIONS = [
   { value: 2 as Priority, label: 'Normal', desc: 'Standard walk-in visit', color: 'border-emerald-400 bg-emerald-50 text-emerald-700', dot: 'bg-emerald-500' }
 ];
 
-export default function PatientWorkspace({ currentUser, navigate, tenant, initialTab }: {
+export default function PatientWorkspace({ currentUser, navigate, tenant, initialTab, onLogout }: {
   currentUser?: AuthUser | null;
   navigate?: (p: any, state?: any) => void;
   tenant?: TenantConfig | null;
   initialTab?: string;
+  onLogout?: () => void;
 }) {
   const getGreeting = () => {
     const hr = new Date().getHours();
@@ -649,7 +650,8 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
                 <button
                   onClick={async () => {
                     await clearOfflineCache();
-                    signOut();
+                    await signOut();
+                    if (onLogout) onLogout();
                   }}
                   className="px-2 py-0.5 bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-550 hover:text-slate-700 text-[8px] font-black rounded uppercase tracking-wider transition-all active:scale-95 min-h-[24px]"
                 >
@@ -1310,7 +1312,8 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
                   type="button"
                   onClick={async () => {
                     await clearOfflineCache();
-                    signOut();
+                    await signOut();
+                    if (onLogout) onLogout();
                   }}
                   className="w-full min-h-[38px] py-1.5 px-3.5 bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-600 font-black text-[9.5px] rounded-lg uppercase tracking-wider transition-all flex items-center justify-center gap-1 outline-none mt-2 active:scale-95"
                 >

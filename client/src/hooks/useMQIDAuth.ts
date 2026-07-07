@@ -47,6 +47,25 @@ export function useMQIDAuth(hospitalId: string, hospitalName: string, localPrefi
 
       if (session) {
         patient = await getCurrentPatient()
+        if (!patient && session.user) {
+          const userPhone = session.user.phone
+          if (userPhone) {
+            patient = await lookupPatientByPhone(userPhone)
+            if (patient) {
+              patient = await linkAuthToPatient(userPhone, session.user.id)
+            }
+          }
+          if (!patient) {
+            setPendingPhone(session.user.phone || '')
+            setState(s => ({
+              ...s,
+              step: 'needs_registration',
+              isNewPatient: true,
+              error: null
+            }))
+            return
+          }
+        }
       } else {
         const cached = getCachedUser()
         if (cached && cached.type === 'patient' && cached.phone) {

@@ -837,7 +837,7 @@ export default function App() {
 
       <main id="main-content" role="main" key={page} className={`animate-fade-in ${user.type === 'patient' ? 'pb-[calc(4rem+env(safe-area-inset-bottom,0px))] md:pb-0' : ''}`}>
         <Suspense fallback={<PageLoader />}>
-          {page === 'register' && <PatientWorkspace currentUser={user} navigate={navigate} tenant={tenant} initialTab={pageState.tab} />}
+          {page === 'register' && <PatientWorkspace currentUser={user} navigate={navigate} tenant={tenant} initialTab={pageState.tab} onLogout={handleLogout} />}
           {page === 'staff' && <StaffDashboard onNavigate={navigate} currentUser={user} />}
           {page === 'super-admin' && <SuperAdminDashboard currentUser={user} onNavigate={navigate} />}
           {page === 'tracker' && (
