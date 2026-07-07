@@ -623,46 +623,33 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
         </div>
       )}
 
-      {/* Global Branded Header */}
-      <header className="bg-white/80 backdrop-blur-md sticky top-0 z-40 border-b border-slate-100">
-        <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-[#005EB8] rounded-xl flex items-center justify-center text-white shadow-sm font-black text-sm">
-              MQ
-            </div>
-            <div>
-              <h1 className="text-sm font-black text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
-                <span>{tenant?.name || 'Apollo Medical Center'}</span>
-                {!isOffline && <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />}
-              </h1>
-              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">MedQueue Outpatient Portal</p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <div className="hidden sm:flex flex-col text-right leading-none">
-              <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{greeting.text}</span>
-              <strong className="text-xs font-extrabold text-slate-700 mt-1">{profileForm.name || 'User'}</strong>
-            </div>
-            <button
-              onClick={async () => {
-                await clearOfflineCache();
-                signOut();
-              }}
-              className="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-600 text-[10px] font-black rounded-xl uppercase tracking-wider transition-colors active:scale-95"
-            >
-              Log Out
-            </button>
-          </div>
-        </div>
-      </header>
-
       {/* Page Body Grid */}
       <main className="max-w-2xl mx-auto px-4 pt-6 space-y-6">
 
         {/* ── TAB 1: HOME DASHBOARD ── */}
         {activeTab === 'home' && (
           <div className="space-y-6 animate-fade-in text-left">
+            
+            {/* Ambient greeting & hospital banner */}
+            <div className="flex items-center justify-between bg-slate-105/50 border border-slate-200/50 rounded-2xl px-4 py-2.5 text-xs font-semibold text-slate-500 select-none">
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="font-extrabold text-slate-700 uppercase tracking-wide">{tenant?.name || 'Apollo Medical Center'}</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{greeting.text}, {profileForm.name || 'User'}</span>
+                <span className="text-slate-200">|</span>
+                <button
+                  onClick={async () => {
+                    await clearOfflineCache();
+                    signOut();
+                  }}
+                  className="text-[#005EB8] hover:text-[#004a96] font-black uppercase tracking-wider text-[10px] active:scale-95 transition-transform"
+                >
+                  Log Out
+                </button>
+              </div>
+            </div>
             
             {/* 1.1 ZOMATO/UBER STYLE LIVE TRACKER CARD */}
             {activeToken ? (
@@ -1312,6 +1299,17 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
                 >
                   {profileSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
                   <span>{profileSaving ? 'Saving Profile...' : 'Save Profile Credentials'}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={async () => {
+                    await clearOfflineCache();
+                    signOut();
+                  }}
+                  className="w-full min-h-[50px] bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-600 font-black text-xs rounded-xl uppercase tracking-wider transition-all flex items-center justify-center gap-2 outline-none mt-2.5 active:scale-95"
+                >
+                  Log Out from Account
                 </button>
               </form>
             </div>
