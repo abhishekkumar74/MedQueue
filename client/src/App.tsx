@@ -782,7 +782,9 @@ export default function App() {
       {/* Accessibility: Skip to main content link */}
       <a href="#main-content" className="sr-only">Skip to main content</a>
 
-      <UniversalHeader page={page} navigate={navigate} currentUser={user} handleLogout={handleLogout} />
+      {user?.type !== 'patient' && (
+        <UniversalHeader page={page} navigate={navigate} currentUser={user} handleLogout={handleLogout} />
+      )}
 
       {/* Mobile bottom nav for patients */}
       {user.type === 'patient' && page !== 'register' && (

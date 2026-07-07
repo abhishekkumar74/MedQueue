@@ -112,6 +112,7 @@ export async function registerNewPatient(
   const { data, error } = await supabase
     .from('mq_patients')
     .insert({
+      id:           (authUserId && authUserId.length === 36) ? authUserId : undefined,
       auth_user_id: (authUserId && authUserId.length === 36) ? authUserId : null,
       full_name:    form.fullName,
       phone:        form.phone,
