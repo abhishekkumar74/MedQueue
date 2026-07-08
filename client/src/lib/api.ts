@@ -105,22 +105,22 @@ export async function registerToken(params: {
   if (!patient) {
     // Walk-in fallback registration
     const form: PatientRegistrationForm = {
-      fullName:         name || 'Walk-in Patient',
-      phone:            normalizedPhone,
-      dob:              '',
-      gender:           null,
-      bloodGroup:       null,
-      address:          address ?? '',
-      city:             '',
+      fullName: name || 'Walk-in Patient',
+      phone: normalizedPhone,
+      dob: '',
+      gender: null,
+      bloodGroup: null,
+      address: address ?? '',
+      city: '',
       emergencyContact: '',
-      allergies:        [],
+      allergies: [],
     };
 
     let userSessionId = '';
     try {
       const { data: { user } } = await supabase.auth.getUser();
       userSessionId = user?.id ?? '';
-    } catch (_) {}
+    } catch (_) { }
 
     const result = await registerNewPatient(form, userSessionId);
     patient = result.patient;
@@ -159,7 +159,7 @@ export async function registerToken(params: {
       .maybeSingle();
 
     tokenNumber = (lastToken?.token_number ?? 0) + 1;
-  } catch (_) {}
+  } catch (_) { }
 
   // 5. Map Priority Parameter
   let numericPriority: 0 | 1 | 2 = 2;
@@ -177,15 +177,15 @@ export async function registerToken(params: {
   const { data: token, error: te } = await supabase
     .from('tokens')
     .insert({
-      phone:         normalizedPhone,
-      patient_id:    patient.id,
-      mqid:          patient.mqid,
-      status:        'WAITING',
-      priority:      numericPriority,
-      token_number:  tokenNumber,
+      phone: normalizedPhone,
+      patient_id: patient.id,
+      mqid: patient.mqid,
+      status: 'WAITING',
+      priority: numericPriority,
+      token_number: tokenNumber,
       intake_status: 'ARRIVED',
-      department:    department ?? null,
-      hospital_id:   resolvedHospitalId,
+      department: department ?? null,
+      hospital_id: resolvedHospitalId,
     })
     .select('*, patients(*)')
     .single();

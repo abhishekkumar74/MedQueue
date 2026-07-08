@@ -95,7 +95,7 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
   const [dbAppointments, setDbAppointments] = useState<any[]>([]);
   const [dbLabReports, setDbLabReports] = useState<any[]>([]);
   const [hospitals, setHospitals] = useState<Record<string, string>>({});
-  
+
   // Timeline Filters
   const [timelineCategory, setTimelineCategory] = useState<string>('All');
   const [selectedHospitalFilter, setSelectedHospitalFilter] = useState<string>('All');
@@ -178,7 +178,7 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
     setLoadingHistory(true);
     try {
       let resolvedPatientId = currentUser?.id || 'self';
-      
+
       const [visitsRes, prescRes, apptsRes] = await Promise.all([
         supabase.from('visits').select('*, tokens(*)').or(`mqid.eq.${mqid},patient_id.eq.${resolvedPatientId}`).eq('hospital_id', currentHospitalId).order('created_at', { ascending: false }),
         supabase.from('prescriptions').select('*').or(`mqid.eq.${mqid},patient_id.eq.${resolvedPatientId}`).eq('hospital_id', currentHospitalId).order('created_at', { ascending: false }),
@@ -218,7 +218,7 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
     try {
       const todayStart = new Date();
       todayStart.setHours(0, 0, 0, 0);
-      
+
       const { data: token } = await supabase
         .from('tokens')
         .select('*, patients(*)')
@@ -258,7 +258,7 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
           .from('doctors')
           .select('*')
           .eq('hospital_id', currentHospitalId);
-        
+
         if (!error && data) {
           setHospDoctors(data);
         }
@@ -564,9 +564,9 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
   const filteredTimelineEvents = useMemo(() => {
     return allTimelineEvents.filter(e => {
       const searchLower = deferredSearchQuery.toLowerCase();
-      const matchesSearch = 
-        e.title.toLowerCase().includes(searchLower) || 
-        e.subtitle.toLowerCase().includes(searchLower) || 
+      const matchesSearch =
+        e.title.toLowerCase().includes(searchLower) ||
+        e.subtitle.toLowerCase().includes(searchLower) ||
         (e.doctorName || '').toLowerCase().includes(searchLower);
 
       if (!matchesSearch) return false;
@@ -596,7 +596,7 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
   // Group events by Year -> Month -> Date
   const groupedEvents = useMemo(() => {
     const groups: { [year: string]: { [month: string]: { [dateKey: string]: typeof filteredTimelineEvents } } } = {};
-    
+
     filteredTimelineEvents.forEach(e => {
       const dt = new Date(e.date);
       const year = dt.getFullYear().toString();
@@ -606,7 +606,7 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
       if (!groups[year]) groups[year] = {};
       if (!groups[year][month]) groups[year][month] = {};
       if (!groups[year][month][dateKey]) groups[year][month][dateKey] = [];
-      
+
       groups[year][month][dateKey].push(e);
     });
 
@@ -619,7 +619,7 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
     const isMorning = freq.includes('morning') || freq.includes('once') || freq.startsWith('1-') || freq.includes('1-1-1');
     const isAfternoon = freq.includes('afternoon') || freq.includes('twice') || freq.includes('-1-') || freq.includes('1-1-1');
     const isNight = freq.includes('night') || freq.includes('twice') || freq.includes('thrice') || freq.endsWith('-1') || freq.includes('1-1-1');
-    
+
     return (
       <div className="flex items-center gap-1 mt-0.5 bg-slate-50 border border-slate-100 px-1.5 py-0.5 rounded w-max select-none text-[7.5px] font-bold">
         <span className={isMorning ? 'text-amber-500 font-black' : 'text-slate-350 opacity-40'}>☀️ Morning</span>
@@ -650,7 +650,7 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] font-sans pb-20 md:pb-6 relative overflow-x-hidden w-full max-w-full text-slate-800 antialiased text-left">
-      
+
       {/* Ambient background decoration */}
       <div className="absolute top-0 left-[-5%] w-[45%] h-[30%] bg-gradient-to-br from-[#005EB8]/3 to-transparent rounded-full blur-[60px] pointer-events-none" />
       <div className="absolute top-[30%] right-[-5%] w-[45%] h-[30%] bg-gradient-to-tr from-[#00A3AD]/3 to-transparent rounded-full blur-[60px] pointer-events-none" />
@@ -669,7 +669,7 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
         {/* ── TAB 1: HOME DASHBOARD ── */}
         {activeTab === 'home' && (
           <div className="space-y-3.5 animate-fade-in text-left">
-            
+
             {/* Ambient greeting & hospital welcome chip */}
             <div className="flex items-center justify-between py-1.5 select-none border-b border-slate-100 pb-3">
               <div className="flex items-center gap-2">
@@ -688,12 +688,12 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
                 </span>
               </div>
             </div>
-            
+
             {/* 1.1 ZOMATO/UBER STYLE LIVE TRACKER CARD */}
             {activeToken ? (
               <div className="bg-white border border-slate-200/60 rounded-xl p-3.5 shadow-sm space-y-3.5 text-left relative overflow-hidden">
                 <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#005EB8] to-[#00A3AD]" />
-                
+
                 <div className="flex items-center justify-between border-b border-slate-100 pb-2">
                   <div className="flex items-center gap-1">
                     <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-ping" />
@@ -709,15 +709,15 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
                 <div className="relative pt-1 pb-1 select-none">
                   {/* Progress Line Background */}
                   <div className="absolute top-[18px] left-[5%] right-[5%] h-0.5 bg-slate-100 rounded-full" />
-                  
+
                   {/* Progress Line Fill */}
-                  <div 
-                    className="absolute top-[18px] left-[5%] h-0.5 bg-[#005EB8] rounded-full transition-all duration-500" 
+                  <div
+                    className="absolute top-[18px] left-[5%] h-0.5 bg-[#005EB8] rounded-full transition-all duration-500"
                     style={{
-                      width: 
+                      width:
                         activeToken.status === 'SERVING' ? '90%' :
-                        activeToken.intake_status === 'READY_FOR_DOCTOR' || activeToken.intake_status === 'WITH_DOCTOR' ? '60%' :
-                        activeToken.intake_status === 'INTAKE_DONE' ? '35%' : '10%'
+                          activeToken.intake_status === 'READY_FOR_DOCTOR' || activeToken.intake_status === 'WITH_DOCTOR' ? '60%' :
+                            activeToken.intake_status === 'INTAKE_DONE' ? '35%' : '10%'
                     }}
                   />
 
@@ -730,16 +730,14 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
                       { label: 'Serving', active: activeToken.status === 'SERVING' },
                     ].map((step, idx) => (
                       <div key={idx} className="flex flex-col items-center w-1/4">
-                        <div className={`w-5 h-5 rounded-full flex items-center justify-center border transition-all relative z-10 text-[8px] font-bold ${
-                          step.active 
-                            ? 'bg-[#005EB8] border-[#005EB8] text-white shadow-sm' 
+                        <div className={`w-5 h-5 rounded-full flex items-center justify-center border transition-all relative z-10 text-[8px] font-bold ${step.active
+                            ? 'bg-[#005EB8] border-[#005EB8] text-white shadow-sm'
                             : 'bg-white border-slate-200 text-slate-400'
-                        }`}>
+                          }`}>
                           {step.active ? '✓' : idx + 1}
                         </div>
-                        <span className={`text-[7px] font-black uppercase tracking-wider mt-1 block ${
-                          step.active ? 'text-[#005EB8]' : 'text-slate-450'
-                        }`}>{step.label}</span>
+                        <span className={`text-[7px] font-black uppercase tracking-wider mt-1 block ${step.active ? 'text-[#005EB8]' : 'text-slate-450'
+                          }`}>{step.label}</span>
                       </div>
                     ))}
                   </div>
@@ -811,7 +809,7 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
                       {new Date(dbAppointments[0].appointment_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })} • {dbAppointments[0].time_slot}
                     </p>
                   </div>
-                  <button 
+                  <button
                     onClick={() => { setActiveTab('guide'); }}
                     className="px-2.5 py-1 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-655 text-[9px] font-black uppercase tracking-wider rounded transition-all min-h-[26px]"
                   >
@@ -876,7 +874,7 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
                     ))}
                   </div>
                   {dbPrescriptions[0].medications?.length > 2 && (
-                    <button 
+                    <button
                       onClick={() => { setActiveTab('history'); setTimelineCategory('Prescriptions'); }}
                       className="text-[7.5px] font-black uppercase text-[#005EB8] tracking-wider block mt-1 hover:underline"
                     >
@@ -993,11 +991,10 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
                     <button
                       key={cat.id}
                       onClick={() => setTimelineCategory(cat.id)}
-                      className={`flex-shrink-0 px-2 py-1 rounded text-[7.5px] font-black uppercase tracking-wider transition-all border min-h-[26px] ${
-                        timelineCategory === cat.id
+                      className={`flex-shrink-0 px-2 py-1 rounded text-[7.5px] font-black uppercase tracking-wider transition-all border min-h-[26px] ${timelineCategory === cat.id
                           ? 'bg-[#005EB8] border-transparent text-white shadow-sm'
                           : 'bg-white hover:bg-slate-50 text-slate-550 border-slate-200'
-                      }`}
+                        }`}
                     >
                       {cat.label}
                     </button>
@@ -1015,9 +1012,8 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
                       <button
                         key={per.id}
                         onClick={() => setTimelineFilter(per.id as any)}
-                        className={`px-1 py-0.5 rounded-[3px] text-[6.5px] font-black tracking-wider transition-all uppercase min-h-[16px] ${
-                          timelineFilter === per.id ? 'bg-white text-[#005EB8] shadow-sm' : 'text-slate-455 hover:text-slate-855'
-                        }`}
+                        className={`px-1 py-0.5 rounded-[3px] text-[6.5px] font-black tracking-wider transition-all uppercase min-h-[16px] ${timelineFilter === per.id ? 'bg-white text-[#005EB8] shadow-sm' : 'text-slate-455 hover:text-slate-855'
+                          }`}
                       >
                         {per.label}
                       </button>
@@ -1055,13 +1051,13 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
                     {Object.entries(months).map(([month, dateGroups]) => (
                       <div key={month} className="space-y-2.5 pl-1">
                         <span className="text-[8.5px] font-black text-[#00A3AD] uppercase tracking-widest block">{month}</span>
-                        
+
                         {Object.entries(dateGroups).map(([dateKey, events]) => (
                           <div key={dateKey} className="space-y-2">
                             <div className="text-[7px] font-bold text-slate-450 uppercase tracking-widest pl-4">
                               {dateKey}
                             </div>
-                            
+
                             {events.map((e, idx) => {
                               const isVisit = e.type === 'Visit';
                               const isPresc = e.type === 'Prescription';
@@ -1092,11 +1088,10 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
 
                                   <div className="bg-white border border-slate-200/50 rounded-xl py-2.5 px-3 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden">
                                     {/* Physical status line tag */}
-                                    <div className={`absolute top-0 bottom-0 left-0 w-1 ${
-                                      isPresc ? 'bg-emerald-500' :
-                                      isAppt ? 'bg-amber-500' :
-                                      isReport ? 'bg-indigo-500' : 'bg-[#005EB8]'
-                                    }`} />
+                                    <div className={`absolute top-0 bottom-0 left-0 w-1 ${isPresc ? 'bg-emerald-500' :
+                                        isAppt ? 'bg-amber-500' :
+                                          isReport ? 'bg-indigo-500' : 'bg-[#005EB8]'
+                                      }`} />
 
                                     {/* Event header info */}
                                     <div className="flex items-center justify-between gap-2 border-b border-slate-100 pb-1.5 mb-1.5">
@@ -1376,7 +1371,7 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
                   <div className="space-y-1">
                     <span className="text-[6.5px] font-black uppercase text-[#005EB8] bg-[#005EB8]/10 border border-[#005EB8]/15 px-1.5 py-0.5 rounded">{fl.floor}</span>
                     <h4 className="font-extrabold text-slate-750 text-[10px] mt-1 leading-relaxed">{fl.desc}</h4>
-                    
+
                     <div className="space-y-0.5 mt-2">
                       <span className="text-[6.5px] font-black text-slate-400 uppercase tracking-widest block mb-0.5">Featured Rooms</span>
                       {fl.rooms.map((rm, rIdx) => (
@@ -1533,11 +1528,10 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
                         key={d}
                         type="button"
                         onClick={() => setQuickDept(d)}
-                        className={`p-1 rounded-md border transition-all flex flex-col items-center justify-center text-center gap-0.5 min-h-[42px] outline-none ${
-                          isSelected
+                        className={`p-1 rounded-md border transition-all flex flex-col items-center justify-center text-center gap-0.5 min-h-[42px] outline-none ${isSelected
                             ? 'border-transparent bg-gradient-to-br from-[#005EB8] to-[#00A3AD] text-white shadow-sm'
                             : 'border-slate-200 bg-white text-slate-750 hover:border-slate-350'
-                        }`}
+                          }`}
                       >
                         <span className="text-sm leading-none">{DEPT_ICONS[d] || '🩺'}</span>
                         <span className="text-[7.5px] font-black uppercase tracking-wider block">
@@ -1558,11 +1552,10 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
                       key={p.value}
                       type="button"
                       onClick={() => setQuickPriority(p.value)}
-                      className={`p-1.5 rounded-md border transition-all flex flex-col items-center justify-center text-center gap-0.5 min-h-[42px] outline-none ${
-                        quickPriority === p.value 
-                          ? p.color + ' border-transparent shadow-sm' 
+                      className={`p-1.5 rounded-md border transition-all flex flex-col items-center justify-center text-center gap-0.5 min-h-[42px] outline-none ${quickPriority === p.value
+                          ? p.color + ' border-transparent shadow-sm'
                           : 'border-slate-200 bg-white text-slate-655 hover:border-slate-350'
-                      }`}
+                        }`}
                     >
                       <span className={`w-1.5 h-1.5 rounded-full ${p.dot}`} />
                       <span className="text-[7.5px] font-black uppercase tracking-wider block leading-none">{p.label}</span>
