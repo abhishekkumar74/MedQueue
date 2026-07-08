@@ -403,6 +403,7 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
     setProfileSuccess(false);
 
     try {
+      // 1. Update local hospital patient record
       const { data: patientRecord } = await supabase
         .from('patients')
         .select('id')
@@ -416,6 +417,43 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
             address: profileForm.address.trim()
           })
           .eq('id', patientRecord.id);
+      }
+
+      // 2. Update global patient record if mqid exists
+      if (mqid) {
+        await supabase.from('mq_patients')
+          .update({
+            full_name: profileForm.name.trim(),
+            blood_group: profileForm.bloodGroup,
+          })
+          .eq('mqid', mqid);
+
+        if (currentHospitalId) {
+          await supabase.from('hospital_patients')
+            .update({
+              address: profileForm.address.trim(),
+              allergies: profileForm.allergies.split(',').map(s => s.trim()).filter(Boolean)
+            })
+            .eq('mqid', mqid)
+            .eq('hospital_id', currentHospitalId);
+        }
+      }
+
+      // 3. Update email in Supabase Auth user database if changed
+      if (profileForm.email.trim()) {
+        await supabase.auth.updateUser({
+          email: profileForm.email.trim()
+        });
+      }
+
+      // 4. Synchronize local cache for the active user session
+      const cached = localStorage.getItem('mq_user');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        parsed.email = profileForm.email.trim();
+        parsed.name = profileForm.name.trim();
+        parsed.address = profileForm.address.trim();
+        localStorage.setItem('mq_user', JSON.stringify(parsed));
       }
 
       setProfileSuccess(true);
@@ -634,7 +672,7 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
             {/* Ambient greeting & hospital welcome chip */}
             <div className="flex items-center justify-between py-1.5 select-none border-b border-slate-100 pb-3">
               <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded bg-[#005EB8]/10 text-[#005EB8] flex items-center justify-center font-black text-[11px] uppercase tracking-wider">
+                <div className="w-7 h-7 rounded-full bg-[#005EB8]/10 text-[#005EB8] flex items-center justify-center font-black text-[11px] uppercase tracking-wider">
                   {profileForm.name ? profileForm.name.substring(0, 2).toUpperCase() : 'PT'}
                 </div>
                 <div>
@@ -647,16 +685,6 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
                   <span className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse" />
                   {tenant?.name || 'Apollo Medical'}
                 </span>
-                <button
-                  onClick={async () => {
-                    await clearOfflineCache();
-                    await signOut();
-                    if (onLogout) onLogout();
-                  }}
-                  className="px-2 py-0.5 bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-550 hover:text-slate-700 text-[8px] font-black rounded uppercase tracking-wider transition-all active:scale-95 min-h-[24px]"
-                >
-                  Log Out
-                </button>
               </div>
             </div>
             
@@ -924,28 +952,28 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
 
             {/* Timelines Search & Filter Pane */}
             <div className="bg-white border border-slate-200/50 rounded-xl p-2.5 shadow-sm space-y-2.5">
-              <div className="flex flex-col sm:flex-row gap-2">
+              <div className="flex gap-1.5 items-center">
                 {/* Search Index Input */}
                 <div className="relative flex-1">
-                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+                  <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-400" />
                   <input
                     type="text"
                     value={searchQuery}
                     onChange={e => setSearchQuery(e.target.value)}
-                    placeholder="Search vault..."
-                    className="w-full pl-7 pr-2.5 py-1 bg-slate-50 border border-slate-200 rounded-lg text-[11px] font-semibold focus:outline-none focus:border-[#005EB8] focus:bg-white transition-all min-h-[32px]"
+                    placeholder="Search..."
+                    className="w-full pl-6 pr-2 py-0.5 bg-slate-50 border border-slate-200 rounded-md text-[10px] font-semibold focus:outline-none focus:border-[#005EB8] focus:bg-white transition-all min-h-[28px]"
                   />
                 </div>
                 {/* Hospital Node Vault Dropdown */}
-                <div className="w-full sm:w-44">
+                <div className="w-32 shrink-0">
                   <select
                     value={selectedHospitalFilter}
                     onChange={e => setSelectedHospitalFilter(e.target.value)}
-                    className="w-full border border-slate-200 bg-slate-50 rounded-lg px-2.5 py-1 text-[11px] font-semibold text-slate-700 focus:outline-none focus:border-[#005EB8] focus:bg-white transition-all min-h-[32px] appearance-none"
+                    className="w-full border border-slate-200 bg-slate-50 rounded-md px-2 py-0.5 text-[10px] font-semibold text-slate-700 focus:outline-none focus:border-[#005EB8] focus:bg-white transition-all min-h-[28px] appearance-none"
                   >
-                    <option value="All">All Hospital Vaults</option>
+                    <option value="All">All Vaults</option>
                     {Object.entries(hospitals).map(([id, name]) => (
-                      <option key={id} value={id}>{name}</option>
+                      <option key={id} value={id}>{name.split(' ')[0]}</option>
                     ))}
                   </select>
                 </div>
@@ -975,19 +1003,19 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
                   ))}
                 </div>
 
-                <div className="flex justify-between items-center text-[8px] font-black text-slate-400 uppercase tracking-wider">
-                  <span>Vault Date Range</span>
-                  <div className="flex gap-1 bg-slate-100 p-0.5 rounded border border-slate-200/50">
+                <div className="flex justify-between items-center text-[7.5px] font-black text-slate-400 uppercase tracking-wider pt-1.5 border-t border-slate-100">
+                  <span>Date Filter</span>
+                  <div className="flex gap-0.5 bg-slate-100 p-0.5 rounded border border-slate-200/30">
                     {[
-                      { id: 'all', label: 'All time' },
-                      { id: '30', label: '30 Days' },
-                      { id: '180', label: '6 Months' }
+                      { id: 'all', label: 'All' },
+                      { id: '30', label: '30D' },
+                      { id: '180', label: '6M' }
                     ].map(per => (
                       <button
                         key={per.id}
                         onClick={() => setTimelineFilter(per.id as any)}
-                        className={`px-1.5 py-0.5 rounded text-[7px] font-black tracking-wider transition-all uppercase ${
-                          timelineFilter === per.id ? 'bg-white text-[#005EB8] shadow-sm' : 'text-slate-450 hover:text-slate-800'
+                        className={`px-1 py-0.5 rounded-[3px] text-[6.5px] font-black tracking-wider transition-all uppercase min-h-[16px] ${
+                          timelineFilter === per.id ? 'bg-white text-[#005EB8] shadow-sm' : 'text-slate-455 hover:text-slate-855'
                         }`}
                       >
                         {per.label}
@@ -1496,7 +1524,7 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
               {/* Specialty Grid */}
               <div className="space-y-1">
                 <label className="block text-[7.5px] font-black text-slate-400 uppercase tracking-widest">Select Specialty Department *</label>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-1">
                   {DEPARTMENTS.map(d => {
                     const isSelected = quickDept === d;
                     return (
@@ -1504,13 +1532,13 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
                         key={d}
                         type="button"
                         onClick={() => setQuickDept(d)}
-                        className={`p-1.5 rounded-lg border transition-all flex flex-col items-center justify-center text-center gap-0.5 min-h-[52px] outline-none ${
+                        className={`p-1 rounded-md border transition-all flex flex-col items-center justify-center text-center gap-0.5 min-h-[42px] outline-none ${
                           isSelected
                             ? 'border-transparent bg-gradient-to-br from-[#005EB8] to-[#00A3AD] text-white shadow-sm'
-                            : 'border-slate-200 bg-white text-slate-700 hover:border-slate-350'
+                            : 'border-slate-200 bg-white text-slate-750 hover:border-slate-350'
                         }`}
                       >
-                        <span className="text-base">{DEPT_ICONS[d] || '🩺'}</span>
+                        <span className="text-sm leading-none">{DEPT_ICONS[d] || '🩺'}</span>
                         <span className="text-[7.5px] font-black uppercase tracking-wider block">
                           {DEPARTMENT_LABEL[d]}
                         </span>
@@ -1523,23 +1551,20 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
               {/* Priority Selectors */}
               <div className="space-y-1">
                 <label className="block text-[7.5px] font-black text-slate-400 uppercase tracking-widest">Priority Classification</label>
-                <div className="grid grid-cols-1 gap-1.5">
+                <div className="grid grid-cols-3 gap-1">
                   {PRIORITY_OPTIONS.map(p => (
                     <button
                       key={p.value}
                       type="button"
                       onClick={() => setQuickPriority(p.value)}
-                      className={`p-2 rounded-lg border transition-all flex items-center gap-2 text-left outline-none ${
+                      className={`p-1.5 rounded-md border transition-all flex flex-col items-center justify-center text-center gap-0.5 min-h-[42px] outline-none ${
                         quickPriority === p.value 
                           ? p.color + ' border-transparent shadow-sm' 
                           : 'border-slate-200 bg-white text-slate-655 hover:border-slate-350'
                       }`}
                     >
-                      <span className={`w-1.5 h-1.5 rounded-full ${p.dot} shrink-0`} />
-                      <div className="min-w-0">
-                        <span className="text-[10px] font-black uppercase tracking-wide block leading-none">{p.label}</span>
-                        <span className="text-[8px] text-slate-455 font-bold block mt-0.5">{p.desc}</span>
-                      </div>
+                      <span className={`w-1.5 h-1.5 rounded-full ${p.dot}`} />
+                      <span className="text-[7.5px] font-black uppercase tracking-wider block leading-none">{p.label}</span>
                     </button>
                   ))}
                 </div>
