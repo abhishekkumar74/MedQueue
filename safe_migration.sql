@@ -54,6 +54,15 @@ BEGIN
     IF EXISTS (SELECT FROM pg_tables WHERE tablename = 'crash_logs') AND NOT EXISTS (SELECT FROM pg_tables WHERE tablename = 'crash_logs_old') THEN
         ALTER TABLE crash_logs RENAME TO crash_logs_old;
     END IF;
+
+    -- Rename OTP tables
+    IF EXISTS (SELECT FROM pg_tables WHERE tablename = 'otps') AND NOT EXISTS (SELECT FROM pg_tables WHERE tablename = 'otps_old') THEN
+        ALTER TABLE otps RENAME TO otps_old;
+    END IF;
+    
+    IF EXISTS (SELECT FROM pg_tables WHERE tablename = 'email_otps') AND NOT EXISTS (SELECT FROM pg_tables WHERE tablename = 'email_otps_old') THEN
+        ALTER TABLE email_otps RENAME TO email_otps_old;
+    END IF;
 END $$;
 
 -- ── STEP 2: Create new consolidated schema ──────────────────────────────────
@@ -342,6 +351,22 @@ BEGIN
             'info' as severity,
             created_at
         FROM activity_logs_old;
+    END IF;
+END $$;
+
+-- 5. Migrate OTP codes
+DO $$
+BEGIN
+    IF EXISTS (SELECT FROM pg_tables WHERE tablename = 'otps_old') THEN
+        INSERT INTO otps (id, target, code, used, created_at)
+        SELECT id, phone as target, code, used, created_at
+        FROM otps_old;
+    END IF;
+    
+    IF EXISTS (SELECT FROM pg_tables WHERE tablename = 'email_otps_old') THEN
+        INSERT INTO otps (id, target, code, used, created_at)
+        SELECT id, email as target, code, used, created_at
+        FROM email_otps_old;
     END IF;
 END $$;
 
