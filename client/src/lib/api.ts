@@ -11,6 +11,7 @@ import { todayStartUTC } from './dateUtils';
 import { getCachedUser } from './auth';
 import {
   lookupPatientByPhone,
+  lookupPatientByMQID,
   registerNewPatient,
   getOrCreateHospitalProfile,
 } from './mqid';
@@ -42,6 +43,7 @@ function getHospitalFilter() {
 
 export async function registerToken(params: {
   phone: string;
+  mqid?: string;
   name?: string;
   age?: number;
   address?: string;
@@ -53,6 +55,7 @@ export async function registerToken(params: {
 }) {
   const {
     phone,
+    mqid,
     name,
     age,
     address,
@@ -89,8 +92,15 @@ export async function registerToken(params: {
     ? phone
     : `+91${phone.replace(/\D/g, '')}`;
 
-  let patient = await lookupPatientByPhone(normalizedPhone)
-    ?? await lookupPatientByPhone(phone);
+  let patient = null;
+  if (mqid) {
+    patient = await lookupPatientByMQID(mqid);
+  }
+
+  if (!patient) {
+    patient = await lookupPatientByPhone(normalizedPhone)
+      ?? await lookupPatientByPhone(phone);
+  }
 
   if (!patient) {
     // Walk-in fallback registration

@@ -378,6 +378,7 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
     try {
       await registerToken({
         phone: patientPhone,
+        mqid: mqid || undefined,
         name: profileForm.name || 'Patient',
         age: currentUser?.age || 30,
         address: profileForm.address || 'Delhi Outpatient Center',
