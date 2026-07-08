@@ -195,7 +195,7 @@ BEGIN
             COALESCE(auth_user_id, id) as id,
             COALESCE(mqid, 'MQ-2026-' || substring(md5(random()::text) from 1 for 8)) as mqid,
             auth_user_id,
-            name,
+            full_name as name,
             phone,
             dob,
             gender,
