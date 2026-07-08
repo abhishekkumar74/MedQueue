@@ -200,9 +200,9 @@ BEGIN
             dob,
             gender,
             blood_group,
-            address,
-            city,
-            emergency_contact,
+            NULL::text as address,
+            NULL::text as city,
+            NULL::text as emergency_contact,
             COALESCE(allergies, '{}') as allergies,
             '{}'::text[] as chronic_conditions,
             created_at,
@@ -213,17 +213,19 @@ BEGIN
     
     -- Migrate remaining local patient accounts
     IF EXISTS (SELECT FROM pg_tables WHERE tablename = 'patients_old') THEN
-        INSERT INTO patients (id, mqid, auth_user_id, name, phone, created_at, updated_at)
+        INSERT INTO patients (id, mqid, auth_user_id, name, phone, address, created_at, updated_at)
         SELECT 
             id,
             'MQ-2026-' || substring(md5(random()::text) from 1 for 8) as mqid,
             auth_user_id,
             name,
             phone,
+            address,
             created_at,
             created_at
         FROM patients_old
-        ON CONFLICT (phone) DO NOTHING;
+        ON CONFLICT (phone) DO UPDATE SET
+            address = COALESCE(patients.address, EXCLUDED.address);
     END IF;
 END $$;
 
