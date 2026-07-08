@@ -378,7 +378,6 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
     try {
       await registerToken({
         phone: patientPhone,
-        mqid: mqid || undefined,
         name: profileForm.name || 'Patient',
         age: currentUser?.age || 30,
         address: profileForm.address || 'Delhi Outpatient Center',
@@ -731,8 +730,8 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
                     ].map((step, idx) => (
                       <div key={idx} className="flex flex-col items-center w-1/4">
                         <div className={`w-5 h-5 rounded-full flex items-center justify-center border transition-all relative z-10 text-[8px] font-bold ${step.active
-                            ? 'bg-[#005EB8] border-[#005EB8] text-white shadow-sm'
-                            : 'bg-white border-slate-200 text-slate-400'
+                          ? 'bg-[#005EB8] border-[#005EB8] text-white shadow-sm'
+                          : 'bg-white border-slate-200 text-slate-400'
                           }`}>
                           {step.active ? '✓' : idx + 1}
                         </div>
@@ -992,8 +991,8 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
                       key={cat.id}
                       onClick={() => setTimelineCategory(cat.id)}
                       className={`flex-shrink-0 px-2 py-1 rounded text-[7.5px] font-black uppercase tracking-wider transition-all border min-h-[26px] ${timelineCategory === cat.id
-                          ? 'bg-[#005EB8] border-transparent text-white shadow-sm'
-                          : 'bg-white hover:bg-slate-50 text-slate-550 border-slate-200'
+                        ? 'bg-[#005EB8] border-transparent text-white shadow-sm'
+                        : 'bg-white hover:bg-slate-50 text-slate-550 border-slate-200'
                         }`}
                     >
                       {cat.label}
@@ -1089,8 +1088,8 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
                                   <div className="bg-white border border-slate-200/50 rounded-xl py-2.5 px-3 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden">
                                     {/* Physical status line tag */}
                                     <div className={`absolute top-0 bottom-0 left-0 w-1 ${isPresc ? 'bg-emerald-500' :
-                                        isAppt ? 'bg-amber-500' :
-                                          isReport ? 'bg-indigo-500' : 'bg-[#005EB8]'
+                                      isAppt ? 'bg-amber-500' :
+                                        isReport ? 'bg-indigo-500' : 'bg-[#005EB8]'
                                       }`} />
 
                                     {/* Event header info */}
@@ -1529,8 +1528,8 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
                         type="button"
                         onClick={() => setQuickDept(d)}
                         className={`p-1 rounded-md border transition-all flex flex-col items-center justify-center text-center gap-0.5 min-h-[42px] outline-none ${isSelected
-                            ? 'border-transparent bg-gradient-to-br from-[#005EB8] to-[#00A3AD] text-white shadow-sm'
-                            : 'border-slate-200 bg-white text-slate-750 hover:border-slate-350'
+                          ? 'border-transparent bg-gradient-to-br from-[#005EB8] to-[#00A3AD] text-white shadow-sm'
+                          : 'border-slate-200 bg-white text-slate-750 hover:border-slate-350'
                           }`}
                       >
                         <span className="text-sm leading-none">{DEPT_ICONS[d] || '🩺'}</span>
@@ -1553,8 +1552,8 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
                       type="button"
                       onClick={() => setQuickPriority(p.value)}
                       className={`p-1.5 rounded-md border transition-all flex flex-col items-center justify-center text-center gap-0.5 min-h-[42px] outline-none ${quickPriority === p.value
-                          ? p.color + ' border-transparent shadow-sm'
-                          : 'border-slate-200 bg-white text-slate-655 hover:border-slate-350'
+                        ? p.color + ' border-transparent shadow-sm'
+                        : 'border-slate-200 bg-white text-slate-655 hover:border-slate-350'
                         }`}
                     >
                       <span className={`w-1.5 h-1.5 rounded-full ${p.dot}`} />
@@ -1762,5 +1761,100 @@ export default function PatientWorkspace({ currentUser, navigate, tenant, initia
         }
       `}</style>
     </div>
+  );
+}
+                  ))}
+                </div >
+              </div >
+
+  {/* Symptoms and Diagnosis */ }
+  < div className = "py-2.5 border-b border-slate-100 grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-[10px] font-semibold" >
+                <div>
+                  <span className="text-[7px] font-black text-slate-400 uppercase tracking-widest block mb-0.5">Chief Symptoms</span>
+                  <div className="text-slate-700 bg-slate-50 rounded p-1.5 leading-relaxed">
+                    {activePrescriptionModal.vis.symptoms || 'General routine followup checkup'}
+                  </div>
+                </div>
+                <div>
+                  <span className="text-[7px] font-black text-slate-400 uppercase tracking-widest block mb-0.5">Diagnosis</span>
+                  <div className="text-slate-700 font-bold bg-slate-50 rounded p-1.5 leading-relaxed">
+                    {activePrescriptionModal.presc?.diagnosis || 'Outpatient Consultation Findings'}
+                  </div>
+                </div>
+              </div >
+
+  {/* Medications grid table */ }
+  < div className = "py-2.5" >
+                <span className="text-[7px] font-black text-slate-400 uppercase tracking-widest block mb-1">Medications List (Rx)</span>
+                <table className="w-full text-[10px] font-semibold">
+                  <thead>
+                    <tr className="border-b border-slate-200 text-slate-400 font-black text-[7px] uppercase tracking-wider text-left">
+                      <th className="pb-1 w-[40%]">Medicine</th>
+                      <th className="pb-1 w-[20%]">Dosage</th>
+                      <th className="pb-1 w-[20%]">Frequency</th>
+                      <th className="pb-1 w-[20%]">Duration</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {activePrescriptionModal.presc && Array.isArray(activePrescriptionModal.presc.medications) && activePrescriptionModal.presc.medications.length > 0 ? (
+                      activePrescriptionModal.presc.medications.map((m: any, i: number) => (
+                        <tr key={i} className="border-b border-slate-100 text-slate-700">
+                          <td className="py-1.5 font-extrabold text-slate-900">
+                            <div>• {m.name}</div>
+                            {m.instructions && (
+                              <div className="text-[8px] text-slate-400 font-bold italic mt-0.5">{m.instructions}</div>
+                            )}
+                          </td>
+                          <td className="py-1.5">{m.dosage || '—'}</td>
+                          <td className="py-1.5 font-extrabold text-[#005EB8]">{m.frequency || '—'}</td>
+                          <td className="py-1.5">{m.duration || '—'}</td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={4} className="py-2 text-center text-slate-450 font-semibold italic">
+                          No medications prescribed.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div >
+
+  {/* Verified Badge and Signature */ }
+  < div className = "mt-3.5 flex justify-between items-end border-t border-slate-100 pt-3" >
+                <span className="border border-emerald-500 text-emerald-500 font-black tracking-widest uppercase rounded px-1.5 py-0.5 rotate-[-2deg] bg-emerald-50 text-[8.5px] shadow-sm select-none">
+                  Verified EHR Rx
+                </span>
+                <div className="text-center font-semibold">
+                  <div className="border-t border-slate-350 w-24 pt-1 text-slate-500 text-[7.5px] uppercase">
+                    Authorized Sign
+                  </div>
+                </div>
+              </div >
+            </div >
+          </div >
+        </div >
+      )}
+
+{/* Global CSS style injection for printable templates */ }
+<style>{`
+        @media print {
+          body * {
+            visibility: hidden;
+          }
+          #printable-prescription-container, #printable-prescription-container * {
+            visibility: visible;
+          }
+          #printable-prescription-container {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            padding: 10px;
+          }
+        }
+      `}</style>
+    </div >
   );
 }
