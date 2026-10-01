@@ -173,12 +173,46 @@ export async function registerToken(params: {
     numericPriority = 2;
   }
 
-  // 6. Insert Token Scoped to Hospital + MQID
+  // 6. Ensure matching patient record exists in `patients` table for FK constraint `tokens_patient_id_fkey`
+  let validPatientsTableId = patient.id;
+
+  try {
+    const { data: pRecord } = await supabase
+      .from('patients')
+      .select('id')
+      .or(`phone.eq.${normalizedPhone},phone.eq.${phone}`)
+      .maybeSingle();
+
+    if (pRecord?.id) {
+      validPatientsTableId = pRecord.id;
+    } else {
+      const generatedMqid = patient.mqid || `MQ-2026-${Math.floor(1000 + Math.random() * 9000)}-${Math.floor(1000 + Math.random() * 9000)}`;
+      const { data: createdP } = await supabase
+        .from('patients')
+        .insert({
+          name: name || patient.fullName || 'Patient',
+          phone: normalizedPhone,
+          mqid: generatedMqid,
+          address: address || '',
+          hospital_id: resolvedHospitalId
+        })
+        .select('id')
+        .single();
+
+      if (createdP?.id) {
+        validPatientsTableId = createdP.id;
+      }
+    }
+  } catch (err) {
+    console.warn('Patients table lookup for FK constraint fallback warning:', err);
+  }
+
+  // 7. Insert Token Scoped to Hospital + MQID
   const { data: token, error: te } = await supabase
     .from('tokens')
     .insert({
       phone: normalizedPhone,
-      patient_id: patient.id,
+      patient_id: validPatientsTableId,
       mqid: patient.mqid,
       status: 'WAITING',
       priority: numericPriority,
@@ -191,7 +225,7 @@ export async function registerToken(params: {
     .single();
 
   if (te) throw new Error(te.message);
-  return { success: true, token, mqid: patient.mqid, patientId: patient.id };
+  return { success: true, token, mqid: patient.mqid, patientId: validPatientsTableId };
 }
 
 // ─── QUEUE ───────────────────────────────────────────────────────────────────

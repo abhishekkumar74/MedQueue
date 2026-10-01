@@ -6,7 +6,9 @@ server/node_modules
 # Build output
 dist
 dist-ssr
+dev-dist
 client/dist
+client/dev-dist
 server/dist
 
 # Environment variables — NEVER commit these
